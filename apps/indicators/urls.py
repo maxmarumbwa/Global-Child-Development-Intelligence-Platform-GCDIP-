@@ -1,12 +1,12 @@
 from django.urls import path
-from .views import home
+from .views import mortality_table
 
 urlpatterns = [
 
     path(
-        "",
-        home,
-        name="home"
+        "mortality/",
+        mortality_table,
+        name="mortality_table"
     ),
 
 ]

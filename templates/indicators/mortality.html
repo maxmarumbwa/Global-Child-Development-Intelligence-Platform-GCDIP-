@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Child Mortality
+{% endblock %}
+
+{% block content %}
+
+<div class="card">
+
+    <div class="card-header">
+
+        <h4>
+            Under-5 Mortality Rate (2023)
+        </h4>
+
+    </div>
+
+    <div class="card-body">
+
+        <table class="table table-striped table-hover">
+
+            <thead>
+
+                <tr>
+                    <th>ISO3</th>
+                    <th>Country</th>
+                    <th>Year</th>
+                    <th>Mortality</th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+            {% for row in records %}
+
+                <tr>
+
+                    <td>{{ row.iso3 }}</td>
+
+                    <td>{{ row.country }}</td>
+
+                    <td>{{ row.year }}</td>
+
+                    <td>{{ row.mortality }}</td>
+
+                </tr>
+
+            {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+{% endblock %}
