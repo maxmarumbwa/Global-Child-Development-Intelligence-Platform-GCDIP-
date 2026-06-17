@@ -10,26 +10,26 @@ Child Mortality Chart
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h4 class="mb-0">Under‑5 Mortality Rate</h4>
         <div style="width:300px;">
-            <label class="form-label">Year: <span id="yearLabel">{{ current_year|default:2023 }}</span></label>
+            <label class="form-label">Year: <span id="yearLabel">{{ current_year }}</span></label>
             <input type="range" id="yearSlider" min="1960" max="2024"
-                   value="{{ current_year|default:2023 }}" class="form-range"
+                   value="{{ current_year }}" class="form-range"
                    oninput="onSliderInput(this.value)">
         </div>
     </div>
 
-    <!-- ANIMATION CONTROLS -->
+    <!-- ANIMATION CONTROLS - inline with slider -->
     <div class="row mb-3 align-items-center">
         <div class="col-auto">
-            <button id="playBtn" class="btn btn-primary" onclick="togglePlay()">▶ Play</button>
+            <button id="playBtn" class="btn btn-primary btn-sm" onclick="togglePlay()">▶ Play</button>
         </div>
         <div class="col-auto">
             <label for="speedSlider" class="form-label me-2">Speed</label>
-            <input type="range" id="speedSlider" min="200" max="3000" value="1000" step="100"
-                   class="form-range" style="width:200px;" oninput="updateSpeed(this.value)">
-            <span id="speedLabel">1000 ms</span>
+            <input type="range" id="speedSlider" min="200" max="2000" value="800" step="100"
+                   class="form-range" style="width:150px;" oninput="updateSpeed(this.value)">
+            <span id="speedLabel">800 ms</span>
         </div>
         <div class="col-auto">
-            <button class="btn btn-secondary" onclick="resetToStart()">Reset</button>
+            <button class="btn btn-secondary btn-sm" onclick="resetToStart()">Reset</button>
         </div>
     </div>
 
@@ -78,32 +78,41 @@ Child Mortality Chart
 // ==============================
 // GLOBALS
 // ==============================
+// All data loaded from server: object mapping year -> array of records
+const allDataByYear = {{ all_data_json|safe }};
+
 let chart;
-let currentData = [];
-let isPlaying = false;
-let animationInterval = null;
-let animationDelay = 1000; // milliseconds per step
+let currentYear = {{ current_year }};
+let currentData = []; // records for current year after filtering
+
 const MIN_YEAR = 1960;
 const MAX_YEAR = 2024;
 
-// ==============================
-// INITIAL DATASET FROM DJANGO
-// ==============================
-const initialData = [
-    {% for row in records %}
-    {
-        country: "{{ row.country|escapejs }}",
-        continent: "{{ row.continent|escapejs }}",
-        income_group: "{{ row.income_group|escapejs }}",
-        subregion: "{{ row.subregion|escapejs }}",
-        year: {{ row.year }},
-        mortality: {{ row.mortality }}
-    },
-    {% endfor %}
-];
+let isPlaying = false;
+let animationInterval = null;
+let animationDelay = 800; // milliseconds per step
 
-currentData = initialData;
-renderChart(currentData);
+// ==============================
+// INITIALIZATION
+// ==============================
+function init() {
+    // Set slider and label
+    document.getElementById("yearSlider").value = currentYear;
+    document.getElementById("yearLabel").innerText = currentYear;
+    // Load data for current year
+    loadYearData(currentYear);
+    // Apply initial filters
+    applyFilters();
+}
+
+function loadYearData(year) {
+    const yearStr = String(year);
+    if (allDataByYear.hasOwnProperty(yearStr)) {
+        currentData = allDataByYear[yearStr];
+    } else {
+        currentData = [];
+    }
+}
 
 // ==============================
 // RENDER CHART
@@ -155,85 +164,7 @@ function renderChart(data) {
 }
 
 // ==============================
-// FETCH DATA FOR A NEW YEAR
-// ==============================
-function updateYear(year) {
-    // Stop animation if playing
-    if (isPlaying) stopAnimation();
-
-    // Update slider and label
-    document.getElementById("yearSlider").value = year;
-    document.getElementById("yearLabel").innerText = year;
-
-    // Store current filter selections
-    const continentVal = document.getElementById("continentFilter").value;
-    const incomeVal = document.getElementById("incomeFilter").value;
-    const subregionVal = document.getElementById("subregionFilter").value;
-
-    fetch(`/indicators/mortality-chart-data/?year=${year}`)
-        .then(response => response.json())
-        .then(data => {
-            // Update dropdown options with new categories
-            updateFilterOptions(data.continents, data.income_groups, data.subregions);
-            // Restore previous selections if they exist in the new lists
-            restoreFilterSelections(continentVal, incomeVal, subregionVal);
-            // Store new data
-            currentData = data.records;
-            // Re-apply filters
-            applyFilters();
-        })
-        .catch(err => console.error("Failed to fetch data:", err));
-}
-
-// ==============================
-// UPDATE FILTER DROPDOWNS
-// ==============================
-function updateFilterOptions(continents, incomeGroups, subregions) {
-    function populate(select, options) {
-        const currentVal = select.value;
-        select.innerHTML = '';
-        const allOption = document.createElement('option');
-        allOption.value = '';
-        allOption.textContent = 'All';
-        select.appendChild(allOption);
-        options.forEach(opt => {
-            const option = document.createElement('option');
-            option.value = opt;
-            option.textContent = opt;
-            select.appendChild(option);
-        });
-        // Try to restore previous selection if it exists in new options
-        if ([...select.options].some(opt => opt.value === currentVal)) {
-            select.value = currentVal;
-        }
-    }
-
-    populate(document.getElementById("continentFilter"), continents);
-    populate(document.getElementById("incomeFilter"), incomeGroups);
-    populate(document.getElementById("subregionFilter"), subregions);
-}
-
-// ==============================
-// RESTORE FILTER SELECTIONS
-// ==============================
-function restoreFilterSelections(continent, income, subregion) {
-    const continentSel = document.getElementById("continentFilter");
-    const incomeSel = document.getElementById("incomeFilter");
-    const subregionSel = document.getElementById("subregionFilter");
-
-    if ([...continentSel.options].some(opt => opt.value === continent)) {
-        continentSel.value = continent;
-    }
-    if ([...incomeSel.options].some(opt => opt.value === income)) {
-        incomeSel.value = income;
-    }
-    if ([...subregionSel.options].some(opt => opt.value === subregion)) {
-        subregionSel.value = subregion;
-    }
-}
-
-// ==============================
-// CLIENT‑SIDE FILTERING
+// FILTERING
 // ==============================
 function applyFilters() {
     const continent = document.getElementById("continentFilter").value;
@@ -254,10 +185,11 @@ function applyFilters() {
 // SLIDER MANUAL INPUT
 // ==============================
 function onSliderInput(value) {
-    // If animation is playing, stop it
     if (isPlaying) stopAnimation();
-    // Update to the selected year
-    updateYear(parseInt(value));
+    currentYear = parseInt(value);
+    document.getElementById("yearLabel").innerText = currentYear;
+    loadYearData(currentYear);
+    applyFilters();
 }
 
 // ==============================
@@ -273,29 +205,26 @@ function togglePlay() {
 
 function startAnimation() {
     if (isPlaying) return;
-    isPlaying = true;
-    document.getElementById("playBtn").innerHTML = "⏸ Pause";
-
-    // If we are at max, reset to min
-    let currentYear = parseInt(document.getElementById("yearSlider").value);
+    // If at max, wrap to min
     if (currentYear >= MAX_YEAR) {
         currentYear = MIN_YEAR;
         document.getElementById("yearSlider").value = currentYear;
         document.getElementById("yearLabel").innerText = currentYear;
-        // Fetch data for the reset year immediately
-        fetchYearData(currentYear);
+        loadYearData(currentYear);
+        applyFilters();
     }
+    isPlaying = true;
+    document.getElementById("playBtn").innerHTML = "⏸ Pause";
 
     animationInterval = setInterval(() => {
-        let year = parseInt(document.getElementById("yearSlider").value);
-        year += 1;
-        if (year > MAX_YEAR) {
-            year = MIN_YEAR;
+        currentYear += 1;
+        if (currentYear > MAX_YEAR) {
+            currentYear = MIN_YEAR;
         }
-        // Update the slider and fetch data
-        document.getElementById("yearSlider").value = year;
-        document.getElementById("yearLabel").innerText = year;
-        fetchYearData(year);
+        document.getElementById("yearSlider").value = currentYear;
+        document.getElementById("yearLabel").innerText = currentYear;
+        loadYearData(currentYear);
+        applyFilters();
     }, animationDelay);
 }
 
@@ -308,30 +237,9 @@ function stopAnimation() {
     document.getElementById("playBtn").innerHTML = "▶ Play";
 }
 
-function fetchYearData(year) {
-    // This is the same as updateYear but without stopping the animation (since we're already in control)
-    // and we don't want to stop the interval.
-    // We'll directly fetch and update.
-    // Store current filter selections
-    const continentVal = document.getElementById("continentFilter").value;
-    const incomeVal = document.getElementById("incomeFilter").value;
-    const subregionVal = document.getElementById("subregionFilter").value;
-
-    fetch(`/indicators/mortality-chart-data/?year=${year}`)
-        .then(response => response.json())
-        .then(data => {
-            updateFilterOptions(data.continents, data.income_groups, data.subregions);
-            restoreFilterSelections(continentVal, incomeVal, subregionVal);
-            currentData = data.records;
-            applyFilters();
-        })
-        .catch(err => console.error("Failed to fetch data:", err));
-}
-
 function updateSpeed(value) {
     animationDelay = parseInt(value);
     document.getElementById("speedLabel").innerText = value + " ms";
-    // If playing, restart interval with new speed
     if (isPlaying) {
         stopAnimation();
         startAnimation();
@@ -340,17 +248,16 @@ function updateSpeed(value) {
 
 function resetToStart() {
     if (isPlaying) stopAnimation();
-    document.getElementById("yearSlider").value = MIN_YEAR;
-    document.getElementById("yearLabel").innerText = MIN_YEAR;
-    updateYear(MIN_YEAR);
+    currentYear = MIN_YEAR;
+    document.getElementById("yearSlider").value = currentYear;
+    document.getElementById("yearLabel").innerText = currentYear;
+    loadYearData(currentYear);
+    applyFilters();
 }
 
 // ==============================
-// INITIAL LOAD: ensure filters are set
+// INIT
 // ==============================
-// After initial render, apply filters (in case initial data already has selections)
-document.addEventListener('DOMContentLoaded', function() {
-    applyFilters();
-});
+document.addEventListener('DOMContentLoaded', init);
 </script>
 {% endblock %}
