@@ -22,6 +22,59 @@ Child Mortality Chart
 
     </div>
 
+    <!-- FILTERS -->
+    <div class="row mt-4">
+
+        <div class="col-md-4">
+
+            <label class="form-label">Continent</label>
+
+            <select id="continentFilter" class="form-select" onchange="applyFilters()">
+
+                <option value="">All Continents</option>
+
+                {% for c in continents %}
+                <option value="{{ c }}">{{ c }}</option>
+                {% endfor %}
+
+            </select>
+
+        </div>
+
+        <div class="col-md-4">
+
+            <label class="form-label">Income Group</label>
+
+            <select id="incomeFilter" class="form-select" onchange="applyFilters()">
+
+                <option value="">All Income Groups</option>
+
+                {% for i in income_groups %}
+                <option value="{{ i }}">{{ i }}</option>
+                {% endfor %}
+
+            </select>
+
+        </div>
+
+        <div class="col-md-4">
+
+            <label class="form-label">Subregion</label>
+
+            <select id="subregionFilter" class="form-select" onchange="applyFilters()">
+
+                <option value="">All Subregions</option>
+
+                {% for s in subregions %}
+                <option value="{{ s }}">{{ s }}</option>
+                {% endfor %}
+
+            </select>
+
+        </div>
+
+    </div>
+
 </div>
 
 {% endblock %}
@@ -32,109 +85,114 @@ Child Mortality Chart
 
 <script>
 
-const labels = [
+let chart;
 
+// ==============================
+// FULL DATASET FROM DJANGO
+// ==============================
+const allData = [
     {% for row in records %}
-        "{{ row.country|escapejs }}",
-    {% endfor %}
-
-];
-
-const values = [
-
-    {% for row in records %}
-        {{ row.mortality }},
-    {% endfor %}
-
-];
-
-const ctx = document
-    .getElementById('mortalityChart')
-    .getContext('2d');
-
-new Chart(ctx, {
-
-    type: 'bar',
-
-    data: {
-
-        labels: labels,
-
-        datasets: [
-
-            {
-
-                label: 'Under-5 Mortality Rate',
-
-                data: values,
-
-                borderWidth: 1
-
-            }
-
-        ]
-
+    {
+        country: "{{ row.country|escapejs }}",
+        continent: "{{ row.continent|escapejs }}",
+        income_group: "{{ row.income_group|escapejs }}",
+        subregion: "{{ row.subregion|escapejs }}",
+        mortality: {{ row.mortality }}
     },
+    {% endfor %}
+];
 
-    options: {
+// ==============================
+// RENDER CHART FUNCTION
+// ==============================
+function renderChart(data) {
 
-        responsive: true,
+    const labels = data.map(d => d.country);
+    const values = data.map(d => d.mortality);
 
-        maintainAspectRatio: true,
+    const ctx = document
+        .getElementById("mortalityChart")
+        .getContext("2d");
 
-        plugins: {
+    if (chart) {
+        chart.destroy();
+    }
 
-            legend: {
+    chart = new Chart(ctx, {
 
-                display: true
+        type: "bar",
 
-            },
-
-            title: {
-
-                display: true,
-
-                text: 'Under-5 Mortality Rate by Country (2023)'
-
-            }
-
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "Under-5 Mortality Rate",
+                data: values,
+                borderWidth: 1
+            }]
         },
 
-        scales: {
+        options: {
 
-            x: {
+            responsive: true,
 
-                ticks: {
-
-                    autoSkip: false,
-
-                    maxRotation: 90,
-
-                    minRotation: 90
-
+            plugins: {
+                legend: { display: true },
+                title: {
+                    display: true,
+                    text: "Under-5 Mortality Rate by Country (2023)"
                 }
-
             },
 
-            y: {
-
-                beginAtZero: true,
-
-                title: {
-
-                    display: true,
-
-                    text: 'Deaths per 1,000 Live Births'
-
+            scales: {
+                x: {
+                    ticks: {
+                        autoSkip: false,
+                        maxRotation: 90,
+                        minRotation: 90
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: "Deaths per 1,000 Live Births"
+                    }
                 }
-
             }
 
         }
 
-    }
+    });
 
-});
+}
+
+// ==============================
+// FILTER LOGIC
+// ==============================
+function applyFilters() {
+
+    const continent = document.getElementById("continentFilter").value;
+    const income = document.getElementById("incomeFilter").value;
+    const subregion = document.getElementById("subregionFilter").value;
+
+    const filtered = allData.filter(d => {
+
+        const continentMatch = !continent || d.continent === continent;
+        const incomeMatch = !income || d.income_group === income;
+        const subregionMatch = !subregion || d.subregion === subregion;
+
+        return continentMatch && incomeMatch && subregionMatch;
+
+    });
+
+    renderChart(filtered);
+
+}
+
+// ==============================
+// INITIAL LOAD
+// ==============================
+renderChart(allData);
 
 </script>
 

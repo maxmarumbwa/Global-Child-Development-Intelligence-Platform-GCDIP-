@@ -3,7 +3,6 @@ import requests
 from django.conf import settings
 from pathlib import Path
 
-
 # =========================================================
 #GEOJSON COUNTRY LOOKUP FROM CSV (MATCH API ISO3 CODES)
 # =========================================================
@@ -17,6 +16,8 @@ countries_csv = (
 
 countries_df = pd.read_csv(countries_csv)
 
+countries_df.columns = countries_df.columns.str.strip()
+
 countries_lookup = dict(
     zip(
         countries_df["iso3"],
@@ -28,6 +29,11 @@ valid_iso3_codes = set(
     countries_df["iso3"]
 )
 
+country_meta = countries_df.set_index("iso3")[[
+    "continent",
+    "INCOME_GRP",
+    "REGION_WB"
+]].to_dict(orient="index") 
 
 # =========================================================
 # WORLD BANK: CHILD MORTALITY
@@ -68,11 +74,21 @@ def get_child_mortality():
         if value is None:
             continue
 
+        meta = country_meta.get(iso3, {})
+
         rows.append({
+
             "iso3": iso3,
             "country": countries_lookup.get(iso3),
+
+            # NEW CLASSIFICATIONS FROM CSV
+            "continent": meta.get("continent"),
+            "income_group": meta.get("INCOME_GRP"),
+            "subregion": meta.get("REGION_WB"),
+
             "year": int(row["date"]),
             "mortality": float(value)
+
         })
 
     df = pd.DataFrame(rows)

@@ -1,259 +1,211 @@
-iso3,country
-IDN,Indonesia
-MYS,Malaysia
-CHL,Chile
-BOL,Bolivia
-PER,Peru
-ARG,Argentina
-GB1,Dhekelia Cantonment
-CYP,Cyprus
-IND,India
-CH1,People's Republic of China
-IS1,Israel
-IS1,Palestine
-LBN,Lebanon
-ETH,Ethiopia
-SDS,South Sudan
-SOM,Somalia
-KEN,Kenya
-MWI,Malawi
-TZA,Tanzania
-SYR,Syria
-SOL,Somaliland
-FR1,France
-SUR,Suriname
-GUY,Guyana
-KOR,South Korea
-PRK,North Korea
-MAR,Morocco
-SAH,Western Sahara
-CRI,Costa Rica
-NIC,Nicaragua
-COG,Republic of the Congo
-COD,Democratic Republic of the Congo
-BTN,Bhutan
-UKR,Ukraine
-BLR,Belarus
-NAM,Namibia
-ZAF,South Africa
-FR1,Saint Martin
-NL1,Sint Maarten
-OMN,Oman
-UZB,Uzbekistan
-KA1,Kazakhstan
-TJK,Tajikistan
-LTU,Lithuania
-BRA,Brazil
-URY,Uruguay
-MNG,Mongolia
-RUS,Russia
-CZE,Czech Republic
-DEU,Germany
-EST,Estonia
-LVA,Latvia
-NOR,Norway
-SWE,Sweden
-FI1,Finland
-VNM,Vietnam
-KHM,Cambodia
-LUX,Luxembourg
-ARE,United Arab Emirates
-BEL,Belgium
-GEO,Georgia
-MKD,North Macedonia
-ALB,Albania
-AZE,Azerbaijan
-KOS,Kosovo
-TUR,Turkey
-ESP,Spain
-LAO,Laos
-KGZ,Kyrgyzstan
-ARM,Armenia
-DN1,Denmark
-LBY,Libya
-TUN,Tunisia
-ROU,Romania
-HUN,Hungary
-SVK,Slovakia
-POL,Poland
-IRL,Ireland
-GB1,United Kingdom
-GRC,Greece
-ZMB,Zambia
-SLE,Sierra Leone
-GIN,Guinea
-LBR,Liberia
-CAF,Central African Republic
-SDN,Sudan
-DJI,Djibouti
-ERI,Eritrea
-AUT,Austria
-IRQ,Iraq
-ITA,Italy
-CHE,Switzerland
-IRN,Iran
-NL1,Netherlands
-LIE,Liechtenstein
-CIV,Ivory Coast
-SRB,Serbia
-MLI,Mali
-SEN,Senegal
-NGA,Nigeria
-BEN,Benin
-AGO,Angola
-HRV,Croatia
-SVN,Slovenia
-QAT,Qatar
-SAU,Saudi Arabia
-BWA,Botswana
-ZWE,Zimbabwe
-PAK,Pakistan
-BGR,Bulgaria
-THA,Thailand
-SMR,San Marino
-HTI,Haiti
-DOM,Dominican Republic
-TCD,Chad
-KWT,Kuwait
-SLV,El Salvador
-GTM,Guatemala
-TLS,East Timor
-BRN,Brunei
-MCO,Monaco
-DZA,Algeria
-MOZ,Mozambique
-SWZ,Eswatini
-BDI,Burundi
-RWA,Rwanda
-MMR,Myanmar
-BGD,Bangladesh
-AND,Andorra
-AFG,Afghanistan
-MNE,Montenegro
-BIH,Bosnia and Herzegovina
-UGA,Uganda
-CU1,Guantanamo Bay Naval Base
-CU1,Cuba
-HND,Honduras
-ECU,Ecuador
-COL,Colombia
-PRY,Paraguay
-BRI,Brazilian Island
-PRT,Portugal
-MDA,Moldova
-TKM,Turkmenistan
-JOR,Jordan
-NPL,Nepal
-LSO,Lesotho
-CMR,Cameroon
-GAB,Gabon
-NER,Niger
-BFA,Burkina Faso
-TGO,Togo
-GHA,Ghana
-GNB,Guinea-Bissau
-GB1,Gibraltar
-US1,United States of America
-CAN,Canada
-MEX,Mexico
-BLZ,Belize
-PAN,Panama
-VEN,Venezuela
-PNG,Papua New Guinea
-EGY,Egypt
-YEM,Yemen
-MRT,Mauritania
-GNQ,Equatorial Guinea
-GMB,The Gambia
-CH1,Hong Kong
-VAT,Vatican City
-CYN,Turkish Republic of Northern Cyprus
-CNM,United Nations Buffer Zone in Cyprus
-KAS,Siachen Glacier
-KA1,Baikonur
-GB1,Akrotiri Sovereign Base Area
-SPI,Southern Patagonian Ice Field
-BRT,Bir Tawil
-ATA,Antarctica
-AU1,Australia
-DN1,Greenland
-FJI,Fiji
-NZ1,New Zealand
-FR1,New Caledonia
-MDG,Madagascar
-PHL,Philippines
-LKA,Sri Lanka
-NL1,Curaçao
-NL1,Aruba
-BHS,The Bahamas
-GB1,Turks and Caicos Islands
-TWN,Taiwan
-JPN,Japan
-FR1,Saint Pierre and Miquelon
-ISL,Iceland
-GB1,Pitcairn Islands
-FR1,French Polynesia
-FR1,French Southern and Antarctic Lands
-SYC,Seychelles
-KIR,Kiribati
-MHL,Marshall Islands
-TTO,Trinidad and Tobago
-GRD,Grenada
-VCT,Saint Vincent and the Grenadines
-BRB,Barbados
-LCA,Saint Lucia
-DMA,Dominica
-US1,United States Minor Outlying Islands
-GB1,Montserrat
-ATG,Antigua and Barbuda
-KNA,Saint Kitts and Nevis
-US1,United States Virgin Islands
-FR1,Saint Barthélemy
-US1,Puerto Rico
-GB1,Anguilla
-GB1,British Virgin Islands
-JAM,Jamaica
-GB1,Cayman Islands
-GB1,Bermuda
-AU1,Heard Island and McDonald Islands
-GB1,Saint Helena
-MUS,Mauritius
-COM,Comoros
-STP,São Tomé and Príncipe
-CPV,Cape Verde
-MLT,Malta
-GB1,Jersey
-GB1,Guernsey
-GB1,Isle of Man
-FI1,Åland
-DN1,Faroe Islands
-AU1,Australian Indian Ocean Territories
-GB1,British Indian Ocean Territory
-SGP,Singapore
-AU1,Norfolk Island
-NZ1,Cook Islands
-TON,Tonga
-FR1,Wallis and Futuna
-WSM,Samoa
-SLB,Solomon Islands
-TUV,Tuvalu
-MDV,Maldives
-NRU,Nauru
-FSM,Federated States of Micronesia
-GB1,South Georgia and the South Sandwich Islands
-GB1,Falkland Islands
-VUT,Vanuatu
-NZ1,Niue
-US1,American Samoa
-PLW,Palau
-US1,Guam
-US1,Northern Mariana Islands
-BHR,Bahrain
-AU1,Coral Sea Islands
-PGA,Wake Island
-FR1,Clipperton Island
-CH1,Macau
-AU1,Ashmore and Cartier Islands
-BJN,Bajo Nuevo Bank
-SER,Serranilla Bank
-SCR,Scarborough Shoal
+iso3,ADMIN,country,ABBREV,ECONOMY,INCOME_GRP,continent,REGION_UN,SUBREGION,REGION_WB
+AFG,Afghanistan,Afghanistan,Afg.,7. Least developed region,5. Low income,Asia,Asia,Southern Asia,South Asia
+AGO,Angola,Angola,Ang.,7. Least developed region,3. Upper middle income,Africa,Africa,Middle Africa,Sub-Saharan Africa
+ALB,Albania,Albania,Alb.,6. Developing region,4. Lower middle income,Europe,Europe,Southern Europe,Europe & Central Asia
+AND,Andorra,Andorra,And.,2. Developed region: nonG7,2. High income: nonOECD,Europe,Europe,Southern Europe,Europe & Central Asia
+ARE,United Arab Emirates,United Arab Emirates,U.A.E.,6. Developing region,2. High income: nonOECD,Asia,Asia,Western Asia,Middle East & North Africa
+ARG,Argentina,Argentina,Arg.,5. Emerging region: G20,3. Upper middle income,South America,Americas,South America,Latin America & Caribbean
+ARM,Armenia,Armenia,Arm.,6. Developing region,4. Lower middle income,Asia,Asia,Western Asia,Europe & Central Asia
+ATA,Antarctica,Antarctica,Ant.,6. Developing region,2. High income: nonOECD,Antarctica,Antarctica,Antarctica,Antarctica
+ATG,Antigua and Barbuda,Antigua and Barbuda,Ant.B.,6. Developing region,3. Upper middle income,North America,Americas,Caribbean,Latin America & Caribbean
+AU1,Australia,Australia,Auz.,2. Developed region: nonG7,1. High income: OECD,Oceania,Oceania,Australia and New Zealand,East Asia & Pacific
+AUT,Austria,Austria,Aust.,2. Developed region: nonG7,1. High income: OECD,Europe,Europe,Western Europe,Europe & Central Asia
+AZE,Azerbaijan,Azerbaijan,Aze.,6. Developing region,3. Upper middle income,Asia,Asia,Western Asia,Europe & Central Asia
+BDI,Burundi,Burundi,Bur.,7. Least developed region,5. Low income,Africa,Africa,Eastern Africa,Sub-Saharan Africa
+BEL,Belgium,Belgium,Belg.,2. Developed region: nonG7,1. High income: OECD,Europe,Europe,Western Europe,Europe & Central Asia
+BEN,Benin,Benin,Benin,7. Least developed region,5. Low income,Africa,Africa,Western Africa,Sub-Saharan Africa
+BFA,Burkina Faso,Burkina Faso,B.F.,7. Least developed region,5. Low income,Africa,Africa,Western Africa,Sub-Saharan Africa
+BGD,Bangladesh,Bangladesh,Bang.,7. Least developed region,5. Low income,Asia,Asia,Southern Asia,South Asia
+BGR,Bulgaria,Bulgaria,Bulg.,2. Developed region: nonG7,3. Upper middle income,Europe,Europe,Eastern Europe,Europe & Central Asia
+BHR,Bahrain,Bahrain,Bahr.,6. Developing region,2. High income: nonOECD,Asia,Asia,Western Asia,Middle East & North Africa
+BHS,The Bahamas,The Bahamas,Bhs.,6. Developing region,2. High income: nonOECD,North America,Americas,Caribbean,Latin America & Caribbean
+BIH,Bosnia and Herzegovina,Bosnia and Herzegovina,B.H.,6. Developing region,3. Upper middle income,Europe,Europe,Southern Europe,Europe & Central Asia
+BJN,Bajo Nuevo Bank (Petrel Is.),Bajo Nuevo Bank,,7. Least developed region,5. Low income,North America,Americas,Caribbean,Latin America & Caribbean
+BLR,Belarus,Belarus,Bela.,6. Developing region,3. Upper middle income,Europe,Europe,Eastern Europe,Europe & Central Asia
+BLZ,Belize,Belize,Belize,6. Developing region,4. Lower middle income,North America,Americas,Central America,Latin America & Caribbean
+BOL,Bolivia,Bolivia,Bolivia,5. Emerging region: G20,4. Lower middle income,South America,Americas,South America,Latin America & Caribbean
+BRA,Brazil,Brazil,Brazil,3. Emerging region: BRIC,3. Upper middle income,South America,Americas,South America,Latin America & Caribbean
+BRB,Barbados,Barbados,Barb.,6. Developing region,2. High income: nonOECD,North America,Americas,Caribbean,Latin America & Caribbean
+BRI,Brazilian Island,Brazilian Island,,3. Emerging region: BRIC,3. Upper middle income,South America,Americas,South America,Latin America & Caribbean
+BRN,Brunei,Brunei,Brunei,6. Developing region,2. High income: nonOECD,Asia,Asia,South-Eastern Asia,East Asia & Pacific
+BRT,Bir Tawil,Bir Tawil,B. Tawil,7. Least developed region,5. Low income,Africa,Africa,Northern Africa,Middle East & North Africa
+BTN,Bhutan,Bhutan,Bhutan,7. Least developed region,4. Lower middle income,Asia,Asia,Southern Asia,South Asia
+BWA,Botswana,Botswana,Bwa.,6. Developing region,3. Upper middle income,Africa,Africa,Southern Africa,Sub-Saharan Africa
+CAF,Central African Republic,Central African Republic,C.A.R.,7. Least developed region,5. Low income,Africa,Africa,Middle Africa,Sub-Saharan Africa
+CAN,Canada,Canada,Can.,1. Developed region: G7,1. High income: OECD,North America,Americas,Northern America,North America
+CH1,China,People's Republic of China,China,3. Emerging region: BRIC,3. Upper middle income,Asia,Asia,Eastern Asia,East Asia & Pacific
+CHE,Switzerland,Switzerland,Switz.,2. Developed region: nonG7,1. High income: OECD,Europe,Europe,Western Europe,Europe & Central Asia
+CHL,Chile,Chile,Chile,5. Emerging region: G20,3. Upper middle income,South America,Americas,South America,Latin America & Caribbean
+CIV,Ivory Coast,Ivory Coast,I.C.,6. Developing region,4. Lower middle income,Africa,Africa,Western Africa,Sub-Saharan Africa
+CMR,Cameroon,Cameroon,Cam.,6. Developing region,4. Lower middle income,Africa,Africa,Middle Africa,Sub-Saharan Africa
+CNM,Cyprus No Mans Area,United Nations Buffer Zone in Cyprus,,6. Developing region,2. High income: nonOECD,Asia,Asia,Western Asia,Europe & Central Asia
+COD,Democratic Republic of the Congo,Democratic Republic of the Congo,D.R.C.,7. Least developed region,5. Low income,Africa,Africa,Middle Africa,Sub-Saharan Africa
+COG,Republic of the Congo,Republic of the Congo,Rep. Congo,6. Developing region,4. Lower middle income,Africa,Africa,Middle Africa,Sub-Saharan Africa
+COL,Colombia,Colombia,Col.,6. Developing region,3. Upper middle income,South America,Americas,South America,Latin America & Caribbean
+COM,Comoros,Comoros,Com.,7. Least developed region,5. Low income,Africa,Africa,Eastern Africa,Sub-Saharan Africa
+CPV,Cabo Verde,Cape Verde,C.Vd.,6. Developing region,4. Lower middle income,Africa,Africa,Western Africa,Sub-Saharan Africa
+CRI,Costa Rica,Costa Rica,C.R.,5. Emerging region: G20,3. Upper middle income,North America,Americas,Central America,Latin America & Caribbean
+CU1,Cuba,Cuba,Cuba,5. Emerging region: G20,3. Upper middle income,North America,Americas,Caribbean,Latin America & Caribbean
+CYN,Northern Cyprus,Turkish Republic of Northern Cyprus,N. Cy.,6. Developing region,3. Upper middle income,Asia,Asia,Western Asia,Europe & Central Asia
+CYP,Cyprus,Cyprus,Cyp.,6. Developing region,2. High income: nonOECD,Asia,Asia,Western Asia,Europe & Central Asia
+CZE,Czechia,Czech Republic,Cz.,2. Developed region: nonG7,1. High income: OECD,Europe,Europe,Eastern Europe,Europe & Central Asia
+DEU,Germany,Germany,Ger.,1. Developed region: G7,1. High income: OECD,Europe,Europe,Western Europe,Europe & Central Asia
+DJI,Djibouti,Djibouti,Dji.,7. Least developed region,4. Lower middle income,Africa,Africa,Eastern Africa,Middle East & North Africa
+DMA,Dominica,Dominica,D'inca,6. Developing region,3. Upper middle income,North America,Americas,Caribbean,Latin America & Caribbean
+DN1,Denmark,Denmark,Den.,2. Developed region: nonG7,1. High income: OECD,Europe,Europe,Northern Europe,Europe & Central Asia
+DOM,Dominican Republic,Dominican Republic,Dom. Rep.,6. Developing region,3. Upper middle income,North America,Americas,Caribbean,Latin America & Caribbean
+DZA,Algeria,Algeria,Alg.,6. Developing region,3. Upper middle income,Africa,Africa,Northern Africa,Middle East & North Africa
+ECU,Ecuador,Ecuador,Ecu.,6. Developing region,3. Upper middle income,South America,Americas,South America,Latin America & Caribbean
+EGY,Egypt,Egypt,Egypt,5. Emerging region: G20,4. Lower middle income,Africa,Africa,Northern Africa,Middle East & North Africa
+ERI,Eritrea,Eritrea,Erit.,7. Least developed region,5. Low income,Africa,Africa,Eastern Africa,Sub-Saharan Africa
+ESP,Spain,Spain,Sp.,2. Developed region: nonG7,1. High income: OECD,Europe,Europe,Southern Europe,Europe & Central Asia
+EST,Estonia,Estonia,Est.,2. Developed region: nonG7,1. High income: OECD,Europe,Europe,Northern Europe,Europe & Central Asia
+ETH,Ethiopia,Ethiopia,Eth.,7. Least developed region,5. Low income,Africa,Africa,Eastern Africa,Sub-Saharan Africa
+FI1,Finland,Finland,Fin.,2. Developed region: nonG7,1. High income: OECD,Europe,Europe,Northern Europe,Europe & Central Asia
+FJI,Fiji,Fiji,Fiji,6. Developing region,4. Lower middle income,Oceania,Oceania,Melanesia,East Asia & Pacific
+FR1,France,France,Fr.,1. Developed region: G7,1. High income: OECD,Europe,Europe,Western Europe,Europe & Central Asia
+FSM,Federated States of Micronesia,Federated States of Micronesia,F.S.M.,6. Developing region,4. Lower middle income,Oceania,Oceania,Micronesia,East Asia & Pacific
+GAB,Gabon,Gabon,Gabon,6. Developing region,3. Upper middle income,Africa,Africa,Middle Africa,Sub-Saharan Africa
+GB1,United Kingdom,United Kingdom,U.K.,1. Developed region: G7,1. High income: OECD,Europe,Europe,Northern Europe,Europe & Central Asia
+GEO,Georgia,Georgia,Geo.,6. Developing region,4. Lower middle income,Asia,Asia,Western Asia,Europe & Central Asia
+GHA,Ghana,Ghana,Ghana,6. Developing region,4. Lower middle income,Africa,Africa,Western Africa,Sub-Saharan Africa
+GIN,Guinea,Guinea,Gin.,7. Least developed region,5. Low income,Africa,Africa,Western Africa,Sub-Saharan Africa
+GMB,Gambia,The Gambia,Gambia,7. Least developed region,5. Low income,Africa,Africa,Western Africa,Sub-Saharan Africa
+GNB,Guinea-Bissau,Guinea-Bissau,GnB.,7. Least developed region,5. Low income,Africa,Africa,Western Africa,Sub-Saharan Africa
+GNQ,Equatorial Guinea,Equatorial Guinea,Eq. G.,7. Least developed region,2. High income: nonOECD,Africa,Africa,Middle Africa,Sub-Saharan Africa
+GRC,Greece,Greece,Greece,2. Developed region: nonG7,1. High income: OECD,Europe,Europe,Southern Europe,Europe & Central Asia
+GRD,Grenada,Grenada,Gren.,6. Developing region,3. Upper middle income,North America,Americas,Caribbean,Latin America & Caribbean
+GTM,Guatemala,Guatemala,Guat.,6. Developing region,4. Lower middle income,North America,Americas,Central America,Latin America & Caribbean
+GUY,Guyana,Guyana,Guy.,6. Developing region,4. Lower middle income,South America,Americas,South America,Latin America & Caribbean
+HND,Honduras,Honduras,Hond.,6. Developing region,4. Lower middle income,North America,Americas,Central America,Latin America & Caribbean
+HRV,Croatia,Croatia,Cro.,2. Developed region: nonG7,2. High income: nonOECD,Europe,Europe,Southern Europe,Europe & Central Asia
+HTI,Haiti,Haiti,Haiti,7. Least developed region,5. Low income,North America,Americas,Caribbean,Latin America & Caribbean
+HUN,Hungary,Hungary,Hun.,2. Developed region: nonG7,1. High income: OECD,Europe,Europe,Eastern Europe,Europe & Central Asia
+IDNo,Indonesia,Indonesia,Indo.,4. Emerging region: MIKT,4. Lower middle income,Asia,Asia,South-Eastern Asia,East Asia & Pacific
+IND,India,India,India,3. Emerging region: BRIC,4. Lower middle income,Asia,Asia,Southern Asia,South Asia
+IRL,Ireland,Ireland,Ire.,2. Developed region: nonG7,1. High income: OECD,Europe,Europe,Northern Europe,Europe & Central Asia
+IRN,Iran,Iran,Iran,5. Emerging region: G20,3. Upper middle income,Asia,Asia,Southern Asia,Middle East & North Africa
+IRQ,Iraq,Iraq,Iraq,6. Developing region,4. Lower middle income,Asia,Asia,Western Asia,Middle East & North Africa
+IS1,Israel,Israel,Isr.,2. Developed region: nonG7,1. High income: OECD,Asia,Asia,Western Asia,Middle East & North Africa
+IS12,Palestine,Palestine,Pal.,6. Developing region,4. Lower middle income,Asia,Asia,Western Asia,Middle East & North Africa
+ISL,Iceland,Iceland,Iceland,2. Developed region: nonG7,1. High income: OECD,Europe,Europe,Northern Europe,Europe & Central Asia
+ITA,Italy,Italy,Italy,1. Developed region: G7,1. High income: OECD,Europe,Europe,Southern Europe,Europe & Central Asia
+JAM,Jamaica,Jamaica,Jam.,6. Developing region,3. Upper middle income,North America,Americas,Caribbean,Latin America & Caribbean
+JOR,Jordan,Jordan,Jord.,6. Developing region,3. Upper middle income,Asia,Asia,Western Asia,Middle East & North Africa
+JPN,Japan,Japan,Japan,1. Developed region: G7,1. High income: OECD,Asia,Asia,Eastern Asia,East Asia & Pacific
+KA1,Kazakhstan,Kazakhstan,Kaz.,6. Developing region,3. Upper middle income,Asia,Asia,Central Asia,Europe & Central Asia
+KAS,Siachen Glacier,Siachen Glacier,Siachen,6. Developing region,4. Lower middle income,Asia,Asia,Southern Asia,South Asia
+KEN,Kenya,Kenya,Ken.,5. Emerging region: G20,5. Low income,Africa,Africa,Eastern Africa,Sub-Saharan Africa
+KGZ,Kyrgyzstan,Kyrgyzstan,Kgz.,6. Developing region,5. Low income,Asia,Asia,Central Asia,Europe & Central Asia
+KHM,Cambodia,Cambodia,Camb.,7. Least developed region,5. Low income,Asia,Asia,South-Eastern Asia,East Asia & Pacific
+KIR,Kiribati,Kiribati,Kir.,7. Least developed region,4. Lower middle income,Oceania,Oceania,Micronesia,East Asia & Pacific
+KNA,Saint Kitts and Nevis,Saint Kitts and Nevis,St.K.N.,6. Developing region,2. High income: nonOECD,North America,Americas,Caribbean,Latin America & Caribbean
+KOR,South Korea,South Korea,S.K.,4. Emerging region: MIKT,1. High income: OECD,Asia,Asia,Eastern Asia,East Asia & Pacific
+KOS,Kosovo,Kosovo,Kos.,6. Developing region,4. Lower middle income,Europe,Europe,Southern Europe,Europe & Central Asia
+KWT,Kuwait,Kuwait,Kwt.,6. Developing region,2. High income: nonOECD,Asia,Asia,Western Asia,Middle East & North Africa
+LAO,Laos,Laos,Laos,7. Least developed region,4. Lower middle income,Asia,Asia,South-Eastern Asia,East Asia & Pacific
+LBN,Lebanon,Lebanon,Leb.,6. Developing region,3. Upper middle income,Asia,Asia,Western Asia,Middle East & North Africa
+LBR,Liberia,Liberia,Liberia,7. Least developed region,5. Low income,Africa,Africa,Western Africa,Sub-Saharan Africa
+LBY,Libya,Libya,Libya,6. Developing region,3. Upper middle income,Africa,Africa,Northern Africa,Middle East & North Africa
+LCA,Saint Lucia,Saint Lucia,S.L.,6. Developing region,3. Upper middle income,North America,Americas,Caribbean,Latin America & Caribbean
+LIE,Liechtenstein,Liechtenstein,Liech.,2. Developed region: nonG7,2. High income: nonOECD,Europe,Europe,Western Europe,Europe & Central Asia
+LKA,Sri Lanka,Sri Lanka,Sri L.,6. Developing region,4. Lower middle income,Asia,Asia,Southern Asia,South Asia
+LSO,Lesotho,Lesotho,Les.,7. Least developed region,4. Lower middle income,Africa,Africa,Southern Africa,Sub-Saharan Africa
+LTU,Lithuania,Lithuania,Lith.,2. Developed region: nonG7,3. Upper middle income,Europe,Europe,Northern Europe,Europe & Central Asia
+LUX,Luxembourg,Luxembourg,Lux.,2. Developed region: nonG7,1. High income: OECD,Europe,Europe,Western Europe,Europe & Central Asia
+LVA,Latvia,Latvia,Lat.,2. Developed region: nonG7,3. Upper middle income,Europe,Europe,Northern Europe,Europe & Central Asia
+MAR,Morocco,Morocco,Mor.,6. Developing region,4. Lower middle income,Africa,Africa,Northern Africa,Middle East & North Africa
+MCO,Monaco,Monaco,Mco.,2. Developed region: nonG7,2. High income: nonOECD,Europe,Europe,Western Europe,Europe & Central Asia
+MDA,Moldova,Moldova,Mda.,6. Developing region,4. Lower middle income,Europe,Europe,Eastern Europe,Europe & Central Asia
+MDG,Madagascar,Madagascar,Mad.,7. Least developed region,5. Low income,Africa,Africa,Eastern Africa,Sub-Saharan Africa
+MDV,Maldives,Maldives,Mald.,6. Developing region,3. Upper middle income,Seven seas (open ocean),Asia,Southern Asia,South Asia
+MEX,Mexico,Mexico,Mex.,4. Emerging region: MIKT,3. Upper middle income,North America,Americas,Central America,Latin America & Caribbean
+MHL,Marshall Islands,Marshall Islands,M. Is.,6. Developing region,4. Lower middle income,Oceania,Oceania,Micronesia,East Asia & Pacific
+MKD,North Macedonia,North Macedonia,N. Mac.,6. Developing region,3. Upper middle income,Europe,Europe,Southern Europe,Europe & Central Asia
+MLI,Mali,Mali,Mali,7. Least developed region,5. Low income,Africa,Africa,Western Africa,Sub-Saharan Africa
+MLT,Malta,Malta,Malta,2. Developed region: nonG7,2. High income: nonOECD,Europe,Europe,Southern Europe,Middle East & North Africa
+MMR,Myanmar,Myanmar,Myan.,7. Least developed region,5. Low income,Asia,Asia,South-Eastern Asia,East Asia & Pacific
+MNE,Montenegro,Montenegro,Mont.,6. Developing region,3. Upper middle income,Europe,Europe,Southern Europe,Europe & Central Asia
+MNG,Mongolia,Mongolia,Mong.,6. Developing region,4. Lower middle income,Asia,Asia,Eastern Asia,East Asia & Pacific
+MOZ,Mozambique,Mozambique,Moz.,7. Least developed region,5. Low income,Africa,Africa,Eastern Africa,Sub-Saharan Africa
+MRT,Mauritania,Mauritania,Mrt.,7. Least developed region,5. Low income,Africa,Africa,Western Africa,Sub-Saharan Africa
+MUS,Mauritius,Mauritius,Mus.,6. Developing region,3. Upper middle income,Seven seas (open ocean),Africa,Eastern Africa,Sub-Saharan Africa
+MWI,Malawi,Malawi,Mal.,7. Least developed region,5. Low income,Africa,Africa,Eastern Africa,Sub-Saharan Africa
+MYS,Malaysia,Malaysia,Malay.,6. Developing region,3. Upper middle income,Asia,Asia,South-Eastern Asia,East Asia & Pacific
+NAM,Namibia,Namibia,Nam.,6. Developing region,3. Upper middle income,Africa,Africa,Southern Africa,Sub-Saharan Africa
+NER,Niger,Niger,Niger,7. Least developed region,5. Low income,Africa,Africa,Western Africa,Sub-Saharan Africa
+NGA,Nigeria,Nigeria,Nigeria,5. Emerging region: G20,4. Lower middle income,Africa,Africa,Western Africa,Sub-Saharan Africa
+NIC,Nicaragua,Nicaragua,Nic.,6. Developing region,4. Lower middle income,North America,Americas,Central America,Latin America & Caribbean
+NL1,Netherlands,Netherlands,Neth.,2. Developed region: nonG7,1. High income: OECD,Europe,Europe,Western Europe,Europe & Central Asia
+NOR,Norway,Norway,Nor.,2. Developed region: nonG7,1. High income: OECD,Europe,Europe,Northern Europe,Europe & Central Asia
+NPL,Nepal,Nepal,Nepal,7. Least developed region,5. Low income,Asia,Asia,Southern Asia,South Asia
+NRU,Nauru,Nauru,Nauru,6. Developing region,4. Lower middle income,Oceania,Oceania,Micronesia,East Asia & Pacific
+NZ1,New Zealand,New Zealand,N.Z.,2. Developed region: nonG7,1. High income: OECD,Oceania,Oceania,Australia and New Zealand,East Asia & Pacific
+OMN,Oman,Oman,Oman,6. Developing region,2. High income: nonOECD,Asia,Asia,Western Asia,Middle East & North Africa
+PAK,Pakistan,Pakistan,Pak.,5. Emerging region: G20,4. Lower middle income,Asia,Asia,Southern Asia,South Asia
+PAN,Panama,Panama,Pan.,6. Developing region,3. Upper middle income,North America,Americas,Central America,Latin America & Caribbean
+PER,Peru,Peru,Peru,5. Emerging region: G20,3. Upper middle income,South America,Americas,South America,Latin America & Caribbean
+PGA,Spratly Islands,Wake Island,Spratly Is.,7. Least developed region,5. Low income,Asia,Asia,South-Eastern Asia,East Asia & Pacific
+PHL,Philippines,Philippines,Phil.,5. Emerging region: G20,4. Lower middle income,Asia,Asia,South-Eastern Asia,East Asia & Pacific
+PLW,Palau,Palau,Palau,6. Developing region,3. Upper middle income,Oceania,Oceania,Micronesia,East Asia & Pacific
+PNG,Papua New Guinea,Papua New Guinea,P.N.G.,6. Developing region,4. Lower middle income,Oceania,Oceania,Melanesia,East Asia & Pacific
+POL,Poland,Poland,Pol.,2. Developed region: nonG7,1. High income: OECD,Europe,Europe,Eastern Europe,Europe & Central Asia
+PRK,North Korea,North Korea,N.K.,7. Least developed region,5. Low income,Asia,Asia,Eastern Asia,East Asia & Pacific
+PRT,Portugal,Portugal,Port.,2. Developed region: nonG7,1. High income: OECD,Europe,Europe,Southern Europe,Europe & Central Asia
+PRY,Paraguay,Paraguay,Para.,5. Emerging region: G20,4. Lower middle income,South America,Americas,South America,Latin America & Caribbean
+QAT,Qatar,Qatar,Qatar,6. Developing region,2. High income: nonOECD,Asia,Asia,Western Asia,Middle East & North Africa
+ROU,Romania,Romania,Rom.,2. Developed region: nonG7,3. Upper middle income,Europe,Europe,Eastern Europe,Europe & Central Asia
+RUS,Russia,Russia,Rus.,3. Emerging region: BRIC,3. Upper middle income,Europe,Europe,Eastern Europe,Europe & Central Asia
+RWA,Rwanda,Rwanda,Rwa.,7. Least developed region,5. Low income,Africa,Africa,Eastern Africa,Sub-Saharan Africa
+SAH,Western Sahara,Western Sahara,W. Sah.,7. Least developed region,5. Low income,Africa,Africa,Northern Africa,Middle East & North Africa
+SAU,Saudi Arabia,Saudi Arabia,Saud.,2. Developed region: nonG7,2. High income: nonOECD,Asia,Asia,Western Asia,Middle East & North Africa
+SCR,Scarborough Reef,Scarborough Shoal,S.R.,7. Least developed region,5. Low income,Asia,Asia,South-Eastern Asia,East Asia & Pacific
+SDN,Sudan,Sudan,Sudan,6. Developing region,4. Lower middle income,Africa,Africa,Northern Africa,Sub-Saharan Africa
+SDS,South Sudan,South Sudan,S. Sud.,7. Least developed region,5. Low income,Africa,Africa,Eastern Africa,Sub-Saharan Africa
+SEN,Senegal,Senegal,Sen.,7. Least developed region,4. Lower middle income,Africa,Africa,Western Africa,Sub-Saharan Africa
+SER,Serranilla Bank,Serranilla Bank,S.B.,7. Least developed region,5. Low income,North America,Americas,Caribbean,Latin America & Caribbean
+SGP,Singapore,Singapore,Sing.,6. Developing region,2. High income: nonOECD,Asia,Asia,South-Eastern Asia,East Asia & Pacific
+SLB,Solomon Islands,Solomon Islands,S. Is.,7. Least developed region,4. Lower middle income,Oceania,Oceania,Melanesia,East Asia & Pacific
+SLE,Sierra Leone,Sierra Leone,S.L.,7. Least developed region,5. Low income,Africa,Africa,Western Africa,Sub-Saharan Africa
+SLV,El Salvador,El Salvador,El. S.,6. Developing region,4. Lower middle income,North America,Americas,Central America,Latin America & Caribbean
+SMR,San Marino,San Marino,S.M.,2. Developed region: nonG7,2. High income: nonOECD,Europe,Europe,Southern Europe,Europe & Central Asia
+SOL,Somaliland,Somaliland,Solnd.,6. Developing region,4. Lower middle income,Africa,Africa,Eastern Africa,Sub-Saharan Africa
+SOM,Somalia,Somalia,Som.,7. Least developed region,5. Low income,Africa,Africa,Eastern Africa,Sub-Saharan Africa
+SPI,Southern Patagonian Ice Field,Southern Patagonian Ice Field,S.Pat. Ice Field,-99,-99,South America,Americas,South America,Latin America & Caribbean
+SRB,Republic of Serbia,Serbia,Serb.,6. Developing region,3. Upper middle income,Europe,Europe,Southern Europe,Europe & Central Asia
+STP,São Tomé and Principe,São Tomé and Príncipe,S.T.P.,7. Least developed region,4. Lower middle income,Africa,Africa,Middle Africa,Sub-Saharan Africa
+SUR,Suriname,Suriname,Sur.,6. Developing region,3. Upper middle income,South America,Americas,South America,Latin America & Caribbean
+SVK,Slovakia,Slovakia,Svk.,2. Developed region: nonG7,1. High income: OECD,Europe,Europe,Eastern Europe,Europe & Central Asia
+SVN,Slovenia,Slovenia,Slo.,2. Developed region: nonG7,1. High income: OECD,Europe,Europe,Southern Europe,Europe & Central Asia
+SWE,Sweden,Sweden,Swe.,2. Developed region: nonG7,1. High income: OECD,Europe,Europe,Northern Europe,Europe & Central Asia
+SWZ,eSwatini,Eswatini,eSw.,6. Developing region,4. Lower middle income,Africa,Africa,Southern Africa,Sub-Saharan Africa
+SYC,Seychelles,Seychelles,Syc.,6. Developing region,3. Upper middle income,Seven seas (open ocean),Africa,Eastern Africa,Sub-Saharan Africa
+SYR,Syria,Syria,Syria,6. Developing region,4. Lower middle income,Asia,Asia,Western Asia,Middle East & North Africa
+TCD,Chad,Chad,Chad,7. Least developed region,5. Low income,Africa,Africa,Middle Africa,Sub-Saharan Africa
+TGO,Togo,Togo,Togo,7. Least developed region,5. Low income,Africa,Africa,Western Africa,Sub-Saharan Africa
+THA,Thailand,Thailand,Thai.,5. Emerging region: G20,3. Upper middle income,Asia,Asia,South-Eastern Asia,East Asia & Pacific
+TJK,Tajikistan,Tajikistan,Tjk.,6. Developing region,5. Low income,Asia,Asia,Central Asia,Europe & Central Asia
+TKM,Turkmenistan,Turkmenistan,Turkm.,6. Developing region,3. Upper middle income,Asia,Asia,Central Asia,Europe & Central Asia
+TLS,East Timor,East Timor,T.L.,7. Least developed region,4. Lower middle income,Asia,Asia,South-Eastern Asia,East Asia & Pacific
+TON,Tonga,Tonga,Tongo,6. Developing region,4. Lower middle income,Oceania,Oceania,Polynesia,East Asia & Pacific
+TTO,Trinidad and Tobago,Trinidad and Tobago,Tr.T.,6. Developing region,2. High income: nonOECD,North America,Americas,Caribbean,Latin America & Caribbean
+TUN,Tunisia,Tunisia,Tun.,6. Developing region,3. Upper middle income,Africa,Africa,Northern Africa,Middle East & North Africa
+TUR,Turkey,Turkey,Tur.,4. Emerging region: MIKT,3. Upper middle income,Asia,Asia,Western Asia,Europe & Central Asia
+TUV,Tuvalu,Tuvalu,Tuv.,7. Least developed region,3. Upper middle income,Oceania,Oceania,Polynesia,East Asia & Pacific
+TWN,Taiwan,Taiwan,Taiwan,2. Developed region: nonG7,2. High income: nonOECD,Asia,Asia,Eastern Asia,East Asia & Pacific
+TZA,United Republic of Tanzania,Tanzania,Tanz.,7. Least developed region,5. Low income,Africa,Africa,Eastern Africa,Sub-Saharan Africa
+UGA,Uganda,Uganda,Uga.,7. Least developed region,5. Low income,Africa,Africa,Eastern Africa,Sub-Saharan Africa
+UKR,Ukraine,Ukraine,Ukr.,6. Developing region,4. Lower middle income,Europe,Europe,Eastern Europe,Europe & Central Asia
+URY,Uruguay,Uruguay,Ury.,5. Emerging region: G20,3. Upper middle income,South America,Americas,South America,Latin America & Caribbean
+US1,United States of America,United States of America,U.S.A.,1. Developed region: G7,1. High income: OECD,North America,Americas,Northern America,North America
+UZB,Uzbekistan,Uzbekistan,Uzb.,6. Developing region,4. Lower middle income,Asia,Asia,Central Asia,Europe & Central Asia
+VAT,Vatican,Vatican City,Vat.,2. Developed region: nonG7,2. High income: nonOECD,Europe,Europe,Southern Europe,Europe & Central Asia
+VCT,Saint Vincent and the Grenadines,Saint Vincent and the Grenadines,St.V.G.,6. Developing region,3. Upper middle income,North America,Americas,Caribbean,Latin America & Caribbean
+VEN,Venezuela,Venezuela,Ven.,5. Emerging region: G20,3. Upper middle income,South America,Americas,South America,Latin America & Caribbean
+VNM,Vietnam,Vietnam,Viet.,5. Emerging region: G20,4. Lower middle income,Asia,Asia,South-Eastern Asia,East Asia & Pacific
+VUT,Vanuatu,Vanuatu,Van.,7. Least developed region,4. Lower middle income,Oceania,Oceania,Melanesia,East Asia & Pacific
+WSM,Samoa,Samoa,Samoa,7. Least developed region,4. Lower middle income,Oceania,Oceania,Polynesia,East Asia & Pacific
+YEM,Yemen,Yemen,Yem.,7. Least developed region,4. Lower middle income,Asia,Asia,Western Asia,Middle East & North Africa
+ZAF,South Africa,South Africa,S.Af.,5. Emerging region: G20,3. Upper middle income,Africa,Africa,Southern Africa,Sub-Saharan Africa
+ZMB,Zambia,Zambia,Zambia,7. Least developed region,4. Lower middle income,Africa,Africa,Eastern Africa,Sub-Saharan Africa
+ZWE,Zimbabwe,Zimbabwe,Zimb.,5. Emerging region: G20,5. Low income,Africa,Africa,Eastern Africa,Sub-Saharan Africa
