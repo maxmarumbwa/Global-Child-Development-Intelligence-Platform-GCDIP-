@@ -65,6 +65,15 @@ Child Mortality Chart
                 <option value="0">All</option>
             </select>
         </div>
+        <div class="col-auto">
+            <label for="colorBySelect" class="form-label me-1">Color by</label>
+            <select id="colorBySelect" class="form-select form-select-sm" style="width:auto; display:inline-block;" onchange="applyFilters()">
+                <option value="">None</option>
+                <option value="continent">Continent</option>
+                <option value="income_group">Income Group</option>
+                <option value="subregion">Subregion</option>
+            </select>
+        </div>
         <div class="col-auto ms-auto">
             <div class="btn-group btn-group-sm" role="group">
                 <button type="button" class="btn btn-outline-primary active" id="barBtn" onclick="setChartType('bar')">Bar</button>
@@ -76,6 +85,11 @@ Child Mortality Chart
     <!-- CHART CONTAINER -->
     <div style="position: relative; height:400px; width:100%;">
         <canvas id="mortalityChart"></canvas>
+    </div>
+
+    <!-- COLOR LEGEND (hidden by default) -->
+    <div id="colorLegend" style="margin-top:15px; display:none; text-align:center;">
+        <div id="legendItems" style="display:flex; flex-wrap:wrap; justify-content:center; gap:12px;"></div>
     </div>
 
     <!-- FALLBACK MESSAGE -->
@@ -141,128 +155,226 @@ let animationInterval = null;
 let animationDelay = 800;
 
 // ==============================
-// INITIALIZATION
+// COLOR PALETTES
 // ==============================
-function init() {
-    document.getElementById("year1Slider").value = currentYear;
-    document.getElementById("year1Label").innerText = currentYear;
-    document.getElementById("year2Slider").value = currentYear;
-    document.getElementById("year2Label").innerText = currentYear;
-    year1 = currentYear;
-    year2 = currentYear;
-    loadAndRender();
-}
+const categoryColors = {
+    // Income groups (World Bank)
+    'High income': '#1f77b4',
+    'Upper middle income': '#ff7f0e',
+    'Lower middle income': '#2ca02c',
+    'Low income': '#d62728',
+    // Continents
+    'Africa': '#e41a1c',
+    'Americas': '#377eb8',
+    'Asia': '#4daf4a',
+    'Europe': '#984ea3',
+    'Oceania': '#ff7f00',
+    // Additional fallback for subregions or unknown
+};
 
-function loadYearData(year) {
-    const yearStr = String(year);
-    return allDataByYear.hasOwnProperty(yearStr) ? allDataByYear[yearStr] : [];
-}
+// Generic fallback palette
+const fallbackColors = [
+    '#a6cee3', '#b2df8a', '#fb9a99', '#fdbf6f', '#cab2d6',
+    '#ffff99', '#b15928', '#1f78b4', '#33a02c', '#e31a1c',
+    '#ff7f00', '#6a3d9a', '#b2df8a', '#a6cee3', '#fdbf6f'
+];
 
-function loadAndRender() {
-    // We'll just call applyFilters which will fetch data for the current mode
-    applyFilters();
+// ==============================
+// UTILITY: get color for a category value
+// ==============================
+function getCategoryColor(category, value) {
+    if (!category || !value) return 'rgba(54, 162, 235, 0.5)';
+    const key = `${category}:${value}`;
+    // If predefined, use it
+    if (categoryColors[value]) {
+        return categoryColors[value];
+    }
+    // Else generate a deterministic color from the string
+    let hash = 0;
+    for (let i = 0; i < key.length; i++) {
+        hash = (hash << 5) - hash + key.charCodeAt(i);
+        hash = hash & hash;
+    }
+    const idx = Math.abs(hash) % fallbackColors.length;
+    return fallbackColors[idx];
 }
 
 // ==============================
-// RENDER CHART (with dual datasets support)
+// UPDATE COLOR LEGEND
+// ==============================
+function updateLegend(data, colorBy) {
+    const legendDiv = document.getElementById('colorLegend');
+    const itemsDiv = document.getElementById('legendItems');
+    if (!colorBy) {
+        legendDiv.style.display = 'none';
+        return;
+    }
+
+    // Collect unique categories and their colors from the data
+    const categories = {};
+    data.forEach(d => {
+        const val = d[colorBy];
+        if (val) {
+            const color = getCategoryColor(colorBy, val);
+            categories[val] = color;
+        }
+    });
+
+    const keys = Object.keys(categories).sort();
+    if (keys.length === 0) {
+        legendDiv.style.display = 'none';
+        return;
+    }
+
+    legendDiv.style.display = 'block';
+    itemsDiv.innerHTML = keys.map(key => `
+        <div style="display:flex; align-items:center; gap:5px;">
+            <span style="display:inline-block; width:18px; height:18px; background-color:${categories[key]}; border:1px solid #ddd;"></span>
+            <span style="font-size:13px;">${key}</span>
+        </div>
+    `).join('');
+}
+
+// ==============================
+// RENDER CHART (with color highlighting)
 // ==============================
 function renderChart(data1, data2, year1Label, year2Label) {
     const noDataMsg = document.getElementById("noDataMessage");
     const canvas = document.getElementById("mortalityChart");
     const ctx = canvas.getContext("2d");
 
-    // Determine which data to use
-    let labels = [];
+    const colorBy = document.getElementById("colorBySelect").value;
+
+    if (chart) { chart.destroy(); chart = null; }
+
     let datasets = [];
+    let labels = [];
+    let displayData = []; // used for legend
 
     if (compareMode && data1 && data2) {
-        // Intersection of countries (by country name)
+        // Intersection of countries
         const countries1 = new Set(data1.map(d => d.country));
         const countries2 = new Set(data2.map(d => d.country));
         const common = [...countries1].filter(c => countries2.has(c));
 
         if (common.length === 0) {
             noDataMsg.style.display = 'block';
-            if (chart) { chart.destroy(); chart = null; }
+            document.getElementById('colorLegend').style.display = 'none';
             return;
         }
 
-        // Build data for each year, sorted by year1 order
         const order = document.getElementById("orderSelect").value;
         const map1 = new Map(data1.map(d => [d.country, d]));
         const map2 = new Map(data2.map(d => [d.country, d]));
 
-        const combined = common.map(country => ({
+        let combined = common.map(country => ({
             country: country,
             mortality1: map1.get(country).mortality,
             mortality2: map2.get(country).mortality,
             year1: year1Label,
             year2: year2Label,
-            // keep extra fields for sorting if needed
+            continent: map1.get(country).continent || '',
+            income_group: map1.get(country).income_group || '',
+            subregion: map1.get(country).subregion || '',
         }));
 
-        // Sort by mortality1 according to order
-        combined.sort((a, b) => {
-            return order === 'desc' ? b.mortality1 - a.mortality1 : a.mortality1 - b.mortality1;
-        });
+        combined.sort((a, b) => order === 'desc' ? b.mortality1 - a.mortality1 : a.mortality1 - b.mortality1);
 
-        // Apply Top N
         const topN = parseInt(document.getElementById("topNSelect").value);
-        let final = combined;
-        if (topN > 0 && final.length > topN) {
-            final = final.slice(0, topN);
+        if (topN > 0 && combined.length > topN) {
+            combined = combined.slice(0, topN);
         }
 
-        labels = final.map(d => d.country);
-        const values1 = final.map(d => d.mortality1);
-        const values2 = final.map(d => d.mortality2);
+        labels = combined.map(d => d.country);
+        const values1 = combined.map(d => d.mortality1);
+        const values2 = combined.map(d => d.mortality2);
+
+        // Determine colors
+        let bgColors1, bgColors2;
+        if (colorBy) {
+            bgColors1 = combined.map(d => getCategoryColor(colorBy, d[colorBy]));
+            bgColors2 = combined.map(d => getCategoryColor(colorBy, d[colorBy]));
+            displayData = combined; // for legend
+        } else {
+            bgColors1 = combined.map(() => 'rgba(54, 162, 235, 0.6)');
+            bgColors2 = combined.map(() => 'rgba(255, 99, 132, 0.6)');
+        }
 
         datasets = [
             {
                 label: `Year ${year1Label}`,
                 data: values1,
-                backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                borderColor: 'rgba(54, 162, 235, 1)',
+                backgroundColor: bgColors1,
+                borderColor: bgColors1.map(c => c.replace('0.6', '1')),
                 borderWidth: 1,
             },
             {
                 label: `Year ${year2Label}`,
                 data: values2,
-                backgroundColor: 'rgba(255, 99, 132, 0.6)',
-                borderColor: 'rgba(255, 99, 132, 1)',
+                backgroundColor: bgColors2,
+                borderColor: bgColors2.map(c => c.replace('0.6', '1')),
                 borderWidth: 1,
             }
         ];
     } else {
-        // Single year mode
-        const data = data1 || [];
+        // Single mode
+        let data = data1 || [];
         if (data.length === 0) {
             noDataMsg.style.display = 'block';
-            if (chart) { chart.destroy(); chart = null; }
+            document.getElementById('colorLegend').style.display = 'none';
             return;
         }
+        const order = document.getElementById("orderSelect").value;
+        data.sort((a, b) => order === 'desc' ? b.mortality - a.mortality : a.mortality - b.mortality);
+        const topN = parseInt(document.getElementById("topNSelect").value);
+        if (topN > 0 && data.length > topN) {
+            data = data.slice(0, topN);
+        }
+
         labels = data.map(d => d.country);
         const values = data.map(d => d.mortality);
+
+        let bgColors;
+        if (colorBy) {
+            bgColors = data.map(d => getCategoryColor(colorBy, d[colorBy]));
+            displayData = data;
+        } else {
+            bgColors = data.map(() => 'rgba(54, 162, 235, 0.5)');
+        }
+
         datasets = [{
             label: `Under‑5 Mortality Rate (${year1Label})`,
             data: values,
-            backgroundColor: 'rgba(54, 162, 235, 0.5)',
-            borderColor: 'rgba(54, 162, 235, 1)',
+            backgroundColor: bgColors,
+            borderColor: bgColors.map(c => c.replace('0.5', '1')),
             borderWidth: 1,
-            pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+            pointBackgroundColor: bgColors,
             pointBorderColor: '#fff',
             pointRadius: 3,
             pointHoverRadius: 5,
             tension: 0.1,
-            fill: false
+            fill: false,
         }];
     }
 
     noDataMsg.style.display = 'none';
-    if (chart) chart.destroy();
+
+    // Update legend
+    if (colorBy && displayData.length > 0) {
+        updateLegend(displayData, colorBy);
+    } else {
+        document.getElementById('colorLegend').style.display = 'none';
+    }
 
     const isLine = chartType === 'line';
     const type = isLine ? 'line' : 'bar';
+
+    let titleText = compareMode ?
+        `Under‑5 Mortality Rate (${year1Label} vs ${year2Label})` :
+        `Under‑5 Mortality Rate (${year1Label})`;
+    if (colorBy) {
+        titleText += ` — colored by ${colorBy}`;
+    }
 
     chart = new Chart(ctx, {
         type: type,
@@ -278,9 +390,7 @@ function renderChart(data1, data2, year1Label, year2Label) {
                 legend: { display: true },
                 title: {
                     display: true,
-                    text: compareMode ?
-                        `Under‑5 Mortality Rate (${year1Label} vs ${year2Label})` :
-                        `Under‑5 Mortality Rate (${year1Label})`
+                    text: titleText
                 }
             },
             scales: {
@@ -324,15 +434,13 @@ function applyFilters() {
         renderChart(data1, data2, year1, year2);
     } else {
         let data = loadYearData(year1).filter(filterFn);
-        // Sort and apply top N for single mode
-        const order = document.getElementById("orderSelect").value;
-        data.sort((a, b) => order === 'desc' ? b.mortality - a.mortality : a.mortality - b.mortality);
-        const topN = parseInt(document.getElementById("topNSelect").value);
-        if (topN > 0 && data.length > topN) {
-            data = data.slice(0, topN);
-        }
         renderChart(data, null, year1, null);
     }
+}
+
+function loadYearData(year) {
+    const yearStr = String(year);
+    return allDataByYear.hasOwnProperty(yearStr) ? allDataByYear[yearStr] : [];
 }
 
 // ==============================
@@ -343,10 +451,6 @@ function setCompareMode(mode) {
     document.getElementById("singleBtn").classList.toggle('active', !mode);
     document.getElementById("compareBtn").classList.toggle('active', mode);
     document.getElementById("year2Container").style.display = mode ? 'block' : 'none';
-    // If switching to compare, ensure year2 is set to something meaningful
-    if (mode) {
-        // set year2 to a different year if needed, but keep default
-    }
     applyFilters();
 }
 
@@ -357,10 +461,7 @@ function onYear1Input(value) {
     if (isPlaying) stopAnimation();
     year1 = parseInt(value);
     document.getElementById("year1Label").innerText = year1;
-    if (!compareMode) {
-        // In single mode, also update the global currentYear for animation
-        currentYear = year1;
-    }
+    if (!compareMode) currentYear = year1;
     applyFilters();
 }
 
@@ -383,11 +484,10 @@ function setChartType(type) {
 }
 
 // ==============================
-// ANIMATION CONTROLS (only single year)
+// ANIMATION CONTROLS (single only)
 // ==============================
 function togglePlay() {
     if (compareMode) {
-        // Animation only works in single mode; maybe we can animate both years together, but for simplicity we disable.
         alert("Animation is available only in Single mode.");
         return;
     }
@@ -444,7 +544,7 @@ function resetToStart() {
     if (isPlaying) stopAnimation();
     currentYear = MIN_YEAR;
     year1 = MIN_YEAR;
-    year2 = MIN_YEAR + 1;  // or keep at MIN_YEAR
+    year2 = MIN_YEAR + 1;
     document.getElementById("year1Slider").value = year1;
     document.getElementById("year1Label").innerText = year1;
     document.getElementById("year2Slider").value = year2;

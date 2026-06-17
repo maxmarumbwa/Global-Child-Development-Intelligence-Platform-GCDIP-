@@ -30,7 +30,7 @@ def mortality_chart_year(request):
         )
 
     # Limit for performance (optional)
-    df = df.head(150)
+    # df = df.head(150)
 
     records = df.to_dict(orient="records")
     continents = sorted(df["continent"].dropna().unique().tolist())
