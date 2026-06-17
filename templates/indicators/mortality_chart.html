@@ -9,11 +9,27 @@ Child Mortality Chart
 <div class="card">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h4 class="mb-0">Under‑5 Mortality Rate</h4>
-        <div style="width:300px;">
-            <label class="form-label">Year: <span id="yearLabel">{{ current_year }}</span></label>
-            <input type="range" id="yearSlider" min="1960" max="2024"
+
+        <!-- Compare toggle -->
+        <div class="btn-group btn-group-sm" role="group">
+            <button type="button" class="btn btn-outline-secondary active" id="singleBtn" onclick="setCompareMode(false)">Single</button>
+            <button type="button" class="btn btn-outline-secondary" id="compareBtn" onclick="setCompareMode(true)">Compare</button>
+        </div>
+    </div>
+
+    <!-- YEAR SLIDERS -->
+    <div class="row mb-2 align-items-center">
+        <div class="col-md-6" id="year1Container">
+            <label class="form-label">Year 1: <span id="year1Label">{{ current_year }}</span></label>
+            <input type="range" id="year1Slider" min="1960" max="2024"
                    value="{{ current_year }}" class="form-range"
-                   oninput="onSliderInput(this.value)">
+                   oninput="onYear1Input(this.value)">
+        </div>
+        <div class="col-md-6" id="year2Container" style="display:none;">
+            <label class="form-label">Year 2: <span id="year2Label">{{ current_year }}</span></label>
+            <input type="range" id="year2Slider" min="1960" max="2024"
+                   value="{{ current_year }}" class="form-range"
+                   oninput="onYear2Input(this.value)">
         </div>
     </div>
 
@@ -31,8 +47,6 @@ Child Mortality Chart
         <div class="col-auto">
             <button class="btn btn-secondary btn-sm" onclick="resetToStart()">Reset</button>
         </div>
-
-        <!-- Order -->
         <div class="col-auto">
             <label for="orderSelect" class="form-label me-1">Order</label>
             <select id="orderSelect" class="form-select form-select-sm" style="width:auto; display:inline-block;" onchange="applyFilters()">
@@ -40,8 +54,6 @@ Child Mortality Chart
                 <option value="asc">Lowest</option>
             </select>
         </div>
-
-        <!-- Show N -->
         <div class="col-auto">
             <label for="topNSelect" class="form-label me-1">Show</label>
             <select id="topNSelect" class="form-select form-select-sm" style="width:auto; display:inline-block;" onchange="applyFilters()">
@@ -53,8 +65,6 @@ Child Mortality Chart
                 <option value="0">All</option>
             </select>
         </div>
-
-        <!-- Chart type -->
         <div class="col-auto ms-auto">
             <div class="btn-group btn-group-sm" role="group">
                 <button type="button" class="btn btn-outline-primary active" id="barBtn" onclick="setChartType('bar')">Bar</button>
@@ -70,7 +80,7 @@ Child Mortality Chart
 
     <!-- FALLBACK MESSAGE -->
     <div id="noDataMessage" class="alert alert-warning text-center" style="display:none;">
-        No data available for the selected year and filters.
+        No data available for the selected year(s) and filters.
     </div>
 
     <!-- FILTERS -->
@@ -118,7 +128,9 @@ const allDataByYear = {{ all_data_json|safe }};
 
 let chart = null;
 let currentYear = {{ current_year }};
-let currentData = [];
+let year1 = {{ current_year }};
+let year2 = {{ current_year }};
+let compareMode = false;
 let chartType = 'bar';
 
 const MIN_YEAR = 1960;
@@ -132,58 +144,122 @@ let animationDelay = 800;
 // INITIALIZATION
 // ==============================
 function init() {
-    document.getElementById("yearSlider").value = currentYear;
-    document.getElementById("yearLabel").innerText = currentYear;
-    loadYearData(currentYear);
-    applyFilters();
+    document.getElementById("year1Slider").value = currentYear;
+    document.getElementById("year1Label").innerText = currentYear;
+    document.getElementById("year2Slider").value = currentYear;
+    document.getElementById("year2Label").innerText = currentYear;
+    year1 = currentYear;
+    year2 = currentYear;
+    loadAndRender();
 }
 
 function loadYearData(year) {
     const yearStr = String(year);
-    if (allDataByYear.hasOwnProperty(yearStr)) {
-        currentData = allDataByYear[yearStr];
-    } else {
-        currentData = [];
-    }
+    return allDataByYear.hasOwnProperty(yearStr) ? allDataByYear[yearStr] : [];
+}
+
+function loadAndRender() {
+    // We'll just call applyFilters which will fetch data for the current mode
+    applyFilters();
 }
 
 // ==============================
-// RENDER CHART (NO ANIMATIONS)
+// RENDER CHART (with dual datasets support)
 // ==============================
-function renderChart(data) {
+function renderChart(data1, data2, year1Label, year2Label) {
     const noDataMsg = document.getElementById("noDataMessage");
     const canvas = document.getElementById("mortalityChart");
     const ctx = canvas.getContext("2d");
 
-    if (!data || data.length === 0) {
-        noDataMsg.style.display = 'block';
-        if (chart) {
-            chart.destroy();
-            chart = null;
+    // Determine which data to use
+    let labels = [];
+    let datasets = [];
+
+    if (compareMode && data1 && data2) {
+        // Intersection of countries (by country name)
+        const countries1 = new Set(data1.map(d => d.country));
+        const countries2 = new Set(data2.map(d => d.country));
+        const common = [...countries1].filter(c => countries2.has(c));
+
+        if (common.length === 0) {
+            noDataMsg.style.display = 'block';
+            if (chart) { chart.destroy(); chart = null; }
+            return;
         }
-        return;
+
+        // Build data for each year, sorted by year1 order
+        const order = document.getElementById("orderSelect").value;
+        const map1 = new Map(data1.map(d => [d.country, d]));
+        const map2 = new Map(data2.map(d => [d.country, d]));
+
+        const combined = common.map(country => ({
+            country: country,
+            mortality1: map1.get(country).mortality,
+            mortality2: map2.get(country).mortality,
+            year1: year1Label,
+            year2: year2Label,
+            // keep extra fields for sorting if needed
+        }));
+
+        // Sort by mortality1 according to order
+        combined.sort((a, b) => {
+            return order === 'desc' ? b.mortality1 - a.mortality1 : a.mortality1 - b.mortality1;
+        });
+
+        // Apply Top N
+        const topN = parseInt(document.getElementById("topNSelect").value);
+        let final = combined;
+        if (topN > 0 && final.length > topN) {
+            final = final.slice(0, topN);
+        }
+
+        labels = final.map(d => d.country);
+        const values1 = final.map(d => d.mortality1);
+        const values2 = final.map(d => d.mortality2);
+
+        datasets = [
+            {
+                label: `Year ${year1Label}`,
+                data: values1,
+                backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1,
+            },
+            {
+                label: `Year ${year2Label}`,
+                data: values2,
+                backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                borderColor: 'rgba(255, 99, 132, 1)',
+                borderWidth: 1,
+            }
+        ];
     } else {
-        noDataMsg.style.display = 'none';
+        // Single year mode
+        const data = data1 || [];
+        if (data.length === 0) {
+            noDataMsg.style.display = 'block';
+            if (chart) { chart.destroy(); chart = null; }
+            return;
+        }
+        labels = data.map(d => d.country);
+        const values = data.map(d => d.mortality);
+        datasets = [{
+            label: `Under‑5 Mortality Rate (${year1Label})`,
+            data: values,
+            backgroundColor: 'rgba(54, 162, 235, 0.5)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1,
+            pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+            pointBorderColor: '#fff',
+            pointRadius: 3,
+            pointHoverRadius: 5,
+            tension: 0.1,
+            fill: false
+        }];
     }
 
-    const labels = data.map(d => d.country);
-    const values = data.map(d => d.mortality);
-
+    noDataMsg.style.display = 'none';
     if (chart) chart.destroy();
-
-    const dataset = {
-        label: "Under‑5 Mortality Rate",
-        data: values,
-        borderWidth: 1,
-        backgroundColor: 'rgba(54, 162, 235, 0.5)',
-        borderColor: 'rgba(54, 162, 235, 1)',
-        pointBackgroundColor: 'rgba(54, 162, 235, 1)',
-        pointBorderColor: '#fff',
-        pointRadius: 3,
-        pointHoverRadius: 5,
-        tension: 0.1,
-        fill: false
-    };
 
     const isLine = chartType === 'line';
     const type = isLine ? 'line' : 'bar';
@@ -192,17 +268,19 @@ function renderChart(data) {
         type: type,
         data: {
             labels: labels,
-            datasets: [dataset]
+            datasets: datasets
         },
         options: {
-            animation: false,                     // DISABLE ALL ANIMATIONS
+            animation: false,
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
                 legend: { display: true },
                 title: {
                     display: true,
-                    text: `Under‑5 Mortality Rate by Country (${data[0].year})`
+                    text: compareMode ?
+                        `Under‑5 Mortality Rate (${year1Label} vs ${year2Label})` :
+                        `Under‑5 Mortality Rate (${year1Label})`
                 }
             },
             scales: {
@@ -233,26 +311,64 @@ function applyFilters() {
     const income = document.getElementById("incomeFilter").value;
     const subregion = document.getElementById("subregionFilter").value;
 
-    let filtered = currentData.filter(d => {
+    const filterFn = (d) => {
         const continentMatch = !continent || d.continent === continent;
         const incomeMatch = !income || d.income_group === income;
         const subregionMatch = !subregion || d.subregion === subregion;
         return continentMatch && incomeMatch && subregionMatch;
-    });
+    };
 
-    const order = document.getElementById("orderSelect").value;
-    if (order === 'desc') {
-        filtered.sort((a, b) => b.mortality - a.mortality);
+    if (compareMode) {
+        let data1 = loadYearData(year1).filter(filterFn);
+        let data2 = loadYearData(year2).filter(filterFn);
+        renderChart(data1, data2, year1, year2);
     } else {
-        filtered.sort((a, b) => a.mortality - b.mortality);
+        let data = loadYearData(year1).filter(filterFn);
+        // Sort and apply top N for single mode
+        const order = document.getElementById("orderSelect").value;
+        data.sort((a, b) => order === 'desc' ? b.mortality - a.mortality : a.mortality - b.mortality);
+        const topN = parseInt(document.getElementById("topNSelect").value);
+        if (topN > 0 && data.length > topN) {
+            data = data.slice(0, topN);
+        }
+        renderChart(data, null, year1, null);
     }
+}
 
-    const topN = parseInt(document.getElementById("topNSelect").value);
-    if (topN > 0 && filtered.length > topN) {
-        filtered = filtered.slice(0, topN);
+// ==============================
+// COMPARE MODE TOGGLE
+// ==============================
+function setCompareMode(mode) {
+    compareMode = mode;
+    document.getElementById("singleBtn").classList.toggle('active', !mode);
+    document.getElementById("compareBtn").classList.toggle('active', mode);
+    document.getElementById("year2Container").style.display = mode ? 'block' : 'none';
+    // If switching to compare, ensure year2 is set to something meaningful
+    if (mode) {
+        // set year2 to a different year if needed, but keep default
     }
+    applyFilters();
+}
 
-    renderChart(filtered);
+// ==============================
+// YEAR SLIDER INPUTS
+// ==============================
+function onYear1Input(value) {
+    if (isPlaying) stopAnimation();
+    year1 = parseInt(value);
+    document.getElementById("year1Label").innerText = year1;
+    if (!compareMode) {
+        // In single mode, also update the global currentYear for animation
+        currentYear = year1;
+    }
+    applyFilters();
+}
+
+function onYear2Input(value) {
+    if (isPlaying) stopAnimation();
+    year2 = parseInt(value);
+    document.getElementById("year2Label").innerText = year2;
+    applyFilters();
 }
 
 // ==============================
@@ -267,20 +383,14 @@ function setChartType(type) {
 }
 
 // ==============================
-// SLIDER MANUAL INPUT
-// ==============================
-function onSliderInput(value) {
-    if (isPlaying) stopAnimation();
-    currentYear = parseInt(value);
-    document.getElementById("yearLabel").innerText = currentYear;
-    loadYearData(currentYear);
-    applyFilters();
-}
-
-// ==============================
-// ANIMATION CONTROLS
+// ANIMATION CONTROLS (only single year)
 // ==============================
 function togglePlay() {
+    if (compareMode) {
+        // Animation only works in single mode; maybe we can animate both years together, but for simplicity we disable.
+        alert("Animation is available only in Single mode.");
+        return;
+    }
     if (isPlaying) {
         stopAnimation();
     } else {
@@ -289,12 +399,12 @@ function togglePlay() {
 }
 
 function startAnimation() {
-    if (isPlaying) return;
+    if (isPlaying || compareMode) return;
     if (currentYear >= MAX_YEAR) {
         currentYear = MIN_YEAR;
-        document.getElementById("yearSlider").value = currentYear;
-        document.getElementById("yearLabel").innerText = currentYear;
-        loadYearData(currentYear);
+        document.getElementById("year1Slider").value = currentYear;
+        document.getElementById("year1Label").innerText = currentYear;
+        year1 = currentYear;
         applyFilters();
     }
     isPlaying = true;
@@ -305,9 +415,9 @@ function startAnimation() {
         if (currentYear > MAX_YEAR) {
             currentYear = MIN_YEAR;
         }
-        document.getElementById("yearSlider").value = currentYear;
-        document.getElementById("yearLabel").innerText = currentYear;
-        loadYearData(currentYear);
+        document.getElementById("year1Slider").value = currentYear;
+        document.getElementById("year1Label").innerText = currentYear;
+        year1 = currentYear;
         applyFilters();
     }, animationDelay);
 }
@@ -333,9 +443,12 @@ function updateSpeed(value) {
 function resetToStart() {
     if (isPlaying) stopAnimation();
     currentYear = MIN_YEAR;
-    document.getElementById("yearSlider").value = currentYear;
-    document.getElementById("yearLabel").innerText = currentYear;
-    loadYearData(currentYear);
+    year1 = MIN_YEAR;
+    year2 = MIN_YEAR + 1;  // or keep at MIN_YEAR
+    document.getElementById("year1Slider").value = year1;
+    document.getElementById("year1Label").innerText = year1;
+    document.getElementById("year2Slider").value = year2;
+    document.getElementById("year2Label").innerText = year2;
     applyFilters();
 }
 
