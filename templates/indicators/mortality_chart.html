@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Child Mortality Chart
+{% endblock %}
+
+{% block content %}
+
+<div class="card">
+
+    <div class="card-header d-flex justify-content-between align-items-center">
+
+        <h4 class="mb-0">
+            Under-5 Mortality Rate (2023)
+        </h4>
+
+    </div>
+
+    <div class="card-body">
+
+        <canvas id="mortalityChart" height="120"></canvas>
+
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+const labels = [
+
+    {% for row in records %}
+        "{{ row.country|escapejs }}",
+    {% endfor %}
+
+];
+
+const values = [
+
+    {% for row in records %}
+        {{ row.mortality }},
+    {% endfor %}
+
+];
+
+const ctx = document
+    .getElementById('mortalityChart')
+    .getContext('2d');
+
+new Chart(ctx, {
+
+    type: 'bar',
+
+    data: {
+
+        labels: labels,
+
+        datasets: [
+
+            {
+
+                label: 'Under-5 Mortality Rate',
+
+                data: values,
+
+                borderWidth: 1
+
+            }
+
+        ]
+
+    },
+
+    options: {
+
+        responsive: true,
+
+        maintainAspectRatio: true,
+
+        plugins: {
+
+            legend: {
+
+                display: true
+
+            },
+
+            title: {
+
+                display: true,
+
+                text: 'Under-5 Mortality Rate by Country (2023)'
+
+            }
+
+        },
+
+        scales: {
+
+            x: {
+
+                ticks: {
+
+                    autoSkip: false,
+
+                    maxRotation: 90,
+
+                    minRotation: 90
+
+                }
+
+            },
+
+            y: {
+
+                beginAtZero: true,
+
+                title: {
+
+                    display: true,
+
+                    text: 'Deaths per 1,000 Live Births'
+
+                }
+
+            }
+
+        }
+
+    }
+
+});
+
+</script>
+
+{% endblock %}

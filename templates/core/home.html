@@ -50,7 +50,7 @@ L.tileLayer(
 ).addTo(map);
 
 fetch(
-    "{% static 'data/ne_10m_admin_0_countries_sm.geojson' %}"
+    "{% static 'data/geojson/ne_10m_admin_0_countries_sm.geojson' %}"
 )
 .then(response => response.json())
 .then(data => {

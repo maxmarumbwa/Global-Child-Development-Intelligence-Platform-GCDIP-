@@ -27,3 +27,22 @@ def mortality_table(request):
             "records": records
         }
     )
+    
+def mortality_chart(request):
+
+    df = get_child_mortality()
+
+    # optional for testing
+    df = df.head(150)
+
+    records = df.to_dict(
+        orient="records"
+    )
+
+    return render(
+        request,
+        "indicators/mortality_chart.html",
+        {
+            "records": records
+        }
+    )
