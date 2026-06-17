@@ -7,142 +7,109 @@ Child Mortality Chart
 {% block content %}
 
 <div class="card">
-
-    <div class="card-header d-flex justify-content-between align-items-center">
-
-        <h4 class="mb-0">
-            Under-5 Mortality Rate (2023)
-        </h4>
-
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0">Under‑5 Mortality Rate</h4>
+        <div style="width:300px;">
+            <label class="form-label">Year: <span id="yearLabel">{{ current_year|default:2023 }}</span></label>
+            <input type="range" id="yearSlider" min="1960" max="2024"
+                   value="{{ current_year|default:2023 }}" class="form-range"
+                   oninput="updateYear(this.value)">
+        </div>
     </div>
 
     <div class="card-body">
-
         <canvas id="mortalityChart" height="120"></canvas>
-
     </div>
 
     <!-- FILTERS -->
     <div class="row mt-4">
-
         <div class="col-md-4">
-
             <label class="form-label">Continent</label>
-
             <select id="continentFilter" class="form-select" onchange="applyFilters()">
-
                 <option value="">All Continents</option>
-
                 {% for c in continents %}
                 <option value="{{ c }}">{{ c }}</option>
                 {% endfor %}
-
             </select>
-
         </div>
-
         <div class="col-md-4">
-
             <label class="form-label">Income Group</label>
-
             <select id="incomeFilter" class="form-select" onchange="applyFilters()">
-
                 <option value="">All Income Groups</option>
-
                 {% for i in income_groups %}
                 <option value="{{ i }}">{{ i }}</option>
                 {% endfor %}
-
             </select>
-
         </div>
-
         <div class="col-md-4">
-
             <label class="form-label">Subregion</label>
-
             <select id="subregionFilter" class="form-select" onchange="applyFilters()">
-
                 <option value="">All Subregions</option>
-
                 {% for s in subregions %}
                 <option value="{{ s }}">{{ s }}</option>
                 {% endfor %}
-
             </select>
-
         </div>
-
     </div>
-
 </div>
 
 {% endblock %}
 
 {% block extra_js %}
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-
 let chart;
+let currentData = [];
 
 // ==============================
-// FULL DATASET FROM DJANGO
+// INITIAL DATASET FROM DJANGO
 // ==============================
-const allData = [
+const initialData = [
     {% for row in records %}
     {
         country: "{{ row.country|escapejs }}",
         continent: "{{ row.continent|escapejs }}",
         income_group: "{{ row.income_group|escapejs }}",
         subregion: "{{ row.subregion|escapejs }}",
+        year: {{ row.year }},
         mortality: {{ row.mortality }}
     },
     {% endfor %}
 ];
 
+currentData = initialData;
+renderChart(currentData);
+
 // ==============================
-// RENDER CHART FUNCTION
+// RENDER CHART
 // ==============================
 function renderChart(data) {
-
     const labels = data.map(d => d.country);
     const values = data.map(d => d.mortality);
 
-    const ctx = document
-        .getElementById("mortalityChart")
-        .getContext("2d");
-
-    if (chart) {
-        chart.destroy();
-    }
+    const ctx = document.getElementById("mortalityChart").getContext("2d");
+    if (chart) chart.destroy();
 
     chart = new Chart(ctx, {
-
         type: "bar",
-
         data: {
             labels: labels,
             datasets: [{
-                label: "Under-5 Mortality Rate",
+                label: "Under‑5 Mortality Rate",
                 data: values,
                 borderWidth: 1
             }]
         },
-
         options: {
-
             responsive: true,
-
             plugins: {
                 legend: { display: true },
                 title: {
                     display: true,
-                    text: "Under-5 Mortality Rate by Country (2023)"
+                    text: `Under‑5 Mortality Rate by Country (${currentData.length ? currentData[0].year : ''})`
                 }
             },
-
             scales: {
                 x: {
                     ticks: {
@@ -159,41 +126,70 @@ function renderChart(data) {
                     }
                 }
             }
-
         }
-
     });
-
 }
 
 // ==============================
-// FILTER LOGIC
+// FETCH DATA FOR A NEW YEAR
+// ==============================
+function updateYear(year) {
+    document.getElementById("yearLabel").innerText = year;
+    fetch(`/indicators/mortality-chart-data/?year=${year}`)
+        .then(response => response.json())
+        .then(data => {
+            // update the dropdown options (in case new categories appear)
+            updateFilterOptions(data.continents, data.income_groups, data.subregions);
+            // store the new records
+            currentData = data.records;
+            // re‑apply all filters (including the newly selected year)
+            applyFilters();
+        })
+        .catch(err => console.error("Failed to fetch data:", err));
+}
+
+// ==============================
+// UPDATE FILTER DROPDOWNS
+// ==============================
+function updateFilterOptions(continents, incomeGroups, subregions) {
+    const continentSel = document.getElementById("continentFilter");
+    const incomeSel = document.getElementById("incomeFilter");
+    const subregionSel = document.getElementById("subregionFilter");
+
+    function populate(select, options) {
+        // keep the "All" option
+        const allOption = select.querySelector('option[value=""]');
+        select.innerHTML = '';
+        select.appendChild(allOption);
+        options.forEach(opt => {
+            const option = document.createElement("option");
+            option.value = opt;
+            option.textContent = opt;
+            select.appendChild(option);
+        });
+    }
+
+    populate(continentSel, continents);
+    populate(incomeSel, incomeGroups);
+    populate(subregionSel, subregions);
+}
+
+// ==============================
+// CLIENT‑SIDE FILTERING
 // ==============================
 function applyFilters() {
-
     const continent = document.getElementById("continentFilter").value;
     const income = document.getElementById("incomeFilter").value;
     const subregion = document.getElementById("subregionFilter").value;
 
-    const filtered = allData.filter(d => {
-
+    const filtered = currentData.filter(d => {
         const continentMatch = !continent || d.continent === continent;
         const incomeMatch = !income || d.income_group === income;
         const subregionMatch = !subregion || d.subregion === subregion;
-
         return continentMatch && incomeMatch && subregionMatch;
-
     });
 
     renderChart(filtered);
-
 }
-
-// ==============================
-// INITIAL LOAD
-// ==============================
-renderChart(allData);
-
 </script>
-
 {% endblock %}

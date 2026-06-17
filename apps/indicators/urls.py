@@ -1,18 +1,8 @@
 from django.urls import path
-from .views import mortality_table, mortality_chart
-
+from . import views 
 urlpatterns = [
 
-    path(
-        "mortality/",
-        mortality_table,
-        name="mortality_table"
-    ),
-
-    path(
-        "mortality/chart/",
-        mortality_chart,
-        name="mortality_chart"
-    ),
+path('mortality-chart/', views.mortality_chart, name='mortality_chart'),
+path('mortality-chart-data/', views.mortality_chart_data, name='mortality_chart_data'),
 
 ]

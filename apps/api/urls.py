@@ -1,12 +1,8 @@
 from django.urls import path
-from .views import home
-
+from . import views 
 urlpatterns = [
 
-    path(
-        "",
-        home,
-        name="home"
-    ),
+path('mortality-chart/', views.mortality_chart, name='mortality_chart'),
+path('mortality-chart-data/', views.mortality_chart_data, name='mortality_chart_data'),
 
 ]
