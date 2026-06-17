@@ -17,8 +17,8 @@ Child Mortality Chart
         </div>
     </div>
 
-    <!-- ANIMATION CONTROLS - inline with slider -->
-    <div class="row mb-3 align-items-center">
+    <!-- CONTROLS ROW -->
+    <div class="row mb-3 align-items-center g-2">
         <div class="col-auto">
             <button id="playBtn" class="btn btn-primary btn-sm" onclick="togglePlay()">▶ Play</button>
         </div>
@@ -31,10 +31,46 @@ Child Mortality Chart
         <div class="col-auto">
             <button class="btn btn-secondary btn-sm" onclick="resetToStart()">Reset</button>
         </div>
+
+        <!-- Order -->
+        <div class="col-auto">
+            <label for="orderSelect" class="form-label me-1">Order</label>
+            <select id="orderSelect" class="form-select form-select-sm" style="width:auto; display:inline-block;" onchange="applyFilters()">
+                <option value="desc">Highest</option>
+                <option value="asc">Lowest</option>
+            </select>
+        </div>
+
+        <!-- Show N -->
+        <div class="col-auto">
+            <label for="topNSelect" class="form-label me-1">Show</label>
+            <select id="topNSelect" class="form-select form-select-sm" style="width:auto; display:inline-block;" onchange="applyFilters()">
+                <option value="10">10</option>
+                <option value="25" selected>25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="200">200</option>
+                <option value="0">All</option>
+            </select>
+        </div>
+
+        <!-- Chart type -->
+        <div class="col-auto ms-auto">
+            <div class="btn-group btn-group-sm" role="group">
+                <button type="button" class="btn btn-outline-primary active" id="barBtn" onclick="setChartType('bar')">Bar</button>
+                <button type="button" class="btn btn-outline-primary" id="lineBtn" onclick="setChartType('line')">Line</button>
+            </div>
+        </div>
     </div>
 
-    <div class="card-body">
-        <canvas id="mortalityChart" height="120"></canvas>
+    <!-- CHART CONTAINER -->
+    <div style="position: relative; height:400px; width:100%;">
+        <canvas id="mortalityChart"></canvas>
+    </div>
+
+    <!-- FALLBACK MESSAGE -->
+    <div id="noDataMessage" class="alert alert-warning text-center" style="display:none;">
+        No data available for the selected year and filters.
     </div>
 
     <!-- FILTERS -->
@@ -78,30 +114,27 @@ Child Mortality Chart
 // ==============================
 // GLOBALS
 // ==============================
-// All data loaded from server: object mapping year -> array of records
 const allDataByYear = {{ all_data_json|safe }};
 
-let chart;
+let chart = null;
 let currentYear = {{ current_year }};
-let currentData = []; // records for current year after filtering
+let currentData = [];
+let chartType = 'bar';
 
 const MIN_YEAR = 1960;
 const MAX_YEAR = 2024;
 
 let isPlaying = false;
 let animationInterval = null;
-let animationDelay = 800; // milliseconds per step
+let animationDelay = 800;
 
 // ==============================
 // INITIALIZATION
 // ==============================
 function init() {
-    // Set slider and label
     document.getElementById("yearSlider").value = currentYear;
     document.getElementById("yearLabel").innerText = currentYear;
-    // Load data for current year
     loadYearData(currentYear);
-    // Apply initial filters
     applyFilters();
 }
 
@@ -115,32 +148,61 @@ function loadYearData(year) {
 }
 
 // ==============================
-// RENDER CHART
+// RENDER CHART (NO ANIMATIONS)
 // ==============================
 function renderChart(data) {
+    const noDataMsg = document.getElementById("noDataMessage");
+    const canvas = document.getElementById("mortalityChart");
+    const ctx = canvas.getContext("2d");
+
+    if (!data || data.length === 0) {
+        noDataMsg.style.display = 'block';
+        if (chart) {
+            chart.destroy();
+            chart = null;
+        }
+        return;
+    } else {
+        noDataMsg.style.display = 'none';
+    }
+
     const labels = data.map(d => d.country);
     const values = data.map(d => d.mortality);
 
-    const ctx = document.getElementById("mortalityChart").getContext("2d");
     if (chart) chart.destroy();
 
+    const dataset = {
+        label: "Under‑5 Mortality Rate",
+        data: values,
+        borderWidth: 1,
+        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+        borderColor: 'rgba(54, 162, 235, 1)',
+        pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+        pointBorderColor: '#fff',
+        pointRadius: 3,
+        pointHoverRadius: 5,
+        tension: 0.1,
+        fill: false
+    };
+
+    const isLine = chartType === 'line';
+    const type = isLine ? 'line' : 'bar';
+
     chart = new Chart(ctx, {
-        type: "bar",
+        type: type,
         data: {
             labels: labels,
-            datasets: [{
-                label: "Under‑5 Mortality Rate",
-                data: values,
-                borderWidth: 1
-            }]
+            datasets: [dataset]
         },
         options: {
+            animation: false,                     // DISABLE ALL ANIMATIONS
             responsive: true,
+            maintainAspectRatio: false,
             plugins: {
                 legend: { display: true },
                 title: {
                     display: true,
-                    text: `Under‑5 Mortality Rate by Country (${data.length ? data[0].year : ''})`
+                    text: `Under‑5 Mortality Rate by Country (${data[0].year})`
                 }
             },
             scales: {
@@ -164,21 +226,44 @@ function renderChart(data) {
 }
 
 // ==============================
-// FILTERING
+// FILTERING + ORDER + TOP N
 // ==============================
 function applyFilters() {
     const continent = document.getElementById("continentFilter").value;
     const income = document.getElementById("incomeFilter").value;
     const subregion = document.getElementById("subregionFilter").value;
 
-    const filtered = currentData.filter(d => {
+    let filtered = currentData.filter(d => {
         const continentMatch = !continent || d.continent === continent;
         const incomeMatch = !income || d.income_group === income;
         const subregionMatch = !subregion || d.subregion === subregion;
         return continentMatch && incomeMatch && subregionMatch;
     });
 
+    const order = document.getElementById("orderSelect").value;
+    if (order === 'desc') {
+        filtered.sort((a, b) => b.mortality - a.mortality);
+    } else {
+        filtered.sort((a, b) => a.mortality - b.mortality);
+    }
+
+    const topN = parseInt(document.getElementById("topNSelect").value);
+    if (topN > 0 && filtered.length > topN) {
+        filtered = filtered.slice(0, topN);
+    }
+
     renderChart(filtered);
+}
+
+// ==============================
+// CHART TYPE TOGGLE
+// ==============================
+function setChartType(type) {
+    if (chartType === type) return;
+    chartType = type;
+    document.getElementById('barBtn').classList.toggle('active', type === 'bar');
+    document.getElementById('lineBtn').classList.toggle('active', type === 'line');
+    applyFilters();
 }
 
 // ==============================
@@ -205,7 +290,6 @@ function togglePlay() {
 
 function startAnimation() {
     if (isPlaying) return;
-    // If at max, wrap to min
     if (currentYear >= MAX_YEAR) {
         currentYear = MIN_YEAR;
         document.getElementById("yearSlider").value = currentYear;
