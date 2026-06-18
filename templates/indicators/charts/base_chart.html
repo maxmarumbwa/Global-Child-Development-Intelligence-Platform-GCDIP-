@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ indicator_title }} – Chart{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        {% include 'indicators/_chart_header.html' %}
+        {% include 'indicators/_year_sliders.html' %}
+        {% include 'indicators/_controls.html' %}
+        {% include 'indicators/_chart_area.html' %}
+        {% include 'indicators/_filters.html' %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% include 'indicators/_chart_js.html' %}
+{% endblock %}

@@ -1,0 +1,50 @@
+<div class="row mb-3 align-items-center g-2">
+    <div class="col-auto">
+        <button id="playBtn" class="btn btn-primary btn-sm" onclick="togglePlay()">▶ Play</button>
+    </div>
+    <div class="col-auto">
+        <label for="speedSlider" class="form-label me-2">Speed</label>
+        <input type="range" id="speedSlider" min="200" max="2000" value="800" step="100"
+               class="form-range" style="width:150px;" oninput="updateSpeed(this.value)">
+        <span id="speedLabel">800 ms</span>
+    </div>
+    <div class="col-auto">
+        <button class="btn btn-secondary btn-sm" onclick="resetToStart()">Reset</button>
+    </div>
+    <div class="col-auto">
+        <label for="orderSelect" class="form-label me-1">Order</label>
+        <select id="orderSelect" class="form-select form-select-sm" style="width:auto; display:inline-block;" onchange="applyFilters()">
+            <option value="desc">Highest</option>
+            <option value="asc">Lowest</option>
+        </select>
+    </div>
+    <div class="col-auto">
+        <label for="topNSelect" class="form-label me-1">Show</label>
+        <select id="topNSelect" class="form-select form-select-sm" style="width:auto; display:inline-block;" onchange="applyFilters()">
+            <option value="10">10</option>
+            <option value="25" selected>25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+            <option value="200">200</option>
+            <option value="0">All</option>
+        </select>
+    </div>
+    <div class="col-auto">
+        <label for="colorBySelect" class="form-label me-1">Color by</label>
+        <select id="colorBySelect" class="form-select form-select-sm" style="width:auto; display:inline-block;" onchange="applyFilters()">
+            <option value="">None</option>
+            <option value="continent">Continent</option>
+            <option value="income_group">Income Group</option>
+            <option value="subregion">Subregion</option>
+        </select>
+    </div>
+    <div class="col-auto">
+        <button class="btn btn-success btn-sm" onclick="exportCSV()">📥 Export CSV</button>
+    </div>
+    <div class="col-auto ms-auto">
+        <div class="btn-group btn-group-sm" role="group">
+            <button type="button" class="btn btn-outline-primary active" id="barBtn" onclick="setChartType('bar')">Bar</button>
+            <button type="button" class="btn btn-outline-primary" id="lineBtn" onclick="setChartType('line')">Line</button>
+        </div>
+    </div>
+</div>

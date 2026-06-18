@@ -122,3 +122,4 @@ def get_child_mortality_range(start_year=1960, end_year=2024):
     if not df.empty:
         df = df.sort_values(["year", "mortality"], ascending=[True, False])
     return df
+

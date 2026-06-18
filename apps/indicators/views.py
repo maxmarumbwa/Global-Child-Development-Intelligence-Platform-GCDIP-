@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 from .services import get_child_mortality, get_child_mortality_range
+import json
 
 # =========================================================
 # PAGE VIEW (initial load with default year 2023)
@@ -121,3 +122,42 @@ def mortality_chart_all_data(request):
         records = year_df.to_dict(orient='records')
         data_by_year[str(year)] = records
     return JsonResponse({"data": data_by_year})
+
+#
+######### Mortality Table View (for all years, no limit) #########
+#
+def mortality_table(request):
+    """
+    Render a table view for child mortality data.
+    """
+    df = get_child_mortality_range(1960, 2024)
+    if df.empty:
+        return render(request, "indicators/mortality_table.html", {
+            "all_data_json": "{}",
+            "current_year": 2023,
+            "continents": [],
+            "income_groups": [],
+            "subregions": [],
+        })
+
+    # Group data by year
+    data_by_year = {}
+    for year in df['year'].unique():
+        year_df = df[df['year'] == year]  # No limit for table, show all
+        records = year_df.to_dict(orient='records')
+        data_by_year[str(year)] = records
+
+    # Extract filter options
+    continents = sorted(df['continent'].dropna().unique().tolist())
+    income_groups = sorted(df['income_group'].dropna().unique().tolist())
+    subregions = sorted(df['subregion'].dropna().unique().tolist())
+
+    all_data_json = json.dumps(data_by_year)
+
+    return render(request, "indicators/mortality_table.html", {
+        "all_data_json": all_data_json,
+        "current_year": 2023,
+        "continents": continents,
+        "income_groups": income_groups,
+        "subregions": subregions,
+    })

@@ -1,0 +1,14 @@
+<div class="row mb-2 align-items-center">
+    <div class="col-md-6" id="year1Container">
+        <label class="form-label">Year 1: <span id="year1Label">{{ current_year }}</span></label>
+        <input type="range" id="year1Slider" min="1960" max="2024"
+               value="{{ current_year }}" class="form-range"
+               oninput="onYear1Input(this.value)">
+    </div>
+    <div class="col-md-6" id="year2Container" style="display:none;">
+        <label class="form-label">Year 2: <span id="year2Label">{{ current_year }}</span></label>
+        <input type="range" id="year2Slider" min="1960" max="2024"
+               value="{{ current_year }}" class="form-range"
+               oninput="onYear2Input(this.value)">
+    </div>
+</div>

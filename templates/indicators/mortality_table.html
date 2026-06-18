@@ -1,0 +1,443 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Child Mortality – Table View
+{% endblock %}
+
+{% block content %}
+
+<div class="card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0">Under‑5 Mortality Rate – Table</h4>
+        <a href="{% url 'mortality_chart' %}" class="btn btn-outline-secondary btn-sm">📊 Chart View</a>
+    </div>
+
+    <!-- YEAR SLIDERS (same as chart page) -->
+    <div class="row mb-2 align-items-center">
+        <div class="col-md-6" id="year1Container">
+            <label class="form-label">Year 1: <span id="year1Label">{{ current_year }}</span></label>
+            <input type="range" id="year1Slider" min="1960" max="2024"
+                   value="{{ current_year }}" class="form-range"
+                   oninput="onYear1Input(this.value)">
+        </div>
+        <div class="col-md-6" id="year2Container" style="display:none;">
+            <label class="form-label">Year 2: <span id="year2Label">{{ current_year }}</span></label>
+            <input type="range" id="year2Slider" min="1960" max="2024"
+                   value="{{ current_year }}" class="form-range"
+                   oninput="onYear2Input(this.value)">
+        </div>
+    </div>
+
+    <!-- CONTROLS ROW (without chart type toggle) -->
+    <div class="row mb-3 align-items-center g-2">
+        <div class="col-auto">
+            <button id="playBtn" class="btn btn-primary btn-sm" onclick="togglePlay()">▶ Play</button>
+        </div>
+        <div class="col-auto">
+            <label for="speedSlider" class="form-label me-2">Speed</label>
+            <input type="range" id="speedSlider" min="200" max="2000" value="800" step="100"
+                   class="form-range" style="width:150px;" oninput="updateSpeed(this.value)">
+            <span id="speedLabel">800 ms</span>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-secondary btn-sm" onclick="resetToStart()">Reset</button>
+        </div>
+        <div class="col-auto">
+            <label for="orderSelect" class="form-label me-1">Order</label>
+            <select id="orderSelect" class="form-select form-select-sm" style="width:auto; display:inline-block;" onchange="applyFilters()">
+                <option value="desc">Highest</option>
+                <option value="asc">Lowest</option>
+            </select>
+        </div>
+        <div class="col-auto">
+            <label for="topNSelect" class="form-label me-1">Show</label>
+            <select id="topNSelect" class="form-select form-select-sm" style="width:auto; display:inline-block;" onchange="applyFilters()">
+                <option value="10">10</option>
+                <option value="25" selected>25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="200">200</option>
+                <option value="0">All</option>
+            </select>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-success btn-sm" onclick="exportCSV()">📥 Export CSV</button>
+        </div>
+        <div class="col-auto ms-auto">
+            <span class="text-muted">Table View</span>
+        </div>
+    </div>
+
+    <!-- TABLE CONTAINER -->
+    <div id="dataTableContainer" style="overflow-x:auto; margin-top:10px;"></div>
+
+    <!-- FALLBACK MESSAGE -->
+    <div id="noDataMessage" class="alert alert-warning text-center" style="display:none;">
+        No data available for the selected year(s) and filters.
+    </div>
+
+    <!-- FILTERS (same as chart page) -->
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <label class="form-label">Continent</label>
+            <select id="continentFilter" class="form-select" onchange="applyFilters()">
+                <option value="">All Continents</option>
+                {% for c in continents %}
+                <option value="{{ c }}">{{ c }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Income Group</label>
+            <select id="incomeFilter" class="form-select" onchange="applyFilters()">
+                <option value="">All Income Groups</option>
+                {% for i in income_groups %}
+                <option value="{{ i }}">{{ i }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Subregion</label>
+            <select id="subregionFilter" class="form-select" onchange="applyFilters()">
+                <option value="">All Subregions</option>
+                {% for s in subregions %}
+                <option value="{{ s }}">{{ s }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ==============================
+// SAFELY PARSE DATA (same as chart)
+// ==============================
+let allDataByYear = {};
+
+try {
+    allDataByYear = {{ all_data_json|safe }};
+    console.log('✅ Data loaded successfully. Years:', Object.keys(allDataByYear).sort());
+} catch (e) {
+    console.error('❌ Failed to parse all_data_json:', e);
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('noDataMessage').style.display = 'block';
+        document.getElementById('noDataMessage').innerHTML = 'Error loading data. See console.';
+    });
+}
+
+// ==============================
+// GLOBALS
+// ==============================
+let currentYear = {{ current_year }};
+let year1 = {{ current_year }};
+let year2 = {{ current_year }};
+let compareMode = false;
+
+const MIN_YEAR = 1960;
+const MAX_YEAR = 2024;
+
+let isPlaying = false;
+let animationInterval = null;
+let animationDelay = 800;
+
+let currentDisplayData = [];
+
+// ==============================
+// RENDER TABLE
+// ==============================
+function renderTable(data) {
+    const container = document.getElementById('dataTableContainer');
+    const noDataMsg = document.getElementById('noDataMessage');
+
+    if (!data || data.length === 0) {
+        noDataMsg.style.display = 'block';
+        container.innerHTML = '';
+        return;
+    }
+    noDataMsg.style.display = 'none';
+
+    // Determine headers and rows
+    const first = data[0];
+    let headers = [];
+    let rows = [];
+
+    if (first.hasOwnProperty('year1')) { // compare mode
+        headers = ['Country', 'Year 1', 'Year 2', 'Mortality Year 1', 'Mortality Year 2', 'Continent', 'Income Group', 'Subregion'];
+        rows = data.map(d => [
+            d.country,
+            d.year1,
+            d.year2,
+            d.value1 !== undefined ? d.value1.toFixed(1) : '',
+            d.value2 !== undefined ? d.value2.toFixed(1) : '',
+            d.continent || '',
+            d.income_group || '',
+            d.subregion || ''
+        ]);
+    } else { // single mode
+        headers = ['Country', 'Year', 'Mortality', 'Continent', 'Income Group', 'Subregion'];
+        rows = data.map(d => [
+            d.country,
+            d.year,
+            d.value !== undefined ? d.value.toFixed(1) : '',
+            d.continent || '',
+            d.income_group || '',
+            d.subregion || ''
+        ]);
+    }
+
+    let html = `<div class="table-responsive">
+        <table class="table table-striped table-bordered table-hover">
+            <thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>
+            <tbody>${rows.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`).join('')}</tbody>
+        </table>
+    </div>`;
+    container.innerHTML = html;
+}
+
+// ==============================
+// DATA PREPARATION AND FILTERING
+// ==============================
+function loadYearData(year) {
+    const yearStr = String(year);
+    return allDataByYear.hasOwnProperty(yearStr) ? allDataByYear[yearStr] : [];
+}
+
+function applyFilters() {
+    try {
+        const continent = document.getElementById("continentFilter").value;
+        const income = document.getElementById("incomeFilter").value;
+        const subregion = document.getElementById("subregionFilter").value;
+
+        const filterFn = (d) => {
+            const continentMatch = !continent || d.continent === continent;
+            const incomeMatch = !income || d.income_group === income;
+            const subregionMatch = !subregion || d.subregion === subregion;
+            return continentMatch && incomeMatch && subregionMatch;
+        };
+
+        let exportData = [];
+
+        if (compareMode) {
+            let data1 = loadYearData(year1).filter(filterFn);
+            let data2 = loadYearData(year2).filter(filterFn);
+            // Intersection of countries
+            const countries1 = new Set(data1.map(d => d.country));
+            const countries2 = new Set(data2.map(d => d.country));
+            const common = [...countries1].filter(c => countries2.has(c));
+
+            const order = document.getElementById("orderSelect").value;
+            const map1 = new Map(data1.map(d => [d.country, d]));
+            const map2 = new Map(data2.map(d => [d.country, d]));
+
+            let combined = common.map(country => ({
+                country: country,
+                value1: map1.get(country).mortality,
+                value2: map2.get(country).mortality,
+                year1: year1,
+                year2: year2,
+                continent: map1.get(country).continent || '',
+                income_group: map1.get(country).income_group || '',
+                subregion: map1.get(country).subregion || '',
+            }));
+
+            combined.sort((a, b) => order === 'desc' ? b.value1 - a.value1 : a.value1 - b.value1);
+
+            const topN = parseInt(document.getElementById("topNSelect").value);
+            if (topN > 0 && combined.length > topN) {
+                combined = combined.slice(0, topN);
+            }
+
+            exportData = combined.map(d => ({
+                country: d.country,
+                year1: d.year1,
+                year2: d.year2,
+                value1: d.value1,
+                value2: d.value2,
+                continent: d.continent,
+                income_group: d.income_group,
+                subregion: d.subregion
+            }));
+        } else {
+            let data = loadYearData(year1).filter(filterFn);
+            const order = document.getElementById("orderSelect").value;
+            data.sort((a, b) => order === 'desc' ? b.mortality - a.mortality : a.mortality - b.mortality);
+            const topN = parseInt(document.getElementById("topNSelect").value);
+            if (topN > 0 && data.length > topN) {
+                data = data.slice(0, topN);
+            }
+
+            exportData = data.map(d => ({
+                country: d.country,
+                year: d.year,
+                value: d.mortality,
+                continent: d.continent || '',
+                income_group: d.income_group || '',
+                subregion: d.subregion || ''
+            }));
+        }
+
+        currentDisplayData = exportData;
+        renderTable(currentDisplayData);
+    } catch (e) {
+        console.error('Error in applyFilters:', e);
+        document.getElementById('noDataMessage').style.display = 'block';
+        document.getElementById('noDataMessage').innerHTML = 'An error occurred. See console.';
+    }
+}
+
+// ==============================
+// COMPARE MODE
+// ==============================
+function setCompareMode(mode) {
+    compareMode = mode;
+    document.getElementById("singleBtn").classList.toggle('active', !mode);
+    document.getElementById("compareBtn").classList.toggle('active', mode);
+    document.getElementById("year2Container").style.display = mode ? 'block' : 'none';
+    applyFilters();
+}
+
+// ==============================
+// YEAR SLIDERS
+// ==============================
+function onYear1Input(value) {
+    if (isPlaying) stopAnimation();
+    year1 = parseInt(value);
+    document.getElementById("year1Label").innerText = year1;
+    if (!compareMode) currentYear = year1;
+    applyFilters();
+}
+
+function onYear2Input(value) {
+    if (isPlaying) stopAnimation();
+    year2 = parseInt(value);
+    document.getElementById("year2Label").innerText = year2;
+    applyFilters();
+}
+
+// ==============================
+// CSV EXPORT (same as chart page)
+// ==============================
+function exportCSV() {
+    if (!currentDisplayData || currentDisplayData.length === 0) {
+        alert('No data to export. Please adjust your filters.');
+        return;
+    }
+
+    const firstRow = currentDisplayData[0];
+    let headers = Object.keys(firstRow);
+    let csvRows = [headers.join(',')];
+
+    for (const row of currentDisplayData) {
+        const values = headers.map(header => {
+            let val = row[header] !== undefined ? row[header] : '';
+            if (typeof val === 'string' && (val.includes(',') || val.includes('"') || val.includes('\n'))) {
+                val = `"${val.replace(/"/g, '""')}"`;
+            }
+            return val;
+        });
+        csvRows.push(values.join(','));
+    }
+
+    const csvString = csvRows.join('\n');
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.href = url;
+    link.setAttribute('download', `mortality_data_${compareMode ? 'compare' : 'single'}_${year1}_${year2}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
+// ==============================
+// ANIMATION (same as chart page)
+// ==============================
+function togglePlay() {
+    if (compareMode) {
+        alert("Animation is available only in Single mode.");
+        return;
+    }
+    if (isPlaying) {
+        stopAnimation();
+    } else {
+        startAnimation();
+    }
+}
+
+function startAnimation() {
+    if (isPlaying || compareMode) return;
+    if (currentYear >= MAX_YEAR) {
+        currentYear = MIN_YEAR;
+        document.getElementById("year1Slider").value = currentYear;
+        document.getElementById("year1Label").innerText = currentYear;
+        year1 = currentYear;
+        applyFilters();
+    }
+    isPlaying = true;
+    document.getElementById("playBtn").innerHTML = "⏸ Pause";
+
+    animationInterval = setInterval(() => {
+        currentYear += 1;
+        if (currentYear > MAX_YEAR) {
+            currentYear = MIN_YEAR;
+        }
+        document.getElementById("year1Slider").value = currentYear;
+        document.getElementById("year1Label").innerText = currentYear;
+        year1 = currentYear;
+        applyFilters();
+    }, animationDelay);
+}
+
+function stopAnimation() {
+    if (animationInterval) {
+        clearInterval(animationInterval);
+        animationInterval = null;
+    }
+    isPlaying = false;
+    document.getElementById("playBtn").innerHTML = "▶ Play";
+}
+
+function updateSpeed(value) {
+    animationDelay = parseInt(value);
+    document.getElementById("speedLabel").innerText = value + " ms";
+    if (isPlaying) {
+        stopAnimation();
+        startAnimation();
+    }
+}
+
+function resetToStart() {
+    if (isPlaying) stopAnimation();
+    currentYear = MIN_YEAR;
+    year1 = MIN_YEAR;
+    year2 = MIN_YEAR + 1;
+    document.getElementById("year1Slider").value = year1;
+    document.getElementById("year1Label").innerText = year1;
+    document.getElementById("year2Slider").value = year2;
+    document.getElementById("year2Label").innerText = year2;
+    applyFilters();
+}
+
+// ==============================
+// INITIALISE
+// ==============================
+document.addEventListener('DOMContentLoaded', function() {
+    if (Object.keys(allDataByYear).length === 0) {
+        document.getElementById('noDataMessage').style.display = 'block';
+        document.getElementById('noDataMessage').innerHTML = 'No data available. Please check the server logs.';
+        return;
+    }
+    document.getElementById("year1Slider").value = currentYear;
+    document.getElementById("year1Label").innerText = currentYear;
+    document.getElementById("year2Slider").value = currentYear;
+    document.getElementById("year2Label").innerText = currentYear;
+    year1 = currentYear;
+    year2 = currentYear;
+    applyFilters();
+});
+</script>
+{% endblock %}

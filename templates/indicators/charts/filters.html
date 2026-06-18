@@ -1,0 +1,29 @@
+<div class="row mt-4">
+    <div class="col-md-4">
+        <label class="form-label">Continent</label>
+        <select id="continentFilter" class="form-select" onchange="applyFilters()">
+            <option value="">All Continents</option>
+            {% for c in continents %}
+            <option value="{{ c }}">{{ c }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">Income Group</label>
+        <select id="incomeFilter" class="form-select" onchange="applyFilters()">
+            <option value="">All Income Groups</option>
+            {% for i in income_groups %}
+            <option value="{{ i }}">{{ i }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">Subregion</label>
+        <select id="subregionFilter" class="form-select" onchange="applyFilters()">
+            <option value="">All Subregions</option>
+            {% for s in subregions %}
+            <option value="{{ s }}">{{ s }}</option>
+            {% endfor %}
+        </select>
+    </div>
+</div>
