@@ -9,10 +9,12 @@ Child Mortality – Table View
 <div class="card">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h4 class="mb-0">Under‑5 Mortality Rate – Table</h4>
-        <a href="{% url 'mortality_chart' %}" class="btn btn-outline-secondary btn-sm">📊 Chart View</a>
+        <div>
+            <a href="{% url 'mortality_chart' %}" class="btn btn-outline-secondary btn-sm">📊 Chart View</a>
+        </div>
     </div>
 
-    <!-- YEAR SLIDERS (same as chart page) -->
+    <!-- YEAR SLIDERS -->
     <div class="row mb-2 align-items-center">
         <div class="col-md-6" id="year1Container">
             <label class="form-label">Year 1: <span id="year1Label">{{ current_year }}</span></label>
@@ -28,7 +30,7 @@ Child Mortality – Table View
         </div>
     </div>
 
-    <!-- CONTROLS ROW (without chart type toggle) -->
+    <!-- CONTROLS ROW -->
     <div class="row mb-3 align-items-center g-2">
         <div class="col-auto">
             <button id="playBtn" class="btn btn-primary btn-sm" onclick="togglePlay()">▶ Play</button>
@@ -56,7 +58,6 @@ Child Mortality – Table View
                 <option value="25" selected>25</option>
                 <option value="50">50</option>
                 <option value="100">100</option>
-                <option value="200">200</option>
                 <option value="0">All</option>
             </select>
         </div>
@@ -68,15 +69,37 @@ Child Mortality – Table View
         </div>
     </div>
 
-    <!-- TABLE CONTAINER -->
-    <div id="dataTableContainer" style="overflow-x:auto; margin-top:10px;"></div>
+    <!-- TABLE AREA with fixed height for scrolling -->
+    <div style="max-height: 500px; overflow-y: auto; margin-top: 10px;">
+        <div id="dataTableContainer"></div>
+    </div>
+
+    <!-- PAGINATION CONTROLS -->
+    <div class="row align-items-center mt-3">
+        <div class="col-md-6">
+            <span id="pageInfo" class="text-muted">Showing 0-0 of 0</span>
+        </div>
+        <div class="col-md-6 d-flex justify-content-end align-items-center gap-2">
+            <label for="pageSizeSelect" class="form-label me-1 mb-0">Rows per page:</label>
+            <select id="pageSizeSelect" class="form-select form-select-sm" style="width:80px;" onchange="applyFilters()">
+                <option value="10">10</option>
+                <option value="25" selected>25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="0">All</option>
+            </select>
+            <button class="btn btn-outline-secondary btn-sm" onclick="goToPage('prev')" id="prevBtn">‹</button>
+            <span id="pageNumberDisplay" class="mx-2">1</span>
+            <button class="btn btn-outline-secondary btn-sm" onclick="goToPage('next')" id="nextBtn">›</button>
+        </div>
+    </div>
 
     <!-- FALLBACK MESSAGE -->
     <div id="noDataMessage" class="alert alert-warning text-center" style="display:none;">
         No data available for the selected year(s) and filters.
     </div>
 
-    <!-- FILTERS (same as chart page) -->
+    <!-- FILTERS (bottom) -->
     <div class="row mt-4">
         <div class="col-md-4">
             <label class="form-label">Continent</label>
@@ -113,7 +136,7 @@ Child Mortality – Table View
 {% block extra_js %}
 <script>
 // ==============================
-// SAFELY PARSE DATA (same as chart)
+// SAFELY PARSE DATA
 // ==============================
 let allDataByYear = {};
 
@@ -143,10 +166,49 @@ let isPlaying = false;
 let animationInterval = null;
 let animationDelay = 800;
 
-let currentDisplayData = [];
+let currentDisplayData = [];     // full filtered data
+let currentPage = 1;
+let pageSize = 25;              // default
 
 // ==============================
-// RENDER TABLE
+// PAGINATION HELPERS
+// ==============================
+function getPaginatedData(data) {
+    const size = parseInt(document.getElementById('pageSizeSelect').value);
+    if (size === 0) { // All rows
+        return { data: data, totalPages: 1, currentPage: 1 };
+    }
+    pageSize = size;
+    const total = data.length;
+    const totalPages = Math.ceil(total / pageSize) || 1;
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+    const start = (currentPage - 1) * pageSize;
+    const end = Math.min(start + pageSize, total);
+    const pageData = data.slice(start, end);
+    return { data: pageData, totalPages, currentPage, start, end, total };
+}
+
+function updatePaginationInfo(start, end, total, currentPage, totalPages) {
+    document.getElementById('pageInfo').textContent =
+        total > 0 ? `Showing ${start + 1}–${end} of ${total}` : 'No records';
+    document.getElementById('pageNumberDisplay').textContent = totalPages > 0 ? currentPage : 0;
+    document.getElementById('prevBtn').disabled = (currentPage <= 1 || total === 0);
+    document.getElementById('nextBtn').disabled = (currentPage >= totalPages || total === 0);
+}
+
+function goToPage(direction) {
+    const total = currentDisplayData.length;
+    const size = parseInt(document.getElementById('pageSizeSelect').value);
+    if (size === 0) return;
+    const totalPages = Math.ceil(total / size) || 1;
+    if (direction === 'prev' && currentPage > 1) currentPage--;
+    if (direction === 'next' && currentPage < totalPages) currentPage++;
+    applyFilters(); // re-render with new page
+}
+
+// ==============================
+// RENDER TABLE (with pagination)
 // ==============================
 function renderTable(data) {
     const container = document.getElementById('dataTableContainer');
@@ -155,18 +217,48 @@ function renderTable(data) {
     if (!data || data.length === 0) {
         noDataMsg.style.display = 'block';
         container.innerHTML = '';
+        document.getElementById('pageInfo').textContent = 'No records';
+        document.getElementById('pageNumberDisplay').textContent = 0;
+        document.getElementById('prevBtn').disabled = true;
+        document.getElementById('nextBtn').disabled = true;
         return;
     }
     noDataMsg.style.display = 'none';
 
-    // Determine headers and rows
-    const first = data[0];
+    // Paginate
+    const size = parseInt(document.getElementById('pageSizeSelect').value);
+    let paginatedResult;
+    if (size === 0) {
+        // Show all
+        paginatedResult = { data: data, totalPages: 1, currentPage: 1, start: 0, end: data.length, total: data.length };
+        document.getElementById('pageNumberDisplay').textContent = 1;
+        document.getElementById('prevBtn').disabled = true;
+        document.getElementById('nextBtn').disabled = true;
+    } else {
+        const totalPages = Math.ceil(data.length / size) || 1;
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+        const start = (currentPage - 1) * size;
+        const end = Math.min(start + size, data.length);
+        const pageData = data.slice(start, end);
+        paginatedResult = { data: pageData, totalPages, currentPage, start, end, total: data.length };
+        document.getElementById('pageNumberDisplay').textContent = currentPage;
+        document.getElementById('prevBtn').disabled = (currentPage <= 1);
+        document.getElementById('nextBtn').disabled = (currentPage >= totalPages);
+    }
+
+    const pageData = paginatedResult.data;
+    updatePaginationInfo(paginatedResult.start, paginatedResult.end, paginatedResult.total,
+                         paginatedResult.currentPage, paginatedResult.totalPages);
+
+    // Build table
+    const first = pageData[0];
     let headers = [];
     let rows = [];
 
     if (first.hasOwnProperty('year1')) { // compare mode
         headers = ['Country', 'Year 1', 'Year 2', 'Mortality Year 1', 'Mortality Year 2', 'Continent', 'Income Group', 'Subregion'];
-        rows = data.map(d => [
+        rows = pageData.map(d => [
             d.country,
             d.year1,
             d.year2,
@@ -178,7 +270,7 @@ function renderTable(data) {
         ]);
     } else { // single mode
         headers = ['Country', 'Year', 'Mortality', 'Continent', 'Income Group', 'Subregion'];
-        rows = data.map(d => [
+        rows = pageData.map(d => [
             d.country,
             d.year,
             d.value !== undefined ? d.value.toFixed(1) : '',
@@ -223,7 +315,6 @@ function applyFilters() {
         if (compareMode) {
             let data1 = loadYearData(year1).filter(filterFn);
             let data2 = loadYearData(year2).filter(filterFn);
-            // Intersection of countries
             const countries1 = new Set(data1.map(d => d.country));
             const countries2 = new Set(data2.map(d => d.country));
             const common = [...countries1].filter(c => countries2.has(c));
@@ -280,6 +371,8 @@ function applyFilters() {
         }
 
         currentDisplayData = exportData;
+        // Reset page to 1 when filters change
+        currentPage = 1;
         renderTable(currentDisplayData);
     } catch (e) {
         console.error('Error in applyFilters:', e);
@@ -318,18 +411,17 @@ function onYear2Input(value) {
 }
 
 // ==============================
-// CSV EXPORT (same as chart page)
+// CSV EXPORT (unchanged)
 // ==============================
 function exportCSV() {
+    // ... same as before (exports full currentDisplayData, not paginated) ...
     if (!currentDisplayData || currentDisplayData.length === 0) {
         alert('No data to export. Please adjust your filters.');
         return;
     }
-
     const firstRow = currentDisplayData[0];
     let headers = Object.keys(firstRow);
     let csvRows = [headers.join(',')];
-
     for (const row of currentDisplayData) {
         const values = headers.map(header => {
             let val = row[header] !== undefined ? row[header] : '';
@@ -340,7 +432,6 @@ function exportCSV() {
         });
         csvRows.push(values.join(','));
     }
-
     const csvString = csvRows.join('\n');
     const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
@@ -354,7 +445,7 @@ function exportCSV() {
 }
 
 // ==============================
-// ANIMATION (same as chart page)
+// ANIMATION (unchanged)
 // ==============================
 function togglePlay() {
     if (compareMode) {

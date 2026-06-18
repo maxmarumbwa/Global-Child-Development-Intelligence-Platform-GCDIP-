@@ -6,7 +6,7 @@ from .services import get_child_mortality
 # PAGE VIEW (initial load with default year 2023)
 # =========================================================
 
-def mortality_chart(request):
+def mortality_chart_api(request):
     # Get year from query string, default to 2023
     year = request.GET.get("year")
     try:
