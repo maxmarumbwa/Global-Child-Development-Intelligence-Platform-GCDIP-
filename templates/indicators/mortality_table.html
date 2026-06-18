@@ -7,126 +7,148 @@ Child Mortality – Table View
 {% block content %}
 
 <div class="card">
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <!-- Navigation Bar -->
+    <div class="card-header d-flex justify-content-between align-items-center">
         <h4 class="mb-0">Under‑5 Mortality Rate – Table</h4>
-        <div>
-            <a href="{% url 'mortality_chart' %}" class="btn btn-outline-secondary btn-sm">📊 Chart View</a>
+        <div class="btn-group btn-group-sm" role="group">
+            <a href="{% url 'mortality_chart' %}" class="btn btn-outline-secondary">Chart</a>
+            <a href="{% url 'mortality_table' %}" class="btn btn-secondary active">Table</a>
+            <a href="#" class="btn btn-outline-secondary">Map</a>
+            <a href="#" class="btn btn-outline-secondary">All</a>
         </div>
     </div>
 
-    <!-- YEAR SLIDERS -->
-    <div class="row mb-2 align-items-center">
-        <div class="col-md-6" id="year1Container">
-            <label class="form-label">Year 1: <span id="year1Label">{{ current_year }}</span></label>
-            <input type="range" id="year1Slider" min="1960" max="2024"
-                   value="{{ current_year }}" class="form-range"
-                   oninput="onYear1Input(this.value)">
+    <div class="card-body">
+        <!-- YEAR SLIDERS -->
+        <div class="row mb-2 align-items-center">
+            <div class="col-md-6" id="year1Container">
+                <label class="form-label">Year 1: <span id="year1Label">{{ current_year }}</span></label>
+                <input type="range" id="year1Slider" min="1960" max="2024"
+                       value="{{ current_year }}" class="form-range"
+                       oninput="onYear1Input(this.value)">
+            </div>
+            <div class="col-md-6" id="year2Container" style="display:none;">
+                <label class="form-label">Year 2: <span id="year2Label">{{ current_year }}</span></label>
+                <input type="range" id="year2Slider" min="1960" max="2024"
+                       value="{{ current_year }}" class="form-range"
+                       oninput="onYear2Input(this.value)">
+            </div>
         </div>
-        <div class="col-md-6" id="year2Container" style="display:none;">
-            <label class="form-label">Year 2: <span id="year2Label">{{ current_year }}</span></label>
-            <input type="range" id="year2Slider" min="1960" max="2024"
-                   value="{{ current_year }}" class="form-range"
-                   oninput="onYear2Input(this.value)">
-        </div>
-    </div>
 
-    <!-- CONTROLS ROW -->
-    <div class="row mb-3 align-items-center g-2">
-        <div class="col-auto">
-            <button id="playBtn" class="btn btn-primary btn-sm" onclick="togglePlay()">▶ Play</button>
+        <!-- CONTROLS ROW -->
+        <div class="row mb-3 align-items-center g-2">
+            <div class="col-auto">
+                <button id="playBtn" class="btn btn-primary btn-sm" onclick="togglePlay()">▶ Play</button>
+            </div>
+            <div class="col-auto">
+                <label for="speedSlider" class="form-label me-2">Speed</label>
+                <input type="range" id="speedSlider" min="200" max="2000" value="800" step="100"
+                       class="form-range" style="width:150px;" oninput="updateSpeed(this.value)">
+                <span id="speedLabel">800 ms</span>
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-secondary btn-sm" onclick="resetToStart()">Reset</button>
+            </div>
+            <div class="col-auto">
+                <label for="orderSelect" class="form-label me-1">Order</label>
+                <select id="orderSelect" class="form-select form-select-sm" style="width:auto; display:inline-block;" onchange="applyFilters()">
+                    <option value="desc">Highest</option>
+                    <option value="asc">Lowest</option>
+                </select>
+            </div>
+            <div class="col-auto">
+                <label for="topNSelect" class="form-label me-1">Show</label>
+                <select id="topNSelect" class="form-select form-select-sm" style="width:auto; display:inline-block;" onchange="applyFilters()">
+                    <option value="10">10</option>
+                    <option value="25" selected>25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="0">All</option>
+                </select>
+            </div>
+            <!-- Year Range -->
+            <div class="col-auto">
+                <label class="form-label me-1">Years</label>
+                <input type="number" id="rangeFrom" class="form-control form-control-sm" style="width:70px; display:inline;" value="1960" min="1960" max="2024">
+                <span class="mx-1">–</span>
+                <input type="number" id="rangeTo" class="form-control form-control-sm" style="width:70px; display:inline;" value="2024" min="1960" max="2024">
+                <button class="btn btn-outline-primary btn-sm" onclick="applyYearRange()">Apply</button>
+            </div>
+            <!-- Search -->
+            <div class="col-auto">
+                <div class="input-group input-group-sm">
+                    <input type="text" id="searchInput" class="form-control" placeholder="Search country..." style="width:140px;">
+                    <button class="btn btn-outline-primary" type="button" onclick="applyFilters()">🔍</button>
+                    <button class="btn btn-outline-secondary" type="button" onclick="clearSearch()">✕</button>
+                </div>
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-success btn-sm" onclick="exportCSV()">📥 Export CSV</button>
+            </div>
+            <div class="col-auto ms-auto">
+                <span class="text-muted">Table View</span>
+            </div>
         </div>
-        <div class="col-auto">
-            <label for="speedSlider" class="form-label me-2">Speed</label>
-            <input type="range" id="speedSlider" min="200" max="2000" value="800" step="100"
-                   class="form-range" style="width:150px;" oninput="updateSpeed(this.value)">
-            <span id="speedLabel">800 ms</span>
-        </div>
-        <div class="col-auto">
-            <button class="btn btn-secondary btn-sm" onclick="resetToStart()">Reset</button>
-        </div>
-        <div class="col-auto">
-            <label for="orderSelect" class="form-label me-1">Order</label>
-            <select id="orderSelect" class="form-select form-select-sm" style="width:auto; display:inline-block;" onchange="applyFilters()">
-                <option value="desc">Highest</option>
-                <option value="asc">Lowest</option>
-            </select>
-        </div>
-        <div class="col-auto">
-            <label for="topNSelect" class="form-label me-1">Show</label>
-            <select id="topNSelect" class="form-select form-select-sm" style="width:auto; display:inline-block;" onchange="applyFilters()">
-                <option value="10">10</option>
-                <option value="25" selected>25</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-                <option value="0">All</option>
-            </select>
-        </div>
-        <div class="col-auto">
-            <button class="btn btn-success btn-sm" onclick="exportCSV()">📥 Export CSV</button>
-        </div>
-        <div class="col-auto ms-auto">
-            <span class="text-muted">Table View</span>
-        </div>
-    </div>
 
-    <!-- TABLE AREA with fixed height for scrolling -->
-    <div style="max-height: 500px; overflow-y: auto; margin-top: 10px;">
-        <div id="dataTableContainer"></div>
-    </div>
+        <!-- TABLE AREA -->
+        <div style="max-height: 500px; overflow-y: auto; margin-top: 10px;">
+            <div id="dataTableContainer"></div>
+        </div>
 
-    <!-- PAGINATION CONTROLS -->
-    <div class="row align-items-center mt-3">
-        <div class="col-md-6">
-            <span id="pageInfo" class="text-muted">Showing 0-0 of 0</span>
+        <!-- PAGINATION -->
+        <div class="row align-items-center mt-3">
+            <div class="col-md-6">
+                <span id="pageInfo" class="text-muted">Showing 0-0 of 0</span>
+            </div>
+            <div class="col-md-6 d-flex justify-content-end align-items-center gap-2">
+                <label for="pageSizeSelect" class="form-label me-1 mb-0">Rows per page:</label>
+                <select id="pageSizeSelect" class="form-select form-select-sm" style="width:80px;" onchange="applyFilters()">
+                    <option value="10">10</option>
+                    <option value="25" selected>25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="0">All</option>
+                </select>
+                <button class="btn btn-outline-secondary btn-sm" onclick="goToPage('prev')" id="prevBtn">‹</button>
+                <span id="pageNumberDisplay" class="mx-2">1</span>
+                <button class="btn btn-outline-secondary btn-sm" onclick="goToPage('next')" id="nextBtn">›</button>
+            </div>
         </div>
-        <div class="col-md-6 d-flex justify-content-end align-items-center gap-2">
-            <label for="pageSizeSelect" class="form-label me-1 mb-0">Rows per page:</label>
-            <select id="pageSizeSelect" class="form-select form-select-sm" style="width:80px;" onchange="applyFilters()">
-                <option value="10">10</option>
-                <option value="25" selected>25</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-                <option value="0">All</option>
-            </select>
-            <button class="btn btn-outline-secondary btn-sm" onclick="goToPage('prev')" id="prevBtn">‹</button>
-            <span id="pageNumberDisplay" class="mx-2">1</span>
-            <button class="btn btn-outline-secondary btn-sm" onclick="goToPage('next')" id="nextBtn">›</button>
-        </div>
-    </div>
 
-    <!-- FALLBACK MESSAGE -->
-    <div id="noDataMessage" class="alert alert-warning text-center" style="display:none;">
-        No data available for the selected year(s) and filters.
-    </div>
+        <!-- FALLBACK MESSAGE -->
+        <div id="noDataMessage" class="alert alert-warning text-center mt-2" style="display:none;">
+            No data available for the selected year(s) and filters.
+        </div>
 
-    <!-- FILTERS (bottom) -->
-    <div class="row mt-4">
-        <div class="col-md-4">
-            <label class="form-label">Continent</label>
-            <select id="continentFilter" class="form-select" onchange="applyFilters()">
-                <option value="">All Continents</option>
-                {% for c in continents %}
-                <option value="{{ c }}">{{ c }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="col-md-4">
-            <label class="form-label">Income Group</label>
-            <select id="incomeFilter" class="form-select" onchange="applyFilters()">
-                <option value="">All Income Groups</option>
-                {% for i in income_groups %}
-                <option value="{{ i }}">{{ i }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="col-md-4">
-            <label class="form-label">Subregion</label>
-            <select id="subregionFilter" class="form-select" onchange="applyFilters()">
-                <option value="">All Subregions</option>
-                {% for s in subregions %}
-                <option value="{{ s }}">{{ s }}</option>
-                {% endfor %}
-            </select>
+        <!-- BOTTOM FILTERS -->
+        <div class="row mt-4">
+            <div class="col-md-4">
+                <label class="form-label">Continent</label>
+                <select id="continentFilter" class="form-select" onchange="applyFilters()">
+                    <option value="">All Continents</option>
+                    {% for c in continents %}
+                    <option value="{{ c }}">{{ c }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Income Group</label>
+                <select id="incomeFilter" class="form-select" onchange="applyFilters()">
+                    <option value="">All Income Groups</option>
+                    {% for i in income_groups %}
+                    <option value="{{ i }}">{{ i }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Subregion</label>
+                <select id="subregionFilter" class="form-select" onchange="applyFilters()">
+                    <option value="">All Subregions</option>
+                    {% for s in subregions %}
+                    <option value="{{ s }}">{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
         </div>
     </div>
 </div>
@@ -134,6 +156,7 @@ Child Mortality – Table View
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 // ==============================
 // SAFELY PARSE DATA
@@ -159,6 +182,9 @@ let year1 = {{ current_year }};
 let year2 = {{ current_year }};
 let compareMode = false;
 
+let rangeStart = 1960;
+let rangeEnd = 2024;
+
 const MIN_YEAR = 1960;
 const MAX_YEAR = 2024;
 
@@ -166,17 +192,46 @@ let isPlaying = false;
 let animationInterval = null;
 let animationDelay = 800;
 
-let currentDisplayData = [];     // full filtered data
+let currentDisplayData = [];
 let currentPage = 1;
-let pageSize = 25;              // default
+let pageSize = 25;
+
+// ==============================
+// YEAR RANGE APPLICATION
+// ==============================
+function applyYearRange() {
+    const from = parseInt(document.getElementById('rangeFrom').value);
+    const to = parseInt(document.getElementById('rangeTo').value);
+    if (isNaN(from) || isNaN(to) || from > to) {
+        alert('Please enter a valid year range (From ≤ To).');
+        return;
+    }
+    rangeStart = Math.max(MIN_YEAR, from);
+    rangeEnd = Math.min(MAX_YEAR, to);
+    // Update sliders min/max
+    document.getElementById('year1Slider').min = rangeStart;
+    document.getElementById('year1Slider').max = rangeEnd;
+    document.getElementById('year2Slider').min = rangeStart;
+    document.getElementById('year2Slider').max = rangeEnd;
+    // Adjust current years if out of range
+    if (year1 < rangeStart) year1 = rangeStart;
+    if (year1 > rangeEnd) year1 = rangeEnd;
+    if (year2 < rangeStart) year2 = rangeStart;
+    if (year2 > rangeEnd) year2 = rangeEnd;
+    document.getElementById('year1Slider').value = year1;
+    document.getElementById('year2Slider').value = year2;
+    document.getElementById('year1Label').innerText = year1;
+    document.getElementById('year2Label').innerText = year2;
+    applyFilters();
+}
 
 // ==============================
 // PAGINATION HELPERS
 // ==============================
 function getPaginatedData(data) {
     const size = parseInt(document.getElementById('pageSizeSelect').value);
-    if (size === 0) { // All rows
-        return { data: data, totalPages: 1, currentPage: 1 };
+    if (size === 0) {
+        return { data: data, totalPages: 1, currentPage: 1, start: 0, end: data.length, total: data.length };
     }
     pageSize = size;
     const total = data.length;
@@ -204,11 +259,11 @@ function goToPage(direction) {
     const totalPages = Math.ceil(total / size) || 1;
     if (direction === 'prev' && currentPage > 1) currentPage--;
     if (direction === 'next' && currentPage < totalPages) currentPage++;
-    applyFilters(); // re-render with new page
+    applyFilters();
 }
 
 // ==============================
-// RENDER TABLE (with pagination)
+// RENDER TABLE
 // ==============================
 function renderTable(data) {
     const container = document.getElementById('dataTableContainer');
@@ -225,11 +280,9 @@ function renderTable(data) {
     }
     noDataMsg.style.display = 'none';
 
-    // Paginate
     const size = parseInt(document.getElementById('pageSizeSelect').value);
     let paginatedResult;
     if (size === 0) {
-        // Show all
         paginatedResult = { data: data, totalPages: 1, currentPage: 1, start: 0, end: data.length, total: data.length };
         document.getElementById('pageNumberDisplay').textContent = 1;
         document.getElementById('prevBtn').disabled = true;
@@ -251,12 +304,13 @@ function renderTable(data) {
     updatePaginationInfo(paginatedResult.start, paginatedResult.end, paginatedResult.total,
                          paginatedResult.currentPage, paginatedResult.totalPages);
 
-    // Build table
+    // Determine headers based on first row
     const first = pageData[0];
     let headers = [];
     let rows = [];
 
-    if (first.hasOwnProperty('year1')) { // compare mode
+    if (first.hasOwnProperty('year1')) {
+        // Compare mode – each row has two years
         headers = ['Country', 'Year 1', 'Year 2', 'Mortality Year 1', 'Mortality Year 2', 'Continent', 'Income Group', 'Subregion'];
         rows = pageData.map(d => [
             d.country,
@@ -268,7 +322,8 @@ function renderTable(data) {
             d.income_group || '',
             d.subregion || ''
         ]);
-    } else { // single mode
+    } else {
+        // Single mode (range) – each row is a country-year pair
         headers = ['Country', 'Year', 'Mortality', 'Continent', 'Income Group', 'Subregion'];
         rows = pageData.map(d => [
             d.country,
@@ -290,11 +345,20 @@ function renderTable(data) {
 }
 
 // ==============================
-// DATA PREPARATION AND FILTERING
+// DATA PREPARATION AND FILTERING (with year range)
 // ==============================
-function loadYearData(year) {
-    const yearStr = String(year);
-    return allDataByYear.hasOwnProperty(yearStr) ? allDataByYear[yearStr] : [];
+function loadDataForYears(start, end) {
+    // Collect all records for years in [start, end]
+    let allRecords = [];
+    for (let y = start; y <= end; y++) {
+        const yearStr = String(y);
+        if (allDataByYear.hasOwnProperty(yearStr)) {
+            // Ensure each record has a 'year' field
+            const records = allDataByYear[yearStr].map(d => ({ ...d, year: y }));
+            allRecords = allRecords.concat(records);
+        }
+    }
+    return allRecords;
 }
 
 function applyFilters() {
@@ -302,19 +366,22 @@ function applyFilters() {
         const continent = document.getElementById("continentFilter").value;
         const income = document.getElementById("incomeFilter").value;
         const subregion = document.getElementById("subregionFilter").value;
+        const searchTerm = document.getElementById('searchInput').value.trim().toLowerCase();
 
         const filterFn = (d) => {
             const continentMatch = !continent || d.continent === continent;
             const incomeMatch = !income || d.income_group === income;
             const subregionMatch = !subregion || d.subregion === subregion;
-            return continentMatch && incomeMatch && subregionMatch;
+            const countryMatch = !searchTerm || d.country.toLowerCase().includes(searchTerm);
+            return continentMatch && incomeMatch && subregionMatch && countryMatch;
         };
 
         let exportData = [];
 
         if (compareMode) {
-            let data1 = loadYearData(year1).filter(filterFn);
-            let data2 = loadYearData(year2).filter(filterFn);
+            // Compare mode: still uses two specific years, but respect the year range
+            let data1 = loadDataForYears(year1, year1).filter(filterFn);
+            let data2 = loadDataForYears(year2, year2).filter(filterFn);
             const countries1 = new Set(data1.map(d => d.country));
             const countries2 = new Set(data2.map(d => d.country));
             const common = [...countries1].filter(c => countries2.has(c));
@@ -352,9 +419,17 @@ function applyFilters() {
                 subregion: d.subregion
             }));
         } else {
-            let data = loadYearData(year1).filter(filterFn);
+            // Single mode: load all years in the range
+            let data = loadDataForYears(rangeStart, rangeEnd).filter(filterFn);
             const order = document.getElementById("orderSelect").value;
-            data.sort((a, b) => order === 'desc' ? b.mortality - a.mortality : a.mortality - b.mortality);
+            // Sort by mortality first, then by year if needed
+            data.sort((a, b) => {
+                if (order === 'desc') {
+                    return b.mortality - a.mortality || a.year - b.year;
+                } else {
+                    return a.mortality - b.mortality || a.year - b.year;
+                }
+            });
             const topN = parseInt(document.getElementById("topNSelect").value);
             if (topN > 0 && data.length > topN) {
                 data = data.slice(0, topN);
@@ -371,7 +446,6 @@ function applyFilters() {
         }
 
         currentDisplayData = exportData;
-        // Reset page to 1 when filters change
         currentPage = 1;
         renderTable(currentDisplayData);
     } catch (e) {
@@ -379,6 +453,14 @@ function applyFilters() {
         document.getElementById('noDataMessage').style.display = 'block';
         document.getElementById('noDataMessage').innerHTML = 'An error occurred. See console.';
     }
+}
+
+// ==============================
+// CLEAR SEARCH
+// ==============================
+function clearSearch() {
+    document.getElementById('searchInput').value = '';
+    applyFilters();
 }
 
 // ==============================
@@ -411,10 +493,9 @@ function onYear2Input(value) {
 }
 
 // ==============================
-// CSV EXPORT (unchanged)
+// CSV EXPORT
 // ==============================
 function exportCSV() {
-    // ... same as before (exports full currentDisplayData, not paginated) ...
     if (!currentDisplayData || currentDisplayData.length === 0) {
         alert('No data to export. Please adjust your filters.');
         return;
@@ -445,7 +526,7 @@ function exportCSV() {
 }
 
 // ==============================
-// ANIMATION (unchanged)
+// ANIMATION
 // ==============================
 function togglePlay() {
     if (compareMode) {
@@ -461,8 +542,8 @@ function togglePlay() {
 
 function startAnimation() {
     if (isPlaying || compareMode) return;
-    if (currentYear >= MAX_YEAR) {
-        currentYear = MIN_YEAR;
+    if (currentYear >= rangeEnd) {
+        currentYear = rangeStart;
         document.getElementById("year1Slider").value = currentYear;
         document.getElementById("year1Label").innerText = currentYear;
         year1 = currentYear;
@@ -473,8 +554,8 @@ function startAnimation() {
 
     animationInterval = setInterval(() => {
         currentYear += 1;
-        if (currentYear > MAX_YEAR) {
-            currentYear = MIN_YEAR;
+        if (currentYear > rangeEnd) {
+            currentYear = rangeStart;
         }
         document.getElementById("year1Slider").value = currentYear;
         document.getElementById("year1Label").innerText = currentYear;
@@ -503,9 +584,10 @@ function updateSpeed(value) {
 
 function resetToStart() {
     if (isPlaying) stopAnimation();
-    currentYear = MIN_YEAR;
-    year1 = MIN_YEAR;
-    year2 = MIN_YEAR + 1;
+    currentYear = rangeStart;
+    year1 = rangeStart;
+    year2 = rangeStart + 1;
+    if (year2 > rangeEnd) year2 = rangeStart;
     document.getElementById("year1Slider").value = year1;
     document.getElementById("year1Label").innerText = year1;
     document.getElementById("year2Slider").value = year2;
@@ -522,6 +604,15 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('noDataMessage').innerHTML = 'No data available. Please check the server logs.';
         return;
     }
+    // Set initial range inputs
+    document.getElementById('rangeFrom').value = 1960;
+    document.getElementById('rangeTo').value = 2024;
+    rangeStart = 1960;
+    rangeEnd = 2024;
+    document.getElementById("year1Slider").min = 1960;
+    document.getElementById("year1Slider").max = 2024;
+    document.getElementById("year2Slider").min = 1960;
+    document.getElementById("year2Slider").max = 2024;
     document.getElementById("year1Slider").value = currentYear;
     document.getElementById("year1Label").innerText = currentYear;
     document.getElementById("year2Slider").value = currentYear;
