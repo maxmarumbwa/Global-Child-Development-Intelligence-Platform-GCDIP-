@@ -1,0 +1,536 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Child Mortality – Map View
+{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    #map { height: 500px; width: 100%; }
+    .legend {
+        background: white;
+        padding: 8px 12px;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        font-size: 12px;
+        line-height: 1.4;
+    }
+    .legend i {
+        width: 18px;
+        height: 18px;
+        float: left;
+        margin-right: 8px;
+        opacity: 0.8;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="card">
+    <!-- Navigation Bar -->
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h4 class="mb-0">Under‑5 Mortality Rate – Map</h4>
+        <div class="btn-group btn-group-sm" role="group">
+            <a href="{% url 'mortality_chart' %}" class="btn btn-outline-secondary">Chart</a>
+            <a href="{% url 'mortality_table' %}" class="btn btn-outline-secondary">Table</a>
+            <a href="{% url 'mortality_map' %}" class="btn btn-secondary active">Map</a>
+            <a href="#" class="btn btn-outline-secondary">All</a>
+        </div>
+    </div>
+
+    <div class="card-body">
+        <!-- YEAR SLIDERS (same as table) -->
+        <div class="row mb-2 align-items-center">
+            <div class="col-md-6" id="year1Container">
+                <label class="form-label">Year 1: <span id="year1Label">{{ current_year }}</span></label>
+                <input type="range" id="year1Slider" min="1960" max="2024"
+                       value="{{ current_year }}" class="form-range"
+                       oninput="onYear1Input(this.value)">
+            </div>
+            <div class="col-md-6" id="year2Container" style="display:none;">
+                <label class="form-label">Year 2: <span id="year2Label">{{ current_year }}</span></label>
+                <input type="range" id="year2Slider" min="1960" max="2024"
+                       value="{{ current_year }}" class="form-range"
+                       oninput="onYear2Input(this.value)">
+            </div>
+        </div>
+
+        <!-- CONTROLS ROW (without chart type toggle) -->
+        <div class="row mb-3 align-items-center g-2">
+            <div class="col-auto">
+                <button id="playBtn" class="btn btn-primary btn-sm" onclick="togglePlay()">▶ Play</button>
+            </div>
+            <div class="col-auto">
+                <label for="speedSlider" class="form-label me-2">Speed</label>
+                <input type="range" id="speedSlider" min="200" max="2000" value="800" step="100"
+                       class="form-range" style="width:150px;" oninput="updateSpeed(this.value)">
+                <span id="speedLabel">800 ms</span>
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-secondary btn-sm" onclick="resetToStart()">Reset</button>
+            </div>
+            <div class="col-auto">
+                <label for="orderSelect" class="form-label me-1">Order</label>
+                <select id="orderSelect" class="form-select form-select-sm" style="width:auto; display:inline-block;" onchange="applyFilters()">
+                    <option value="desc">Highest</option>
+                    <option value="asc">Lowest</option>
+                </select>
+            </div>
+            <div class="col-auto">
+                <label for="topNSelect" class="form-label me-1">Show</label>
+                <select id="topNSelect" class="form-select form-select-sm" style="width:auto; display:inline-block;" onchange="applyFilters()">
+                    <option value="10">10</option>
+                    <option value="25" selected>25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="0">All</option>
+                </select>
+            </div>
+            <!-- Year Range -->
+            <div class="col-auto">
+                <label class="form-label me-1">Years</label>
+                <input type="number" id="rangeFrom" class="form-control form-control-sm" style="width:70px; display:inline;" value="1960" min="1960" max="2024">
+                <span class="mx-1">–</span>
+                <input type="number" id="rangeTo" class="form-control form-control-sm" style="width:70px; display:inline;" value="2024" min="1960" max="2024">
+                <button class="btn btn-outline-primary btn-sm" onclick="applyYearRange()">Apply</button>
+            </div>
+            <!-- Search -->
+            <div class="col-auto">
+                <div class="input-group input-group-sm">
+                    <input type="text" id="searchInput" class="form-control" placeholder="Search country..." style="width:140px;">
+                    <button class="btn btn-outline-primary" type="button" onclick="applyFilters()">🔍</button>
+                    <button class="btn btn-outline-secondary" type="button" onclick="clearSearch()">✕</button>
+                </div>
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-success btn-sm" onclick="exportCSV()">📥 Export CSV</button>
+            </div>
+            <div class="col-auto ms-auto">
+                <span class="text-muted">Map View</span>
+            </div>
+        </div>
+
+        <!-- MAP CONTAINER -->
+        <div id="map" style="height:500px; width:100%; margin-top:10px;"></div>
+
+        <!-- FALLBACK MESSAGE -->
+        <div id="noDataMessage" class="alert alert-warning text-center mt-2" style="display:none;">
+            No data available for the selected year(s) and filters.
+        </div>
+
+        <!-- BOTTOM FILTERS (same as table) -->
+        <div class="row mt-4">
+            <div class="col-md-4">
+                <label class="form-label">Continent</label>
+                <select id="continentFilter" class="form-select" onchange="applyFilters()">
+                    <option value="">All Continents</option>
+                    {% for c in continents %}
+                    <option value="{{ c }}">{{ c }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Income Group</label>
+                <select id="incomeFilter" class="form-select" onchange="applyFilters()">
+                    <option value="">All Income Groups</option>
+                    {% for i in income_groups %}
+                    <option value="{{ i }}">{{ i }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Subregion</label>
+                <select id="subregionFilter" class="form-select" onchange="applyFilters()">
+                    <option value="">All Subregions</option>
+                    {% for s in subregions %}
+                    <option value="{{ s }}">{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chroma-js@2.4.2/chroma.min.js"></script>
+<script>
+// ==============================
+// SAFELY PARSE DATA
+// ==============================
+let allDataByYear = {};
+
+try {
+    allDataByYear = {{ all_data_json|safe }};
+    console.log('✅ Data loaded successfully. Years:', Object.keys(allDataByYear).sort());
+} catch (e) {
+    console.error('❌ Failed to parse all_data_json:', e);
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('noDataMessage').style.display = 'block';
+        document.getElementById('noDataMessage').innerHTML = 'Error loading data. See console.';
+    });
+}
+
+// ==============================
+// GLOBALS
+// ==============================
+let currentYear = {{ current_year }};
+let year1 = {{ current_year }};
+let year2 = {{ current_year }};
+let compareMode = false;
+
+let rangeStart = 1960;
+let rangeEnd = 2024;
+
+const MIN_YEAR = 1960;
+const MAX_YEAR = 2024;
+
+let isPlaying = false;
+let animationInterval = null;
+let animationDelay = 800;
+
+let currentDisplayData = [];
+
+// ==============================
+// LEAFLET MAP
+// ==============================
+let map = null;
+let geoJsonLayer = null;
+let legendControl = null;
+
+function initMap() {
+    map = L.map('map').setView([20, 0], 2);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; CartoDB'
+    }).addTo(map);
+}
+
+// ==============================
+// LOAD GEOJSON AND BUILD CHOROPLETH
+// ==============================
+function loadGeoJSON() {
+    const geojsonUrl = '/static/data/geojson/ne_10m_admin_0_countries_sm.geojson';
+    fetch(geojsonUrl)
+        .then(response => response.json())
+        .then(data => {
+            geoJsonLayer = L.geoJSON(data, {
+                style: function(feature) {
+                    return { fillColor: '#ccc', color: '#555', weight: 1, fillOpacity: 0.7 };
+                },
+                onEachFeature: function(feature, layer) {
+                    layer.bindPopup(feature.properties.NAME || feature.properties.name || 'Unknown');
+                }
+            }).addTo(map);
+            // Initial update
+            updateMap();
+        })
+        .catch(err => {
+            console.error('Failed to load GeoJSON:', err);
+            document.getElementById('noDataMessage').style.display = 'block';
+            document.getElementById('noDataMessage').innerHTML = 'Error loading map data.';
+        });
+}
+
+// ==============================
+// UPDATE MAP BASED ON CURRENT FILTERS
+// ==============================
+function updateMap() {
+    if (!geoJsonLayer) return;
+
+    const continent = document.getElementById("continentFilter").value;
+    const income = document.getElementById("incomeFilter").value;
+    const subregion = document.getElementById("subregionFilter").value;
+    const searchTerm = document.getElementById('searchInput').value.trim().toLowerCase();
+
+    // Get data for the selected year (Year 1)
+    const yearStr = String(year1);
+    let data = allDataByYear[yearStr] || [];
+
+    // Apply filters
+    data = data.filter(d => {
+        const continentMatch = !continent || d.continent === continent;
+        const incomeMatch = !income || d.income_group === income;
+        const subregionMatch = !subregion || d.subregion === subregion;
+        const countryMatch = !searchTerm || d.country.toLowerCase().includes(searchTerm);
+        return continentMatch && incomeMatch && subregionMatch && countryMatch;
+    });
+
+    // Build a map: iso3 -> mortality
+    const valueMap = {};
+    data.forEach(d => {
+        valueMap[d.iso3] = d.mortality;
+    });
+
+    // Determine min and max for color scaling (from filtered data)
+    const values = Object.values(valueMap).filter(v => v !== undefined && v !== null);
+    if (values.length === 0) {
+        // No data – show all gray
+        geoJsonLayer.setStyle({ fillColor: '#ccc', color: '#555', weight: 1, fillOpacity: 0.7 });
+        if (legendControl) map.removeControl(legendControl);
+        document.getElementById('noDataMessage').style.display = 'block';
+        return;
+    }
+    document.getElementById('noDataMessage').style.display = 'none';
+
+    const minVal = Math.min(...values);
+    const maxVal = Math.max(...values);
+    // Use a color scale: from light blue to dark blue
+    const colorScale = chroma.scale(['#deebf7', '#08306b']).domain([minVal, maxVal]);
+
+    // Apply styles to each feature
+    geoJsonLayer.eachLayer(function(layer) {
+        const props = layer.feature.properties;
+        // Try to find iso3: use SOV_A3 (sovereign iso3) or ADM0_A3
+        let iso3 = props.SOV_A3 || props.ADM0_A3 || props.iso3 || props.ISO_A3;
+        if (!iso3) return;
+        const value = valueMap[iso3];
+        if (value !== undefined && value !== null) {
+            const color = colorScale(value).hex();
+            layer.setStyle({ fillColor: color, color: '#555', weight: 1, fillOpacity: 0.7 });
+            // Update popup with value
+            const name = props.NAME || props.name || 'Unknown';
+            layer.bindPopup(`<b>${name}</b><br>Mortality: ${value.toFixed(1)}`);
+        } else {
+            // No data – gray
+            layer.setStyle({ fillColor: '#ccc', color: '#555', weight: 1, fillOpacity: 0.7 });
+            const name = props.NAME || props.name || 'Unknown';
+            layer.bindPopup(`<b>${name}</b><br>No data`);
+        }
+    });
+
+    // Update legend
+    if (legendControl) map.removeControl(legendControl);
+    const legend = L.control({ position: 'bottomright' });
+    legend.onAdd = function() {
+        const div = L.DomUtil.create('div', 'legend');
+        div.innerHTML = `<b>Mortality</b><br>`;
+        const steps = 5;
+        for (let i = 0; i <= steps; i++) {
+            const val = minVal + (maxVal - minVal) * (i / steps);
+            const color = colorScale(val).hex();
+            div.innerHTML += `<i style="background:${color};"></i> ${val.toFixed(1)}<br>`;
+        }
+        return div;
+    };
+    legend.addTo(map);
+    legendControl = legend;
+
+    // Also update the currentDisplayData for CSV export (if needed)
+    currentDisplayData = data.map(d => ({
+        country: d.country,
+        year: d.year,
+        value: d.mortality,
+        continent: d.continent || '',
+        income_group: d.income_group || '',
+        subregion: d.subregion || ''
+    }));
+}
+
+// ==============================
+// FILTER FUNCTIONS (reuse from table view)
+// ==============================
+function applyFilters() {
+    updateMap();
+}
+
+function clearSearch() {
+    document.getElementById('searchInput').value = '';
+    updateMap();
+}
+
+// ==============================
+// YEAR RANGE APPLICATION (adjust slider limits)
+// ==============================
+function applyYearRange() {
+    const from = parseInt(document.getElementById('rangeFrom').value);
+    const to = parseInt(document.getElementById('rangeTo').value);
+    if (isNaN(from) || isNaN(to) || from > to) {
+        alert('Please enter a valid year range (From ≤ To).');
+        return;
+    }
+    rangeStart = Math.max(MIN_YEAR, from);
+    rangeEnd = Math.min(MAX_YEAR, to);
+    document.getElementById('year1Slider').min = rangeStart;
+    document.getElementById('year1Slider').max = rangeEnd;
+    document.getElementById('year2Slider').min = rangeStart;
+    document.getElementById('year2Slider').max = rangeEnd;
+    if (year1 < rangeStart) year1 = rangeStart;
+    if (year1 > rangeEnd) year1 = rangeEnd;
+    if (year2 < rangeStart) year2 = rangeStart;
+    if (year2 > rangeEnd) year2 = rangeEnd;
+    document.getElementById('year1Slider').value = year1;
+    document.getElementById('year2Slider').value = year2;
+    document.getElementById('year1Label').innerText = year1;
+    document.getElementById('year2Label').innerText = year2;
+    updateMap();
+}
+
+// ==============================
+// YEAR SLIDERS
+// ==============================
+function onYear1Input(value) {
+    if (isPlaying) stopAnimation();
+    year1 = parseInt(value);
+    document.getElementById("year1Label").innerText = year1;
+    if (!compareMode) currentYear = year1;
+    updateMap();
+}
+
+function onYear2Input(value) {
+    // For map, we ignore Year 2, but keep for consistency
+    if (isPlaying) stopAnimation();
+    year2 = parseInt(value);
+    document.getElementById("year2Label").innerText = year2;
+    // Not used in map, but could be used later
+}
+
+// ==============================
+// COMPARE MODE (disabled for map)
+// ==============================
+function setCompareMode(mode) {
+    compareMode = mode;
+    document.getElementById("singleBtn").classList.toggle('active', !mode);
+    document.getElementById("compareBtn").classList.toggle('active', mode);
+    document.getElementById("year2Container").style.display = mode ? 'block' : 'none';
+    if (mode) {
+        alert('Compare mode is not supported for the map. Only Year 1 is used.');
+    }
+    updateMap();
+}
+
+// ==============================
+// CSV EXPORT (uses currentDisplayData)
+// ==============================
+function exportCSV() {
+    if (!currentDisplayData || currentDisplayData.length === 0) {
+        alert('No data to export. Please adjust your filters.');
+        return;
+    }
+    const firstRow = currentDisplayData[0];
+    let headers = Object.keys(firstRow);
+    let csvRows = [headers.join(',')];
+    for (const row of currentDisplayData) {
+        const values = headers.map(header => {
+            let val = row[header] !== undefined ? row[header] : '';
+            if (typeof val === 'string' && (val.includes(',') || val.includes('"') || val.includes('\n'))) {
+                val = `"${val.replace(/"/g, '""')}"`;
+            }
+            return val;
+        });
+        csvRows.push(values.join(','));
+    }
+    const csvString = csvRows.join('\n');
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.href = url;
+    link.setAttribute('download', `mortality_data_${compareMode ? 'compare' : 'single'}_${year1}_${year2}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
+// ==============================
+// ANIMATION (updates Year 1 only)
+// ==============================
+function togglePlay() {
+    if (compareMode) {
+        alert("Animation is available only in Single mode.");
+        return;
+    }
+    if (isPlaying) {
+        stopAnimation();
+    } else {
+        startAnimation();
+    }
+}
+
+function startAnimation() {
+    if (isPlaying || compareMode) return;
+    if (year1 >= rangeEnd) {
+        year1 = rangeStart;
+        document.getElementById("year1Slider").value = year1;
+        document.getElementById("year1Label").innerText = year1;
+        currentYear = year1;
+        updateMap();
+    }
+    isPlaying = true;
+    document.getElementById("playBtn").innerHTML = "⏸ Pause";
+
+    animationInterval = setInterval(() => {
+        year1 += 1;
+        if (year1 > rangeEnd) {
+            year1 = rangeStart;
+        }
+        document.getElementById("year1Slider").value = year1;
+        document.getElementById("year1Label").innerText = year1;
+        currentYear = year1;
+        updateMap();
+    }, animationDelay);
+}
+
+function stopAnimation() {
+    if (animationInterval) {
+        clearInterval(animationInterval);
+        animationInterval = null;
+    }
+    isPlaying = false;
+    document.getElementById("playBtn").innerHTML = "▶ Play";
+}
+
+function updateSpeed(value) {
+    animationDelay = parseInt(value);
+    document.getElementById("speedLabel").innerText = value + " ms";
+    if (isPlaying) {
+        stopAnimation();
+        startAnimation();
+    }
+}
+
+function resetToStart() {
+    if (isPlaying) stopAnimation();
+    year1 = rangeStart;
+    year2 = rangeStart + 1;
+    if (year2 > rangeEnd) year2 = rangeStart;
+    document.getElementById("year1Slider").value = year1;
+    document.getElementById("year1Label").innerText = year1;
+    document.getElementById("year2Slider").value = year2;
+    document.getElementById("year2Label").innerText = year2;
+    updateMap();
+}
+
+// ==============================
+// INITIALISE
+// ==============================
+document.addEventListener('DOMContentLoaded', function() {
+    if (Object.keys(allDataByYear).length === 0) {
+        document.getElementById('noDataMessage').style.display = 'block';
+        document.getElementById('noDataMessage').innerHTML = 'No data available. Please check the server logs.';
+        return;
+    }
+    // Set initial range inputs
+    document.getElementById('rangeFrom').value = 1960;
+    document.getElementById('rangeTo').value = 2024;
+    rangeStart = 1960;
+    rangeEnd = 2024;
+    document.getElementById("year1Slider").min = 1960;
+    document.getElementById("year1Slider").max = 2024;
+    document.getElementById("year2Slider").min = 1960;
+    document.getElementById("year2Slider").max = 2024;
+    document.getElementById("year1Slider").value = currentYear;
+    document.getElementById("year1Label").innerText = currentYear;
+    document.getElementById("year2Slider").value = currentYear;
+    document.getElementById("year2Label").innerText = currentYear;
+    year1 = currentYear;
+    year2 = currentYear;
+
+    initMap();
+    loadGeoJSON();
+});
+</script>
+{% endblock %}
