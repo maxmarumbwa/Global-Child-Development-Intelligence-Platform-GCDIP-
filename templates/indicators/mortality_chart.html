@@ -33,7 +33,7 @@ Child Mortality Chart
         </div>
     </div>
 
-    <!-- CONTROLS ROW -->
+    <!-- CONTROLS ROW (with Export button) -->
     <div class="row mb-3 align-items-center g-2">
         <div class="col-auto">
             <button id="playBtn" class="btn btn-primary btn-sm" onclick="togglePlay()">▶ Play</button>
@@ -74,6 +74,10 @@ Child Mortality Chart
                 <option value="subregion">Subregion</option>
             </select>
         </div>
+        <!-- NEW: Export CSV button -->
+        <div class="col-auto">
+            <button class="btn btn-success btn-sm" onclick="exportCSV()">📥 Export CSV</button>
+        </div>
         <div class="col-auto ms-auto">
             <div class="btn-group btn-group-sm" role="group">
                 <button type="button" class="btn btn-outline-primary active" id="barBtn" onclick="setChartType('bar')">Bar</button>
@@ -87,7 +91,7 @@ Child Mortality Chart
         <canvas id="mortalityChart"></canvas>
     </div>
 
-    <!-- COLOR LEGEND (hidden by default) -->
+    <!-- COLOR LEGEND -->
     <div id="colorLegend" style="margin-top:15px; display:none; text-align:center;">
         <div id="legendItems" style="display:flex; flex-wrap:wrap; justify-content:center; gap:12px;"></div>
     </div>
@@ -136,10 +140,24 @@ Child Mortality Chart
 
 <script>
 // ==============================
+// SAFELY PARSE DATA
+// ==============================
+let allDataByYear = {};
+
+try {
+    allDataByYear = {{ all_data_json|safe }};
+    console.log('✅ Data loaded successfully. Years:', Object.keys(allDataByYear).sort());
+} catch (e) {
+    console.error('❌ Failed to parse all_data_json:', e);
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('noDataMessage').style.display = 'block';
+        document.getElementById('noDataMessage').innerHTML = 'Error loading data. See console.';
+    });
+}
+
+// ==============================
 // GLOBALS
 // ==============================
-const allDataByYear = {{ all_data_json|safe }};
-
 let chart = null;
 let currentYear = {{ current_year }};
 let year1 = {{ current_year }};
@@ -154,43 +172,37 @@ let isPlaying = false;
 let animationInterval = null;
 let animationDelay = 800;
 
+let chartMetaData = [];
+
+// Store the currently displayed data for CSV export
+let currentDisplayData = [];
+
 // ==============================
 // COLOR PALETTES
 // ==============================
 const categoryColors = {
-    // Income groups (World Bank)
     'High income': '#1f77b4',
     'Upper middle income': '#ff7f0e',
     'Lower middle income': '#2ca02c',
     'Low income': '#d62728',
-    // Continents
     'Africa': '#e41a1c',
     'Americas': '#377eb8',
     'Asia': '#4daf4a',
     'Europe': '#984ea3',
     'Oceania': '#ff7f00',
-    // Additional fallback for subregions or unknown
 };
 
-// Generic fallback palette
 const fallbackColors = [
     '#a6cee3', '#b2df8a', '#fb9a99', '#fdbf6f', '#cab2d6',
     '#ffff99', '#b15928', '#1f78b4', '#33a02c', '#e31a1c',
     '#ff7f00', '#6a3d9a', '#b2df8a', '#a6cee3', '#fdbf6f'
 ];
 
-// ==============================
-// UTILITY: get color for a category value
-// ==============================
 function getCategoryColor(category, value) {
     if (!category || !value) return 'rgba(54, 162, 235, 0.5)';
-    const key = `${category}:${value}`;
-    // If predefined, use it
-    if (categoryColors[value]) {
-        return categoryColors[value];
-    }
-    // Else generate a deterministic color from the string
+    if (categoryColors[value]) return categoryColors[value];
     let hash = 0;
+    const key = `${category}:${value}`;
     for (let i = 0; i < key.length; i++) {
         hash = (hash << 5) - hash + key.charCodeAt(i);
         hash = hash & hash;
@@ -209,23 +221,18 @@ function updateLegend(data, colorBy) {
         legendDiv.style.display = 'none';
         return;
     }
-
-    // Collect unique categories and their colors from the data
     const categories = {};
     data.forEach(d => {
         const val = d[colorBy];
         if (val) {
-            const color = getCategoryColor(colorBy, val);
-            categories[val] = color;
+            categories[val] = getCategoryColor(colorBy, val);
         }
     });
-
     const keys = Object.keys(categories).sort();
     if (keys.length === 0) {
         legendDiv.style.display = 'none';
         return;
     }
-
     legendDiv.style.display = 'block';
     itemsDiv.innerHTML = keys.map(key => `
         <div style="display:flex; align-items:center; gap:5px;">
@@ -236,7 +243,7 @@ function updateLegend(data, colorBy) {
 }
 
 // ==============================
-// RENDER CHART (with color highlighting)
+// RENDER CHART
 // ==============================
 function renderChart(data1, data2, year1Label, year2Label) {
     const noDataMsg = document.getElementById("noDataMessage");
@@ -249,10 +256,13 @@ function renderChart(data1, data2, year1Label, year2Label) {
 
     let datasets = [];
     let labels = [];
-    let displayData = []; // used for legend
+    let displayData = [];
+    let metaData = [];
+
+    // We'll store the final data array for CSV export
+    let exportData = [];
 
     if (compareMode && data1 && data2) {
-        // Intersection of countries
         const countries1 = new Set(data1.map(d => d.country));
         const countries2 = new Set(data2.map(d => d.country));
         const common = [...countries1].filter(c => countries2.has(c));
@@ -260,6 +270,7 @@ function renderChart(data1, data2, year1Label, year2Label) {
         if (common.length === 0) {
             noDataMsg.style.display = 'block';
             document.getElementById('colorLegend').style.display = 'none';
+            currentDisplayData = [];
             return;
         }
 
@@ -285,16 +296,44 @@ function renderChart(data1, data2, year1Label, year2Label) {
             combined = combined.slice(0, topN);
         }
 
+        // Prepare export data (same as combined, but structured for CSV)
+        exportData = combined.map(d => ({
+            country: d.country,
+            year1: d.year1,
+            year2: d.year2,
+            mortality1: d.mortality1,
+            mortality2: d.mortality2,
+            continent: d.continent,
+            income_group: d.income_group,
+            subregion: d.subregion
+        }));
+
         labels = combined.map(d => d.country);
         const values1 = combined.map(d => d.mortality1);
         const values2 = combined.map(d => d.mortality2);
 
-        // Determine colors
+        const meta1 = combined.map(d => ({
+            country: d.country,
+            mortality: d.mortality1,
+            year: d.year1,
+            continent: d.continent,
+            income_group: d.income_group,
+            subregion: d.subregion
+        }));
+        const meta2 = combined.map(d => ({
+            country: d.country,
+            mortality: d.mortality2,
+            year: d.year2,
+            continent: d.continent,
+            income_group: d.income_group,
+            subregion: d.subregion
+        }));
+
         let bgColors1, bgColors2;
         if (colorBy) {
             bgColors1 = combined.map(d => getCategoryColor(colorBy, d[colorBy]));
             bgColors2 = combined.map(d => getCategoryColor(colorBy, d[colorBy]));
-            displayData = combined; // for legend
+            displayData = combined;
         } else {
             bgColors1 = combined.map(() => 'rgba(54, 162, 235, 0.6)');
             bgColors2 = combined.map(() => 'rgba(255, 99, 132, 0.6)');
@@ -307,6 +346,7 @@ function renderChart(data1, data2, year1Label, year2Label) {
                 backgroundColor: bgColors1,
                 borderColor: bgColors1.map(c => c.replace('0.6', '1')),
                 borderWidth: 1,
+                _meta: meta1,
             },
             {
                 label: `Year ${year2Label}`,
@@ -314,14 +354,16 @@ function renderChart(data1, data2, year1Label, year2Label) {
                 backgroundColor: bgColors2,
                 borderColor: bgColors2.map(c => c.replace('0.6', '1')),
                 borderWidth: 1,
+                _meta: meta2,
             }
         ];
+        metaData = combined;
     } else {
-        // Single mode
         let data = data1 || [];
         if (data.length === 0) {
             noDataMsg.style.display = 'block';
             document.getElementById('colorLegend').style.display = 'none';
+            currentDisplayData = [];
             return;
         }
         const order = document.getElementById("orderSelect").value;
@@ -330,6 +372,16 @@ function renderChart(data1, data2, year1Label, year2Label) {
         if (topN > 0 && data.length > topN) {
             data = data.slice(0, topN);
         }
+
+        // Prepare export data
+        exportData = data.map(d => ({
+            country: d.country,
+            year: d.year,
+            mortality: d.mortality,
+            continent: d.continent || '',
+            income_group: d.income_group || '',
+            subregion: d.subregion || ''
+        }));
 
         labels = data.map(d => d.country);
         const values = data.map(d => d.mortality);
@@ -341,6 +393,15 @@ function renderChart(data1, data2, year1Label, year2Label) {
         } else {
             bgColors = data.map(() => 'rgba(54, 162, 235, 0.5)');
         }
+
+        const meta = data.map(d => ({
+            country: d.country,
+            mortality: d.mortality,
+            year: d.year,
+            continent: d.continent,
+            income_group: d.income_group,
+            subregion: d.subregion
+        }));
 
         datasets = [{
             label: `Under‑5 Mortality Rate (${year1Label})`,
@@ -354,12 +415,16 @@ function renderChart(data1, data2, year1Label, year2Label) {
             pointHoverRadius: 5,
             tension: 0.1,
             fill: false,
+            _meta: meta,
         }];
+        metaData = data;
     }
+
+    // Store the export data globally
+    currentDisplayData = exportData;
 
     noDataMsg.style.display = 'none';
 
-    // Update legend
     if (colorBy && displayData.length > 0) {
         updateLegend(displayData, colorBy);
     } else {
@@ -376,6 +441,42 @@ function renderChart(data1, data2, year1Label, year2Label) {
         titleText += ` — colored by ${colorBy}`;
     }
 
+    const tooltipCallbacks = {
+        label: function(context) {
+            const dataset = context.dataset;
+            const index = context.dataIndex;
+            const meta = dataset._meta ? dataset._meta[index] : null;
+            if (meta) {
+                return `${meta.country}: ${meta.mortality.toFixed(1)} (${meta.year})`;
+            } else {
+                return `${context.label}: ${context.parsed.y.toFixed(1)}`;
+            }
+        },
+        afterBody: function(tooltipItems) {
+            if (tooltipItems.length === 0) return [];
+            const first = tooltipItems[0];
+            const dataset = first.dataset;
+            const index = first.dataIndex;
+            const meta = dataset._meta ? dataset._meta[index] : null;
+            if (meta) {
+                const lines = [];
+                if (meta.continent) lines.push(`Continent: ${meta.continent}`);
+                if (meta.income_group) lines.push(`Income: ${meta.income_group}`);
+                if (meta.subregion) lines.push(`Subregion: ${meta.subregion}`);
+                return lines;
+            }
+            if (metaData && metaData[index]) {
+                const m = metaData[index];
+                const lines = [];
+                if (m.continent) lines.push(`Continent: ${m.continent}`);
+                if (m.income_group) lines.push(`Income: ${m.income_group}`);
+                if (m.subregion) lines.push(`Subregion: ${m.subregion}`);
+                return lines;
+            }
+            return [];
+        }
+    };
+
     chart = new Chart(ctx, {
         type: type,
         data: {
@@ -388,63 +489,104 @@ function renderChart(data1, data2, year1Label, year2Label) {
             maintainAspectRatio: false,
             plugins: {
                 legend: { display: true },
-                title: {
-                    display: true,
-                    text: titleText
-                }
+                title: { display: true, text: titleText },
+                tooltip: { callbacks: tooltipCallbacks }
             },
             scales: {
                 x: {
-                    ticks: {
-                        autoSkip: false,
-                        maxRotation: 90,
-                        minRotation: 90
-                    }
+                    ticks: { autoSkip: false, maxRotation: 90, minRotation: 90 }
                 },
                 y: {
                     beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: "Deaths per 1,000 Live Births"
-                    }
+                    title: { display: true, text: "Deaths per 1,000 Live Births" }
                 }
             }
         }
     });
+    console.log(`📊 Chart rendered for year ${year1Label} (${compareMode ? 'compare' : 'single'})`);
 }
 
 // ==============================
-// FILTERING + ORDER + TOP N
+// FILTERING
 // ==============================
 function applyFilters() {
-    const continent = document.getElementById("continentFilter").value;
-    const income = document.getElementById("incomeFilter").value;
-    const subregion = document.getElementById("subregionFilter").value;
+    try {
+        const continent = document.getElementById("continentFilter").value;
+        const income = document.getElementById("incomeFilter").value;
+        const subregion = document.getElementById("subregionFilter").value;
 
-    const filterFn = (d) => {
-        const continentMatch = !continent || d.continent === continent;
-        const incomeMatch = !income || d.income_group === income;
-        const subregionMatch = !subregion || d.subregion === subregion;
-        return continentMatch && incomeMatch && subregionMatch;
-    };
+        const filterFn = (d) => {
+            const continentMatch = !continent || d.continent === continent;
+            const incomeMatch = !income || d.income_group === income;
+            const subregionMatch = !subregion || d.subregion === subregion;
+            return continentMatch && incomeMatch && subregionMatch;
+        };
 
-    if (compareMode) {
-        let data1 = loadYearData(year1).filter(filterFn);
-        let data2 = loadYearData(year2).filter(filterFn);
-        renderChart(data1, data2, year1, year2);
-    } else {
-        let data = loadYearData(year1).filter(filterFn);
-        renderChart(data, null, year1, null);
+        if (compareMode) {
+            let data1 = loadYearData(year1).filter(filterFn);
+            let data2 = loadYearData(year2).filter(filterFn);
+            renderChart(data1, data2, year1, year2);
+        } else {
+            let data = loadYearData(year1).filter(filterFn);
+            renderChart(data, null, year1, null);
+        }
+    } catch (e) {
+        console.error('Error in applyFilters:', e);
+        document.getElementById('noDataMessage').style.display = 'block';
+        document.getElementById('noDataMessage').innerHTML = 'An error occurred. See console.';
     }
 }
 
 function loadYearData(year) {
     const yearStr = String(year);
-    return allDataByYear.hasOwnProperty(yearStr) ? allDataByYear[yearStr] : [];
+    if (allDataByYear.hasOwnProperty(yearStr)) {
+        return allDataByYear[yearStr];
+    } else {
+        console.warn(`No data for year ${year}`);
+        return [];
+    }
 }
 
 // ==============================
-// COMPARE MODE TOGGLE
+// CSV EXPORT
+// ==============================
+function exportCSV() {
+    if (!currentDisplayData || currentDisplayData.length === 0) {
+        alert('No data to export. Please adjust your filters.');
+        return;
+    }
+
+    // Determine headers based on first row
+    const firstRow = currentDisplayData[0];
+    let headers = Object.keys(firstRow);
+    let csvRows = [headers.join(',')];
+
+    for (const row of currentDisplayData) {
+        const values = headers.map(header => {
+            let val = row[header] !== undefined ? row[header] : '';
+            // Escape double quotes and wrap in quotes if contains comma or newline
+            if (typeof val === 'string' && (val.includes(',') || val.includes('"') || val.includes('\n'))) {
+                val = `"${val.replace(/"/g, '""')}"`;
+            }
+            return val;
+        });
+        csvRows.push(values.join(','));
+    }
+
+    const csvString = csvRows.join('\n');
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.href = url;
+    link.setAttribute('download', `mortality_data_${compareMode ? 'compare' : 'single'}_${year1}_${year2}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
+// ==============================
+// COMPARE MODE
 // ==============================
 function setCompareMode(mode) {
     compareMode = mode;
@@ -455,7 +597,7 @@ function setCompareMode(mode) {
 }
 
 // ==============================
-// YEAR SLIDER INPUTS
+// YEAR SLIDERS
 // ==============================
 function onYear1Input(value) {
     if (isPlaying) stopAnimation();
@@ -473,7 +615,7 @@ function onYear2Input(value) {
 }
 
 // ==============================
-// CHART TYPE TOGGLE
+// CHART TYPE
 // ==============================
 function setChartType(type) {
     if (chartType === type) return;
@@ -484,7 +626,7 @@ function setChartType(type) {
 }
 
 // ==============================
-// ANIMATION CONTROLS (single only)
+// ANIMATION
 // ==============================
 function togglePlay() {
     if (compareMode) {
@@ -553,8 +695,21 @@ function resetToStart() {
 }
 
 // ==============================
-// INIT
+// INITIALISE
 // ==============================
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', function() {
+    if (Object.keys(allDataByYear).length === 0) {
+        document.getElementById('noDataMessage').style.display = 'block';
+        document.getElementById('noDataMessage').innerHTML = 'No data available. Please check the server logs.';
+        return;
+    }
+    document.getElementById("year1Slider").value = currentYear;
+    document.getElementById("year1Label").innerText = currentYear;
+    document.getElementById("year2Slider").value = currentYear;
+    document.getElementById("year2Label").innerText = currentYear;
+    year1 = currentYear;
+    year2 = currentYear;
+    applyFilters();
+});
 </script>
 {% endblock %}
