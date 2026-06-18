@@ -21,7 +21,9 @@ Child Mortality – Map View
         height: 18px;
         float: left;
         margin-right: 8px;
-        opacity: 0.8;
+        opacity: 0.9;
+        display: inline-block;   /* ADDED */
+        border: 1px solid #888;  /* ADDED */
     }
 </style>
 {% endblock %}
@@ -41,23 +43,20 @@ Child Mortality – Map View
     </div>
 
     <div class="card-body">
-        <!-- YEAR SLIDERS (same as table) -->
+        <!-- YEAR SLIDER (only Year 1, Year 2 hidden) -->
         <div class="row mb-2 align-items-center">
-            <div class="col-md-6" id="year1Container">
-                <label class="form-label">Year 1: <span id="year1Label">{{ current_year }}</span></label>
+            <div class="col-md-6">
+                <label class="form-label">Year: <span id="year1Label">{{ current_year }}</span></label>
                 <input type="range" id="year1Slider" min="1960" max="2024"
                        value="{{ current_year }}" class="form-range"
                        oninput="onYear1Input(this.value)">
             </div>
             <div class="col-md-6" id="year2Container" style="display:none;">
-                <label class="form-label">Year 2: <span id="year2Label">{{ current_year }}</span></label>
-                <input type="range" id="year2Slider" min="1960" max="2024"
-                       value="{{ current_year }}" class="form-range"
-                       oninput="onYear2Input(this.value)">
+                <!-- hidden, but kept for consistency -->
             </div>
         </div>
 
-        <!-- CONTROLS ROW (without chart type toggle) -->
+        <!-- CONTROLS ROW (without year range) -->
         <div class="row mb-3 align-items-center g-2">
             <div class="col-auto">
                 <button id="playBtn" class="btn btn-primary btn-sm" onclick="togglePlay()">▶ Play</button>
@@ -88,14 +87,6 @@ Child Mortality – Map View
                     <option value="0">All</option>
                 </select>
             </div>
-            <!-- Year Range -->
-            <div class="col-auto">
-                <label class="form-label me-1">Years</label>
-                <input type="number" id="rangeFrom" class="form-control form-control-sm" style="width:70px; display:inline;" value="1960" min="1960" max="2024">
-                <span class="mx-1">–</span>
-                <input type="number" id="rangeTo" class="form-control form-control-sm" style="width:70px; display:inline;" value="2024" min="1960" max="2024">
-                <button class="btn btn-outline-primary btn-sm" onclick="applyYearRange()">Apply</button>
-            </div>
             <!-- Search -->
             <div class="col-auto">
                 <div class="input-group input-group-sm">
@@ -106,6 +97,9 @@ Child Mortality – Map View
             </div>
             <div class="col-auto">
                 <button class="btn btn-success btn-sm" onclick="exportCSV()">📥 Export CSV</button>
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-warning btn-sm" onclick="exportGeoJSON()">🌍 Export GeoJSON</button>
             </div>
             <div class="col-auto ms-auto">
                 <span class="text-muted">Map View</span>
@@ -120,7 +114,7 @@ Child Mortality – Map View
             No data available for the selected year(s) and filters.
         </div>
 
-        <!-- BOTTOM FILTERS (same as table) -->
+        <!-- BOTTOM FILTERS -->
         <div class="row mt-4">
             <div class="col-md-4">
                 <label class="form-label">Continent</label>
@@ -183,9 +177,6 @@ let year1 = {{ current_year }};
 let year2 = {{ current_year }};
 let compareMode = false;
 
-let rangeStart = 1960;
-let rangeEnd = 2024;
-
 const MIN_YEAR = 1960;
 const MAX_YEAR = 2024;
 
@@ -201,6 +192,7 @@ let currentDisplayData = [];
 let map = null;
 let geoJsonLayer = null;
 let legendControl = null;
+let rawGeoJSON = null; // store for export
 
 function initMap() {
     map = L.map('map').setView([20, 0], 2);
@@ -217,6 +209,7 @@ function loadGeoJSON() {
     fetch(geojsonUrl)
         .then(response => response.json())
         .then(data => {
+            rawGeoJSON = data;
             geoJsonLayer = L.geoJSON(data, {
                 style: function(feature) {
                     return { fillColor: '#ccc', color: '#555', weight: 1, fillOpacity: 0.7 };
@@ -225,7 +218,6 @@ function loadGeoJSON() {
                     layer.bindPopup(feature.properties.NAME || feature.properties.name || 'Unknown');
                 }
             }).addTo(map);
-            // Initial update
             updateMap();
         })
         .catch(err => {
@@ -236,7 +228,7 @@ function loadGeoJSON() {
 }
 
 // ==============================
-// UPDATE MAP BASED ON CURRENT FILTERS
+// UPDATE MAP – now zooms to filtered features
 // ==============================
 function updateMap() {
     if (!geoJsonLayer) return;
@@ -246,7 +238,6 @@ function updateMap() {
     const subregion = document.getElementById("subregionFilter").value;
     const searchTerm = document.getElementById('searchInput').value.trim().toLowerCase();
 
-    // Get data for the selected year (Year 1)
     const yearStr = String(year1);
     let data = allDataByYear[yearStr] || [];
 
@@ -259,48 +250,76 @@ function updateMap() {
         return continentMatch && incomeMatch && subregionMatch && countryMatch;
     });
 
-    // Build a map: iso3 -> mortality
+    // Build iso3 -> mortality map
     const valueMap = {};
     data.forEach(d => {
         valueMap[d.iso3] = d.mortality;
     });
 
-    // Determine min and max for color scaling (from filtered data)
     const values = Object.values(valueMap).filter(v => v !== undefined && v !== null);
     if (values.length === 0) {
         // No data – show all gray
         geoJsonLayer.setStyle({ fillColor: '#ccc', color: '#555', weight: 1, fillOpacity: 0.7 });
         if (legendControl) map.removeControl(legendControl);
         document.getElementById('noDataMessage').style.display = 'block';
+        currentDisplayData = [];
+        // Zoom out to world
+        map.setView([20, 0], 2);
         return;
     }
     document.getElementById('noDataMessage').style.display = 'none';
 
     const minVal = Math.min(...values);
     const maxVal = Math.max(...values);
-    // Use a color scale: from light blue to dark blue
-    const colorScale = chroma.scale(['#deebf7', '#08306b']).domain([minVal, maxVal]);
+    // Deep bright palette: yellow -> orange -> dark red
+    const colorScale = chroma.scale(['#ffffb2', '#fecc5c', '#fd8d3c', '#f03b20', '#bd0026'])
+        .domain([minVal, maxVal]);
 
-    // Apply styles to each feature
+    // Update styles and store data for export
+    const features = [];
+    const bounds = L.latLngBounds(); // ADDED: collect bounds of features with data
+
     geoJsonLayer.eachLayer(function(layer) {
         const props = layer.feature.properties;
-        // Try to find iso3: use SOV_A3 (sovereign iso3) or ADM0_A3
         let iso3 = props.SOV_A3 || props.ADM0_A3 || props.iso3 || props.ISO_A3;
-        if (!iso3) return;
-        const value = valueMap[iso3];
-        if (value !== undefined && value !== null) {
-            const color = colorScale(value).hex();
-            layer.setStyle({ fillColor: color, color: '#555', weight: 1, fillOpacity: 0.7 });
-            // Update popup with value
-            const name = props.NAME || props.name || 'Unknown';
-            layer.bindPopup(`<b>${name}</b><br>Mortality: ${value.toFixed(1)}`);
-        } else {
-            // No data – gray
+        if (!iso3) {
             layer.setStyle({ fillColor: '#ccc', color: '#555', weight: 1, fillOpacity: 0.7 });
             const name = props.NAME || props.name || 'Unknown';
             layer.bindPopup(`<b>${name}</b><br>No data`);
+            return;
+        }
+        const value = valueMap[iso3];
+        const name = props.NAME || props.name || 'Unknown';
+        if (value !== undefined && value !== null) {
+            const color = colorScale(value).hex();
+            layer.setStyle({ fillColor: color, color: '#333', weight: 1, fillOpacity: 0.85 });
+            layer.bindPopup(`<b>${name}</b><br>Mortality: ${value.toFixed(1)}`);
+            // Store for export
+            features.push({
+                ...layer.feature,
+                properties: {
+                    ...layer.feature.properties,
+                    mortality: value,
+                    year: year1
+                }
+            });
+            // ADDED: extend bounds with this layer's bounds
+            if (layer.getBounds) {
+                bounds.extend(layer.getBounds());
+            }
+        } else {
+            layer.setStyle({ fillColor: '#ccc', color: '#555', weight: 1, fillOpacity: 0.7 });
+            layer.bindPopup(`<b>${name}</b><br>No data`);
         }
     });
+
+    // ADDED: zoom to bounds if we have any data
+    if (bounds.isValid() && !bounds.equals(L.latLngBounds([[-90,-180],[90,180]]))) {
+        map.fitBounds(bounds, { padding: [20,20] });
+    } else {
+        // fallback to world view
+        map.setView([20, 0], 2);
+    }
 
     // Update legend
     if (legendControl) map.removeControl(legendControl);
@@ -319,7 +338,7 @@ function updateMap() {
     legend.addTo(map);
     legendControl = legend;
 
-    // Also update the currentDisplayData for CSV export (if needed)
+    // Store for CSV and GeoJSON export
     currentDisplayData = data.map(d => ({
         country: d.country,
         year: d.year,
@@ -328,10 +347,13 @@ function updateMap() {
         income_group: d.income_group || '',
         subregion: d.subregion || ''
     }));
+
+    // Store exported GeoJSON features
+    window._exportGeoJSONFeatures = features;
 }
 
 // ==============================
-// FILTER FUNCTIONS (reuse from table view)
+// FILTER FUNCTIONS
 // ==============================
 function applyFilters() {
     updateMap();
@@ -343,67 +365,18 @@ function clearSearch() {
 }
 
 // ==============================
-// YEAR RANGE APPLICATION (adjust slider limits)
-// ==============================
-function applyYearRange() {
-    const from = parseInt(document.getElementById('rangeFrom').value);
-    const to = parseInt(document.getElementById('rangeTo').value);
-    if (isNaN(from) || isNaN(to) || from > to) {
-        alert('Please enter a valid year range (From ≤ To).');
-        return;
-    }
-    rangeStart = Math.max(MIN_YEAR, from);
-    rangeEnd = Math.min(MAX_YEAR, to);
-    document.getElementById('year1Slider').min = rangeStart;
-    document.getElementById('year1Slider').max = rangeEnd;
-    document.getElementById('year2Slider').min = rangeStart;
-    document.getElementById('year2Slider').max = rangeEnd;
-    if (year1 < rangeStart) year1 = rangeStart;
-    if (year1 > rangeEnd) year1 = rangeEnd;
-    if (year2 < rangeStart) year2 = rangeStart;
-    if (year2 > rangeEnd) year2 = rangeEnd;
-    document.getElementById('year1Slider').value = year1;
-    document.getElementById('year2Slider').value = year2;
-    document.getElementById('year1Label').innerText = year1;
-    document.getElementById('year2Label').innerText = year2;
-    updateMap();
-}
-
-// ==============================
-// YEAR SLIDERS
+// YEAR SLIDER
 // ==============================
 function onYear1Input(value) {
     if (isPlaying) stopAnimation();
     year1 = parseInt(value);
     document.getElementById("year1Label").innerText = year1;
-    if (!compareMode) currentYear = year1;
-    updateMap();
-}
-
-function onYear2Input(value) {
-    // For map, we ignore Year 2, but keep for consistency
-    if (isPlaying) stopAnimation();
-    year2 = parseInt(value);
-    document.getElementById("year2Label").innerText = year2;
-    // Not used in map, but could be used later
-}
-
-// ==============================
-// COMPARE MODE (disabled for map)
-// ==============================
-function setCompareMode(mode) {
-    compareMode = mode;
-    document.getElementById("singleBtn").classList.toggle('active', !mode);
-    document.getElementById("compareBtn").classList.toggle('active', mode);
-    document.getElementById("year2Container").style.display = mode ? 'block' : 'none';
-    if (mode) {
-        alert('Compare mode is not supported for the map. Only Year 1 is used.');
-    }
+    currentYear = year1;
     updateMap();
 }
 
 // ==============================
-// CSV EXPORT (uses currentDisplayData)
+// EXPORT FUNCTIONS
 // ==============================
 function exportCSV() {
     if (!currentDisplayData || currentDisplayData.length === 0) {
@@ -428,7 +401,29 @@ function exportCSV() {
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.href = url;
-    link.setAttribute('download', `mortality_data_${compareMode ? 'compare' : 'single'}_${year1}_${year2}.csv`);
+    link.setAttribute('download', `mortality_data_${year1}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
+function exportGeoJSON() {
+    const features = window._exportGeoJSONFeatures || [];
+    if (features.length === 0) {
+        alert('No data to export. Please adjust your filters.');
+        return;
+    }
+    const fc = {
+        type: 'FeatureCollection',
+        features: features
+    };
+    const json = JSON.stringify(fc, null, 2);
+    const blob = new Blob([json], { type: 'application/json;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.href = url;
+    link.setAttribute('download', `mortality_data_${year1}.geojson`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -436,13 +431,9 @@ function exportCSV() {
 }
 
 // ==============================
-// ANIMATION (updates Year 1 only)
+// ANIMATION
 // ==============================
 function togglePlay() {
-    if (compareMode) {
-        alert("Animation is available only in Single mode.");
-        return;
-    }
     if (isPlaying) {
         stopAnimation();
     } else {
@@ -451,9 +442,9 @@ function togglePlay() {
 }
 
 function startAnimation() {
-    if (isPlaying || compareMode) return;
-    if (year1 >= rangeEnd) {
-        year1 = rangeStart;
+    if (isPlaying) return;
+    if (year1 >= MAX_YEAR) {
+        year1 = MIN_YEAR;
         document.getElementById("year1Slider").value = year1;
         document.getElementById("year1Label").innerText = year1;
         currentYear = year1;
@@ -464,8 +455,8 @@ function startAnimation() {
 
     animationInterval = setInterval(() => {
         year1 += 1;
-        if (year1 > rangeEnd) {
-            year1 = rangeStart;
+        if (year1 > MAX_YEAR) {
+            year1 = MIN_YEAR;
         }
         document.getElementById("year1Slider").value = year1;
         document.getElementById("year1Label").innerText = year1;
@@ -494,13 +485,10 @@ function updateSpeed(value) {
 
 function resetToStart() {
     if (isPlaying) stopAnimation();
-    year1 = rangeStart;
-    year2 = rangeStart + 1;
-    if (year2 > rangeEnd) year2 = rangeStart;
+    year1 = MIN_YEAR;
     document.getElementById("year1Slider").value = year1;
     document.getElementById("year1Label").innerText = year1;
-    document.getElementById("year2Slider").value = year2;
-    document.getElementById("year2Label").innerText = year2;
+    currentYear = year1;
     updateMap();
 }
 
@@ -513,21 +501,11 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('noDataMessage').innerHTML = 'No data available. Please check the server logs.';
         return;
     }
-    // Set initial range inputs
-    document.getElementById('rangeFrom').value = 1960;
-    document.getElementById('rangeTo').value = 2024;
-    rangeStart = 1960;
-    rangeEnd = 2024;
-    document.getElementById("year1Slider").min = 1960;
-    document.getElementById("year1Slider").max = 2024;
-    document.getElementById("year2Slider").min = 1960;
-    document.getElementById("year2Slider").max = 2024;
+    document.getElementById("year1Slider").min = MIN_YEAR;
+    document.getElementById("year1Slider").max = MAX_YEAR;
     document.getElementById("year1Slider").value = currentYear;
     document.getElementById("year1Label").innerText = currentYear;
-    document.getElementById("year2Slider").value = currentYear;
-    document.getElementById("year2Label").innerText = currentYear;
     year1 = currentYear;
-    year2 = currentYear;
 
     initMap();
     loadGeoJSON();
