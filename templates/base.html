@@ -51,6 +51,8 @@
 
             box-shadow:0 2px 8px rgba(0,0,0,.15);
 
+            flex-shrink: 0;
+
         }
 
         .navbar-custom a{
@@ -63,6 +65,10 @@
 
         }
 
+        .navbar-custom a:hover {
+            text-decoration: underline;
+        }
+
         .layout{
 
             display:flex;
@@ -73,7 +79,7 @@
 
         .sidebar{
 
-            width:280px;
+            width:380px;
 
             background:white;
 
@@ -81,7 +87,9 @@
 
             overflow-y:auto;
 
-            padding:20px;
+            padding:16px;
+
+            flex-shrink: 0;
 
         }
 
@@ -101,41 +109,201 @@
 
             margin-bottom:15px;
 
-        }
-
-        .menu-item{
-
-            padding:12px;
-
-            border-radius:6px;
-
-            margin-bottom:8px;
-
-            cursor:pointer;
-
-        }
-
-        .menu-item:hover{
-
-            background:#eef3f8;
-
-        }
-
-        .menu-item i{
-
-            width:25px;
-
-            color:#003366;
-
-        }
-
-        .logo{
-
             font-weight:bold;
 
-            font-size:20px;
+            border-bottom:2px solid #003366;
+
+            padding-bottom:8px;
+
+            font-size:16px;
 
         }
+
+        /* ---- Menu Section (top-level) ---- */
+        .menu-section {
+            margin-bottom:8px;
+            border-bottom:1px solid #f0f0f0;
+            padding-bottom:6px;
+        }
+
+        .menu-section-title {
+            color:#003366;
+            font-weight:600;
+            font-size:14px;
+            padding:8px 0 6px 0;
+            cursor:pointer;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            border-bottom:1px solid #eee;
+            transition:background 0.2s;
+        }
+
+        .menu-section-title:hover {
+            background:#f5f8fc;
+        }
+
+        .menu-section-title i {
+            transition:transform 0.2s;
+            font-size:12px;
+            color:#888;
+        }
+
+        /* ---- Sub-menu containers ---- */
+        .sub-menu {
+            display:block;
+            padding-left:10px;
+            margin-top:2px;
+        }
+
+        .sub-menu.hidden {
+            display:none;
+        }
+
+        /* ---- Level 1 (second-level headings) ---- */
+        .sub-section-title {
+            font-size:13px;
+            font-weight:500;
+            color:#1a3a5c;
+            padding:6px 0 4px 8px;
+            cursor:pointer;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            border-bottom:1px solid #f5f5f5;
+        }
+
+        .sub-section-title:hover {
+            background:#f5f8fc;
+        }
+
+        .sub-section-title i {
+            font-size:11px;
+            color:#888;
+        }
+
+        /* ---- Level 2 (leaf items) ---- */
+        .menu-item {
+            padding:4px 12px 4px 28px;
+            border-radius:4px;
+            margin-bottom:1px;
+            font-size:13px;
+            display:block;
+            color:#333;
+            text-decoration:none;
+            transition:background 0.15s;
+        }
+
+        .menu-item:hover {
+            background:#eef3f8;
+            color:#003366;
+        }
+
+        .menu-item i {
+            width:20px;
+            color:#003366;
+            font-size:12px;
+        }
+
+        .menu-item.active {
+            background:#d4e2f0;
+            font-weight:500;
+        }
+
+        /* ---- Indentation for deeper levels ---- */
+        .sub-menu .sub-menu {
+            padding-left:16px;
+        }
+
+        .logo {
+            font-weight:bold;
+            font-size:20px;
+        }
+
+        .toggle-icon {
+            font-size:11px;
+            color:#888;
+            margin-left:6px;
+            transition:transform 0.2s;
+        }
+
+        /* Expand/Collapse all links */
+        .sidebar-toggle-all {
+            text-align:right;
+            margin-bottom:10px;
+            font-size:12px;
+        }
+        .sidebar-toggle-all a {
+            color:#003366;
+            text-decoration:none;
+            cursor:pointer;
+            margin-left:10px;
+        }
+        .sidebar-toggle-all a:hover {
+            text-decoration:underline;
+        }
+
+        /* Scrollbar styling */
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .sidebar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .sidebar::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 320px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .layout {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #ddd;
+                max-height: 350px;
+            }
+            .content {
+                padding: 15px;
+            }
+        }
+
+    .menu-section-title {
+        background: linear-gradient(90deg, #003366, #004c99);
+        color: #fff;
+        font-weight: 700;
+        font-size: 15px;
+        padding: 12px 12px;
+        border-radius: 6px;
+        margin-top: 12px;
+        border-left: 5px solid #00bcd4;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        cursor: pointer;
+    }
+
+    /* icon styling only */
+    .menu-section-title i {
+        color: #e0f7ff;
+        font-size: 13px;
+    }
+
+    .menu-section-title:hover {
+        background: linear-gradient(90deg, #003366, #004c99) !important;
+        color: #fff !important;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08) !important;
+        transform: none !important;
+    }
 
     </style>
 
@@ -152,20 +320,41 @@
         GCDIP
     </div>
 
-    <div>
+    <div class="d-flex align-items-center flex-wrap">
+<div class="d-flex align-items-center flex-wrap">
 
-        <a href="/">Dashboard</a>
+    <a href="{% url 'mortality_chart' %}">Dashboard</a>
 
-        <a href="/indicators/mortality/">Indicators</a>
+    <!-- 🌍 EXPLORE MAP -->
+    <div class="dropdown d-inline-block ms-3">
+        <a class="text-white dropdown-toggle" href="#" data-bs-toggle="dropdown">
+            🌍 Explore Map
+        </a>
+        <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="#">Administrative Boundaries</a></li>
+            <li><a class="dropdown-item" href="#">Hazard Layers</a></li>
+            <li><a class="dropdown-item" href="#">Child Vulnerability Index</a></li>
+            <li><a class="dropdown-item" href="#">Climate Layers</a></li>
+        </ul>
+    </div>
 
-        <a href="#">Country Profiles</a>
+    <!-- 📊 ANALYZE -->
+    <div class="dropdown d-inline-block ms-3">
+        <a class="text-white dropdown-toggle" href="#" data-bs-toggle="dropdown">
+            📊 Analyze
+        </a>
+        <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="#">Time Series Viewer</a></li>
+            <li><a class="dropdown-item" href="#">Bar/Line Charts</a></li>
+            <li><a class="dropdown-item" href="#">Correlation Analysis</a></li>
+        </ul>
+    </div>
 
-        <a href="#">Trends</a>
+    <a href="#">Country Profiles</a>
+    <a href="#">Analytics</a>
+    <a href="#">Downloads</a>
 
-        <a href="#">Analytics</a>
-
-        <a href="#">Downloads</a>
-
+</div>
     </div>
 
 </div>
@@ -173,41 +362,395 @@
 <div class="layout">
 
     <div class="sidebar">
-
-        <h5>Controls</h5>
-
-        <div class="menu-item">
-            <i class="fa-solid fa-globe"></i>
-            Global Map
+        <!-- Expand/Collapse All -->
+        <div class="sidebar-toggle-all">
+            <a onclick="expandAll()">Expand All</a>
+            <a onclick="collapseAll()">Collapse All</a>
         </div>
 
-        <div class="menu-item">
-            <i class="fa-solid fa-chart-line"></i>
-            Indicators
-        </div>
+        <!-- ============================================================ -->
+        <!-- 1. UNICEF PROGRAMME INDICATORS                                -->
+        <!-- ============================================================ -->
+        <div class="menu-section">
+            <div class="menu-section-title" onclick="toggleSection(this)">
+                Children Indicators
+                <i class="fa-solid fa-chevron-down toggle-icon"></i>
+            </div>
+            <div class="sub-menu hidden">
 
-        <div class="menu-item">
-            <i class="fa-solid fa-chart-column"></i>
-            Trends
-        </div>
+                <!-- Child Survival & Health -->
+                <div class="sub-section-title" onclick="toggleSection(this)">
+                    👶 Child Survival & Health
+                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="sub-menu hidden">
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Under-5 Mortality</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Infant Mortality</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Neonatal Mortality</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Immunization Coverage</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> DPT3 Coverage</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Measles Coverage</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Skilled Birth Attendance</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Anaemia Prevalence</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Disease Burden (ARI, Diarrhea)</a>
+                </div>
 
-        <div class="menu-item">
-            <i class="fa-solid fa-ranking-star"></i>
-            Analytics
-        </div>
+                <!-- Education -->
+                <div class="sub-section-title" onclick="toggleSection(this)">
+                    🎓 Education
+                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="sub-menu hidden">
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> School Enrollment</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Primary Attendance</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Secondary Attendance</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Out-of-School Children</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Completion Rate</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Literacy Rate</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Numeracy Rate</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Gender Parity Index</a>
+                </div>
 
-        <div class="menu-item">
-            <i class="fa-solid fa-scale-balanced"></i>
-            Comparison
-        </div>
+                <!-- WASH -->
+                <div class="sub-section-title" onclick="toggleSection(this)">
+                    🚰 WASH
+                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="sub-menu hidden">
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Basic Drinking Water</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Safely Managed Water</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Basic Sanitation</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Safely Managed Sanitation</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Open Defecation Rate</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Handwashing Facilities</a>
+                </div>
 
-        <div class="menu-item">
-            <i class="fa-solid fa-download"></i>
-            Downloads
-        </div>
+                <!-- Child Protection -->
+                <div class="sub-section-title" onclick="toggleSection(this)">
+                    🛡 Child Protection
+                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="sub-menu hidden">
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Child Labour</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Hazardous Child Labour</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Child Marriage</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Birth Registration</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Violent Discipline</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Refugee Children</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Internally Displaced Children</a>
+                </div>
+
+                <!-- Gender Equality -->
+                <div class="sub-section-title" onclick="toggleSection(this)">
+                    ♀ Gender Equality
+                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="sub-menu hidden">
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Adolescent Birth Rate</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Girls School Attendance</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Gender-Based Violence Risk</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Gender Equality Index</a>
+                </div>
+
+                <!-- Nutrition & Food Security -->
+                <div class="sub-section-title" onclick="toggleSection(this)">
+                    🍽 Nutrition & Food Security
+                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="sub-menu hidden">
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Stunting</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Wasting</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Underweight</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Overweight</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Exclusive Breastfeeding</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Dietary Diversity</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Food Insecurity Index</a>
+                </div>
+
+                <!-- Climate & Environment (UNICEF Exposure) -->
+                <div class="sub-section-title" onclick="toggleSection(this)">
+                    🌍 Climate & Environment (UNICEF Exposure)
+                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="sub-menu hidden">
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Children Exposed to Flood Risk</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Children Exposed to Drought Risk</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Children Exposed to Heat Stress</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Children Exposed to Air Pollution</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Children Exposed to Water Scarcity</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Children Exposed to Multi-Hazard Risk</a>
+                </div>
+
+                <!-- Social Protection & Poverty -->
+                <div class="sub-section-title" onclick="toggleSection(this)">
+                    ⚖ Social Protection & Poverty
+                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="sub-menu hidden">
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Child Poverty Rate</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Multidimensional Poverty Index</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Social Protection Coverage</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Cash Transfer Coverage</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Household Vulnerability Index</a>
+                </div>
+
+            </div> <!-- end sub-menu -->
+        </div> <!-- end UNICEF section -->
+
+
+        <!-- ============================================================ -->
+        <!-- 2. REMOTE SENSING & GEOSPATIAL INTELLIGENCE                  -->
+        <!-- ============================================================ -->
+        <div class="menu-section">
+            <div class="menu-section-title" onclick="toggleSection(this)">
+                🛰 Remote Sensing Indicators
+                <i class="fa-solid fa-chevron-down toggle-icon"></i>
+            </div>
+            <div class="sub-menu hidden">
+
+                <!-- Population & Demographics -->
+                <div class="sub-section-title" onclick="toggleSection(this)">
+                    👶 Population & Demographics
+                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="sub-menu hidden">
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Total Population Density</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Child Population (0–4)</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Child Population (5–9)</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Child Population (10–14)</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Child Population (15–19)</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Male Population Density</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Female Population Density</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Urban Population Density</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Rural Population Density</a>
+                </div>
+
+                <!-- Baseline Climate & Environmental Conditions -->
+                <div class="sub-section-title" onclick="toggleSection(this)">
+                    🌦 Baseline Climate & Environmental Conditions
+                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="sub-menu hidden">
+
+                    <!-- Rainfall -->
+                    <div class="sub-section-title" onclick="toggleSection(this)">
+                        🌧 Rainfall
+                        <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                    </div>
+                    <div class="sub-menu hidden">
+                        <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Mean Annual Rainfall</a>
+                        <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Rainfall Variability</a>
+                        <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Rainfall Seasonality</a>
+                        <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Consecutive Dry Days</a>
+                    </div>
+
+                    <!-- Temperature -->
+                    <div class="sub-section-title" onclick="toggleSection(this)">
+                        🌡 Temperature
+                        <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                    </div>
+                    <div class="sub-menu hidden">
+                        <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Mean Temperature</a>
+                        <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Maximum Temperature</a>
+                        <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Minimum Temperature</a>
+                        <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Temperature Variability</a>
+                    </div>
+
+                    <!-- Vegetation & Land -->
+                    <div class="sub-section-title" onclick="toggleSection(this)">
+                        🌿 Vegetation & Land
+                        <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                    </div>
+                    <div class="sub-menu hidden">
+                        <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> NDVI</a>
+                        <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Vegetation Health Index</a>
+                        <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Land Cover</a>
+                        <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Biomass Productivity</a>
+                    </div>
+
+                    <!-- Water Resources -->
+                    <div class="sub-section-title" onclick="toggleSection(this)">
+                        💧 Water Resources
+                        <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                    </div>
+                    <div class="sub-menu hidden">
+                        <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Surface Water Occurrence</a>
+                        <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Water Availability</a>
+                        <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Groundwater Stress</a>
+                        <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Water Storage</a>
+                    </div>
+
+                </div> <!-- end Climate & Environmental -->
+
+                <!-- Water-Related Hazards -->
+                <div class="sub-section-title" onclick="toggleSection(this)">
+                    🌊 Water-Related Hazards
+                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="sub-menu hidden">
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Drought Risk</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Drought Frequency</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Drought Severity</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Climate Aridity</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Flood Risk</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> River Flood Hazard</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Flash Flood Hazard</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Coastal Flood Hazard</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Water Stress</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Water Scarcity</a>
+                </div>
+
+                <!-- Atmospheric & Pollution Hazards -->
+                <div class="sub-section-title" onclick="toggleSection(this)">
+                    🌡 Atmospheric & Pollution Hazards
+                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="sub-menu hidden">
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> PM2.5 Exposure</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> PM10 Exposure</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> NO₂ Exposure</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> SO₂ Exposure</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Ozone Exposure</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Aerosol Optical Depth</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Water Pollution Index</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Heat Stress</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Heatwave Risk</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Extreme Temperature Exposure</a>
+                </div>
+
+                <!-- Natural Hazards -->
+                <div class="sub-section-title" onclick="toggleSection(this)">
+                    🔥 Natural Hazards
+                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="sub-menu hidden">
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Wildfire Risk</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Fire Frequency</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Burn Probability</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Earthquake Hazard</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Seismic Risk</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Landslide Susceptibility</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Volcanic Hazard</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Ash Exposure</a>
+                </div>
+
+                <!-- Extreme Weather Hazards -->
+                <div class="sub-section-title" onclick="toggleSection(this)">
+                    🌀 Extreme Weather Hazards
+                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="sub-menu hidden">
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Cyclone Risk</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Cyclone Frequency</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Storm Frequency</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Wind Hazard</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Storm Surge Risk</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Thunderstorm Risk</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Lightning Exposure</a>
+                </div>
+
+                <!-- Food Security & Agriculture -->
+                <div class="sub-section-title" onclick="toggleSection(this)">
+                    🌱 Food Security & Agriculture
+                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="sub-menu hidden">
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Agricultural Stress</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Agricultural Suitability</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Crop Failure Risk</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Growing Season Length</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Pasture Condition</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Biomass Productivity</a>
+                </div>
+
+                <!-- Health & Environmental Health -->
+                <div class="sub-section-title" onclick="toggleSection(this)">
+                    🏥 Health & Environmental Health
+                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="sub-menu hidden">
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Land Degradation</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Desertification Risk</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Soil Erosion Risk</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Malaria Risk</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Dengue Suitability</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Cholera Risk</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Environmental Health Risk</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Air Pollution Exposure</a>
+                </div>
+
+            </div> <!-- end sub-menu -->
+        </div> <!-- end Remote Sensing section -->
+
+
+        <!-- ============================================================ -->
+        <!-- 3. CHILD EXPOSURE ANALYTICS                                  -->
+        <!-- ============================================================ -->
+        <div class="menu-section">
+            <div class="menu-section-title" onclick="toggleSection(this)">
+                🎯 Child Exposure Analytics
+                <i class="fa-solid fa-chevron-down toggle-icon"></i>
+            </div>
+            <div class="sub-menu hidden">
+
+                <!-- Hazard Exposure -->
+                <div class="sub-section-title" onclick="toggleSection(this)">
+                    ⚠️ Hazard Exposure (Children)
+                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="sub-menu hidden">
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Children Exposed to Flood Risk</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Children Exposed to Drought Risk</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Children Exposed to Heat Stress</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Children Exposed to Cyclone Risk</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Children Exposed to Wildfire Risk</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Children Exposed to Air Pollution</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Children Exposed to Water Scarcity</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Children Exposed to Malaria Risk</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Children Exposed to Multi-Hazard Risk</a>
+                </div>
+
+                <!-- Infrastructure Exposure -->
+                <div class="sub-section-title" onclick="toggleSection(this)">
+                    🏗 Infrastructure Exposure
+                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="sub-menu hidden">
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Schools in Hazard Zones</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Health Facilities in Hazard Zones</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Water Points in Hazard Zones</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Roads in Flood Zones</a>
+                </div>
+
+                <!-- Population Exposure -->
+                <div class="sub-section-title" onclick="toggleSection(this)">
+                    👥 Population Exposure
+                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="sub-menu hidden">
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Total Population Exposed to Hazards</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Urban Population Exposure</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Rural Population Exposure</a>
+                </div>
+
+                <!-- Composite Indices -->
+                <div class="sub-section-title" onclick="toggleSection(this)">
+                    📊 Composite Indices
+                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="sub-menu hidden">
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Child Vulnerability Index</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Multi-Hazard Exposure Index</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Climate Risk Index for Children</a>
+                    <a href="javascript:void(0)" class="menu-item"><i class="fa-regular fa-circle"></i> Disaster Risk Index</a>
+                </div>
+
+            </div> <!-- end sub-menu -->
+        </div> <!-- end Child Exposure section -->
 
         <hr>
 
+        <!-- Sidebar content block for child templates -->
         {% block sidebar %}
         {% endblock %}
 
@@ -223,6 +766,70 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    // ==============================
+    // TOGGLE SINGLE SECTION
+    // ==============================
+function toggleSection(element) {
+    const subMenu = element.nextElementSibling;
+
+    if (subMenu && subMenu.classList.contains('sub-menu')) {
+        subMenu.classList.toggle('hidden');
+
+        const icon = element.querySelector('.toggle-icon');
+        if (icon) {
+            const isHidden = subMenu.classList.contains('hidden');
+
+            icon.classList.toggle('fa-chevron-down', !isHidden);
+            icon.classList.toggle('fa-chevron-right', isHidden);
+        }
+    }
+}
+    // ==============================
+    // EXPAND / COLLAPSE ALL
+    // ==============================
+    function expandAll() {
+        document.querySelectorAll('.sub-menu').forEach(el => el.classList.remove('hidden'));
+        document.querySelectorAll('.toggle-icon').forEach(icon => {
+            icon.classList.remove('fa-chevron-right');
+            icon.classList.add('fa-chevron-down');
+        });
+    }
+
+    function collapseAll() {
+        document.querySelectorAll('.sub-menu').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('.toggle-icon').forEach(icon => {
+            icon.classList.remove('fa-chevron-down');
+            icon.classList.add('fa-chevron-right');
+        });
+    }
+
+    // ==============================
+    // COLLAPSE ALL BY DEFAULT except submentus (optional, can be adjusted based on preference)
+    // ==============================
+document.addEventListener('DOMContentLoaded', function () {
+    // Show all main + second level menus
+    document.querySelectorAll('.menu-section > .sub-menu').forEach(el => {
+        el.classList.remove('hidden');
+    });
+
+    document.querySelectorAll('.sub-section-title + .sub-menu').forEach(el => {
+        el.classList.remove('hidden');
+    });
+
+    // Only collapse deeper nested lists (optional safety)
+    document.querySelectorAll('.sub-menu .sub-menu').forEach(el => {
+        el.classList.add('hidden');
+    });
+
+    // Fix icons
+    document.querySelectorAll('.toggle-icon').forEach(icon => {
+        icon.classList.remove('fa-chevron-right');
+        icon.classList.add('fa-chevron-down');
+    });
+});
+</script>
 
 {% block extra_js %}
 {% endblock %}

@@ -14,16 +14,10 @@ Child Mortality – Map View
         border-radius: 4px;
         box-shadow: 0 1px 3px rgba(0,0,0,0.2);
         font-size: 12px;
-        line-height: 1.4;
+        line-height: 1.6;
     }
-    .legend i {
-        width: 18px;
-        height: 18px;
-        float: left;
-        margin-right: 8px;
-        opacity: 0.9;
-        display: inline-block;   /* ADDED */
-        border: 1px solid #888;  /* ADDED */
+    .legend span {
+        vertical-align: middle;
     }
 </style>
 {% endblock %}
@@ -43,7 +37,7 @@ Child Mortality – Map View
     </div>
 
     <div class="card-body">
-        <!-- YEAR SLIDER (only Year 1, Year 2 hidden) -->
+        <!-- YEAR SLIDER -->
         <div class="row mb-2 align-items-center">
             <div class="col-md-6">
                 <label class="form-label">Year: <span id="year1Label">{{ current_year }}</span></label>
@@ -51,12 +45,9 @@ Child Mortality – Map View
                        value="{{ current_year }}" class="form-range"
                        oninput="onYear1Input(this.value)">
             </div>
-            <div class="col-md-6" id="year2Container" style="display:none;">
-                <!-- hidden, but kept for consistency -->
-            </div>
         </div>
 
-        <!-- CONTROLS ROW (without year range) -->
+        <!-- CONTROLS ROW -->
         <div class="row mb-3 align-items-center g-2">
             <div class="col-auto">
                 <button id="playBtn" class="btn btn-primary btn-sm" onclick="togglePlay()">▶ Play</button>
@@ -174,7 +165,6 @@ try {
 // ==============================
 let currentYear = {{ current_year }};
 let year1 = {{ current_year }};
-let year2 = {{ current_year }};
 let compareMode = false;
 
 const MIN_YEAR = 1960;
@@ -192,7 +182,7 @@ let currentDisplayData = [];
 let map = null;
 let geoJsonLayer = null;
 let legendControl = null;
-let rawGeoJSON = null; // store for export
+let rawGeoJSON = null;
 
 function initMap() {
     map = L.map('map').setView([20, 0], 2);
@@ -201,9 +191,6 @@ function initMap() {
     }).addTo(map);
 }
 
-// ==============================
-// LOAD GEOJSON AND BUILD CHOROPLETH
-// ==============================
 function loadGeoJSON() {
     const geojsonUrl = '/static/data/geojson/ne_10m_admin_0_countries_sm.geojson';
     fetch(geojsonUrl)
@@ -211,9 +198,7 @@ function loadGeoJSON() {
         .then(data => {
             rawGeoJSON = data;
             geoJsonLayer = L.geoJSON(data, {
-                style: function(feature) {
-                    return { fillColor: '#ccc', color: '#555', weight: 1, fillOpacity: 0.7 };
-                },
+                style: { fillColor: '#ccc', color: '#555', weight: 1, fillOpacity: 0.7 },
                 onEachFeature: function(feature, layer) {
                     layer.bindPopup(feature.properties.NAME || feature.properties.name || 'Unknown');
                 }
@@ -228,7 +213,7 @@ function loadGeoJSON() {
 }
 
 // ==============================
-// UPDATE MAP – now zooms to filtered features
+// UPDATE MAP – ZOOM TO FILTERED DATA + FIXED LEGEND
 // ==============================
 function updateMap() {
     if (!geoJsonLayer) return;
@@ -241,7 +226,6 @@ function updateMap() {
     const yearStr = String(year1);
     let data = allDataByYear[yearStr] || [];
 
-    // Apply filters
     data = data.filter(d => {
         const continentMatch = !continent || d.continent === continent;
         const incomeMatch = !income || d.income_group === income;
@@ -250,20 +234,15 @@ function updateMap() {
         return continentMatch && incomeMatch && subregionMatch && countryMatch;
     });
 
-    // Build iso3 -> mortality map
     const valueMap = {};
-    data.forEach(d => {
-        valueMap[d.iso3] = d.mortality;
-    });
+    data.forEach(d => { valueMap[d.iso3] = d.mortality; });
 
     const values = Object.values(valueMap).filter(v => v !== undefined && v !== null);
     if (values.length === 0) {
-        // No data – show all gray
         geoJsonLayer.setStyle({ fillColor: '#ccc', color: '#555', weight: 1, fillOpacity: 0.7 });
         if (legendControl) map.removeControl(legendControl);
         document.getElementById('noDataMessage').style.display = 'block';
         currentDisplayData = [];
-        // Zoom out to world
         map.setView([20, 0], 2);
         return;
     }
@@ -271,30 +250,25 @@ function updateMap() {
 
     const minVal = Math.min(...values);
     const maxVal = Math.max(...values);
-    // Deep bright palette: yellow -> orange -> dark red
     const colorScale = chroma.scale(['#ffffb2', '#fecc5c', '#fd8d3c', '#f03b20', '#bd0026'])
         .domain([minVal, maxVal]);
 
-    // Update styles and store data for export
     const features = [];
-    const bounds = L.latLngBounds(); // ADDED: collect bounds of features with data
+    const bounds = L.latLngBounds();
 
     geoJsonLayer.eachLayer(function(layer) {
         const props = layer.feature.properties;
         let iso3 = props.SOV_A3 || props.ADM0_A3 || props.iso3 || props.ISO_A3;
-        if (!iso3) {
-            layer.setStyle({ fillColor: '#ccc', color: '#555', weight: 1, fillOpacity: 0.7 });
-            const name = props.NAME || props.name || 'Unknown';
-            layer.bindPopup(`<b>${name}</b><br>No data`);
-            return;
-        }
-        const value = valueMap[iso3];
         const name = props.NAME || props.name || 'Unknown';
+        const value = iso3 ? valueMap[iso3] : undefined;
+
         if (value !== undefined && value !== null) {
             const color = colorScale(value).hex();
             layer.setStyle({ fillColor: color, color: '#333', weight: 1, fillOpacity: 0.85 });
             layer.bindPopup(`<b>${name}</b><br>Mortality: ${value.toFixed(1)}`);
-            // Store for export
+            if (layer.getBounds) {
+                bounds.extend(layer.getBounds());
+            }
             features.push({
                 ...layer.feature,
                 properties: {
@@ -303,25 +277,22 @@ function updateMap() {
                     year: year1
                 }
             });
-            // ADDED: extend bounds with this layer's bounds
-            if (layer.getBounds) {
-                bounds.extend(layer.getBounds());
-            }
         } else {
-            layer.setStyle({ fillColor: '#ccc', color: '#555', weight: 1, fillOpacity: 0.7 });
+            layer.setStyle({ fillColor: '#e0e0e0', color: '#999', weight: 1, fillOpacity: 0.4 });
             layer.bindPopup(`<b>${name}</b><br>No data`);
         }
     });
 
-    // ADDED: zoom to bounds if we have any data
+    // Zoom to filtered data
     if (bounds.isValid() && !bounds.equals(L.latLngBounds([[-90,-180],[90,180]]))) {
         map.fitBounds(bounds, { padding: [20,20] });
     } else {
-        // fallback to world view
         map.setView([20, 0], 2);
     }
 
-    // Update legend
+    // ==============================
+    // FIXED LEGEND – using <span> with inline styles
+    // ==============================
     if (legendControl) map.removeControl(legendControl);
     const legend = L.control({ position: 'bottomright' });
     legend.onAdd = function() {
@@ -331,14 +302,14 @@ function updateMap() {
         for (let i = 0; i <= steps; i++) {
             const val = minVal + (maxVal - minVal) * (i / steps);
             const color = colorScale(val).hex();
-            div.innerHTML += `<i style="background:${color};"></i> ${val.toFixed(1)}<br>`;
+            div.innerHTML += `<span style="display:inline-block; width:18px; height:18px; background:${color}; border:1px solid #888; margin-right:8px;"></span> ${val.toFixed(1)}<br>`;
         }
         return div;
     };
     legend.addTo(map);
     legendControl = legend;
 
-    // Store for CSV and GeoJSON export
+    // Store for exports
     currentDisplayData = data.map(d => ({
         country: d.country,
         year: d.year,
@@ -347,8 +318,6 @@ function updateMap() {
         income_group: d.income_group || '',
         subregion: d.subregion || ''
     }));
-
-    // Store exported GeoJSON features
     window._exportGeoJSONFeatures = features;
 }
 
@@ -376,7 +345,7 @@ function onYear1Input(value) {
 }
 
 // ==============================
-// EXPORT FUNCTIONS
+// EXPORT FUNCTIONS (unchanged)
 // ==============================
 function exportCSV() {
     if (!currentDisplayData || currentDisplayData.length === 0) {
@@ -431,7 +400,7 @@ function exportGeoJSON() {
 }
 
 // ==============================
-// ANIMATION
+// ANIMATION, SPEED, RESET
 // ==============================
 function togglePlay() {
     if (isPlaying) {

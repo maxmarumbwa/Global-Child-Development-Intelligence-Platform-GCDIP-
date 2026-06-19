@@ -7,4 +7,5 @@ path('mortality-chart-year/', views.mortality_chart_year, name='mortality_chart_
 path('mortality-chart-data/', views.mortality_chart_data, name='mortality_chart_data'),
 path('mortality-table/', views.mortality_table, name='mortality_table'),
 path('mortality-map/', views.mortality_map, name='mortality_map'),
+path('mortality-all/', views.mortality_all, name='mortality_all'),
 ]

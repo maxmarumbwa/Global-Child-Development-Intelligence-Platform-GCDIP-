@@ -199,5 +199,42 @@ def mortality_map(request):
         "income_groups": income_groups,
         "subregions": subregions,
     })
-    
-    
+
+
+#
+##### Plots all graphics 
+#
+def mortality_all(request):
+    """
+    Render the combined map, table, and chart view.
+    """
+    df = get_child_mortality_range(1960, 2024)
+    if df.empty:
+        return render(request, "indicators/mortality_all.html", {
+            "all_data_json": "{}",
+            "current_year": 2023,
+            "continents": [],
+            "income_groups": [],
+            "subregions": [],
+        })
+
+    data_by_year = {}
+    for year in df['year'].unique():
+        year_df = df[df['year'] == year]   # all rows
+        records = year_df.to_dict(orient='records')
+        data_by_year[str(year)] = records
+
+    continents = sorted(df['continent'].dropna().unique().tolist())
+    income_groups = sorted(df['income_group'].dropna().unique().tolist())
+    subregions = sorted(df['subregion'].dropna().unique().tolist())
+
+    import json
+    all_data_json = json.dumps(data_by_year)
+
+    return render(request, "indicators/mortality_all.html", {
+        "all_data_json": all_data_json,
+        "current_year": 2023,
+        "continents": continents,
+        "income_groups": income_groups,
+        "subregions": subregions,
+    })
