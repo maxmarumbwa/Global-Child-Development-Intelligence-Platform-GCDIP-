@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Classified Rainfall – {{ date }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    #map {
+        height: 600px;
+        width: 100%;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h4>Classified Rainfall – {{ date }}</h4>
+    </div>
+    <div class="card-body">
+        <div id="map"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+    const imageUrl = '{{ image_url }}';
+
+    // 🌍 Fixed Southern Africa bounds (no API needed)
+    const imageBounds = [
+        [-35.0, 15.0],   // Southwest (lat, lng)
+        [-5.0, 40.0]     // Northeast (lat, lng)
+    ];
+
+    // Initialize map centered on Southern Africa
+    const map = L.map('map', {
+        center: [-18, 25],
+        zoom: 4
+    });
+
+    // Base map
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap & CartoDB'
+    }).addTo(map);
+
+    // Fit to region
+    map.fitBounds(imageBounds);
+
+    // Raster overlay
+    L.imageOverlay(imageUrl, imageBounds, {
+        opacity: 0.8,
+        attribution: 'Classified Rainfall'
+    }).addTo(map);
+</script>
+{% endblock %}

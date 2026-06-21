@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'apps.analytics',
     'apps.comparison',
     'apps.api',
+    'apps.earth_observation',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',

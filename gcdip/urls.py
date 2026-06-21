@@ -46,5 +46,8 @@ urlpatterns = [
         "api/",
         include("apps.api.urls")
     ),
-
+    path(
+        "earth_observation/",
+        include("apps.earth_observation.urls")
+    ),
 ]

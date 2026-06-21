@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Monthly Rainfall LTA Viewer</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        body { margin: 0; padding: 0; font-family: sans-serif; }
+        #map { height: 100vh; width: 100%; }
+        #controls {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            z-index: 1000;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        select, button { padding: 6px 12px; font-size: 14px; }
+        .legend {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 10px;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            font-size: 12px;
+            z-index: 1000;
+        }
+        .legend-item { display: flex; align-items: center; gap: 6px; margin: 4px 0; }
+        .color-box { width: 20px; height: 20px; }
+    </style>
+</head>
+<body>
+
+<div id="controls">
+    <label for="monthSelect">Month:</label>
+    <select id="monthSelect">
+        <option value="01">01</option>
+        <option value="02">02</option>
+        <option value="03">03</option>
+        <option value="04">04</option>
+        <option value="05">05</option>
+        <option value="06">06</option>
+        <option value="07">07</option>
+        <option value="08">08</option>
+        <option value="09">09</option>
+        <option value="10">10</option>
+        <option value="11">11</option>
+        <option value="12">12</option>
+    </select>
+    <button id="loadBtn">Load</button>
+</div>
+
+<div class="legend">
+    <div class="legend-item"><span class="color-box" style="background:#deebf7;"></span> ≤ 25 mm</div>
+    <div class="legend-item"><span class="color-box" style="background:#9ecae1;"></span> 25–75 mm</div>
+    <div class="legend-item"><span class="color-box" style="background:#3182bd;"></span> 75–150 mm</div>
+    <div class="legend-item"><span class="color-box" style="background:#08306b;"></span> > 150 mm</div>
+</div>
+
+<div id="map"></div>
+
+<script>
+    var map = L.map('map').setView([-20, 30], 6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    var currentLayer = null;
+
+    // Build URL templates using Django's reverse with a placeholder
+    // We'll replace 'MONTH' with the actual two-digit month later
+    var metadataUrlTemplate = "{% url 'metadata' month=0 %}".replace('0', 'MONTH');
+    var classifiedUrlTemplate = "{% url 'classified' month=0 %}".replace('0', 'MONTH');
+
+    function loadMonth(month) {
+        if (currentLayer) {
+            map.removeLayer(currentLayer);
+        }
+        var monthStr = String(month).padStart(2, '0');
+        var metadataUrl = metadataUrlTemplate.replace('MONTH', monthStr);
+        var classifiedUrl = classifiedUrlTemplate.replace('MONTH', monthStr);
+
+        fetch(metadataUrl)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                var b = data.bounds;
+                var bounds = [[b.south, b.west], [b.north, b.east]];
+                currentLayer = L.imageOverlay(classifiedUrl, bounds, {
+                    opacity: 0.8
+                }).addTo(map);
+                map.fitBounds(bounds);
+            })
+            .catch(err => {
+                alert('Error loading metadata: ' + err.message);
+                console.error(err);
+            });
+    }
+
+    document.getElementById('loadBtn').addEventListener('click', function() {
+        var month = document.getElementById('monthSelect').value;
+        loadMonth(month);
+    });
+
+    // Load default month (January)
+    window.onload = function() {
+        document.getElementById('monthSelect').value = '01';
+        loadMonth('01');
+    };
+</script>
+</body>
+</html>
