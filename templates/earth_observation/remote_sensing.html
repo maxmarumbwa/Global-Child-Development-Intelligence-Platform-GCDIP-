@@ -1,125 +1,350 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>Monthly Rainfall LTA Viewer</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <style>
-        body { margin: 0; padding: 0; font-family: sans-serif; }
-        #map { height: 100vh; width: 100%; }
-        #controls {
-            position: absolute;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: white;
-            padding: 10px 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-            z-index: 1000;
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
-        select, button { padding: 6px 12px; font-size: 14px; }
-        .legend {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            background: white;
-            padding: 10px;
-            border-radius: 6px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            font-size: 12px;
-            z-index: 1000;
-        }
-        .legend-item { display: flex; align-items: center; gap: 6px; margin: 4px 0; }
-        .color-box { width: 20px; height: 20px; }
-    </style>
-</head>
-<body>
+{% extends "base.html" %}
+{% load static %}
 
-<div id="controls">
-    <label for="monthSelect">Month:</label>
-    <select id="monthSelect">
-        <option value="01">01</option>
-        <option value="02">02</option>
-        <option value="03">03</option>
-        <option value="04">04</option>
-        <option value="05">05</option>
-        <option value="06">06</option>
-        <option value="07">07</option>
-        <option value="08">08</option>
-        <option value="09">09</option>
-        <option value="10">10</option>
-        <option value="11">11</option>
-        <option value="12">12</option>
-    </select>
-    <button id="loadBtn">Load</button>
-</div>
+{% block title %}Global Rainfall – Static Map{% endblock %}
 
-<div class="legend">
-    <div class="legend-item"><span class="color-box" style="background:#deebf7;"></span> ≤ 25 mm</div>
-    <div class="legend-item"><span class="color-box" style="background:#9ecae1;"></span> 25–75 mm</div>
-    <div class="legend-item"><span class="color-box" style="background:#3182bd;"></span> 75–150 mm</div>
-    <div class="legend-item"><span class="color-box" style="background:#08306b;"></span> > 150 mm</div>
-</div>
-
-<div id="map"></div>
-
-<script>
-    var map = L.map('map').setView([-20, 30], 6);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
-
-    var currentLayer = null;
-
-    // Build URL templates using Django's reverse with a placeholder
-    // We'll replace 'MONTH' with the actual two-digit month later
-    var metadataUrlTemplate = "{% url 'metadata' month=0 %}".replace('0', 'MONTH');
-    var classifiedUrlTemplate = "{% url 'classified' month=0 %}".replace('0', 'MONTH');
-
-    function loadMonth(month) {
-        if (currentLayer) {
-            map.removeLayer(currentLayer);
-        }
-        var monthStr = String(month).padStart(2, '0');
-        var metadataUrl = metadataUrlTemplate.replace('MONTH', monthStr);
-        var classifiedUrl = classifiedUrlTemplate.replace('MONTH', monthStr);
-
-        fetch(metadataUrl)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                var b = data.bounds;
-                var bounds = [[b.south, b.west], [b.north, b.east]];
-                currentLayer = L.imageOverlay(classifiedUrl, bounds, {
-                    opacity: 0.8
-                }).addTo(map);
-                map.fitBounds(bounds);
-            })
-            .catch(err => {
-                alert('Error loading metadata: ' + err.message);
-                console.error(err);
-            });
+{% block extra_css %}
+<style>
+    /* Override content area to be full screen for the map */
+    .content {
+        padding: 0 !important;
+        overflow: hidden !important;
+        position: relative;
+        height: 100%;
     }
 
-    document.getElementById('loadBtn').addEventListener('click', function() {
-        var month = document.getElementById('monthSelect').value;
-        loadMonth(month);
-    });
+    #map {
+        width: 100%;
+        height: 100vh;
+        min-height: 100vh; /* fallback */
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
 
-    // Load default month (January)
-    window.onload = function() {
-        document.getElementById('monthSelect').value = '01';
-        loadMonth('01');
-    };
-</script>
-</body>
-</html>
+    /* Legend (copied from standalone) */
+    .legend {
+        background: white;
+        padding: 10px 14px;
+        line-height: 24px;
+        border-radius: 4px;
+        box-shadow: 0 0 8px rgba(0,0,0,.2);
+        font-size: 13px;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .legend h4 {
+        margin: 0 0 4px 0;
+        font-size: 14px;
+        font-weight: 600;
+    }
+    .legend i {
+        width: 22px;
+        height: 22px;
+        float: left;
+        margin-right: 10px;
+        border-radius: 2px;
+        border: 1px solid rgba(0,0,0,.08);
+    }
+    .legend .clearfix { clear: both; }
+
+    /* Month control */
+    .month-control {
+        background: white;
+        padding: 8px 14px 10px 14px;
+        border-radius: 4px;
+        box-shadow: 0 0 8px rgba(0,0,0,.2);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-size: 14px;
+        line-height: 1.6;
+        min-width: 160px;
+    }
+    .month-control label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 2px;
+        font-size: 13px;
+        color: #333;
+    }
+    .month-control select {
+        width: 100%;
+        padding: 4px 6px;
+        font-size: 13px;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+        background: #fafafa;
+    }
+    .month-control select:focus {
+        border-color: #3182bd;
+        outline: none;
+        box-shadow: 0 0 3px rgba(49,130,189,.3);
+    }
+
+    /* Loading tip */
+    #loading-tip {
+        position: absolute;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1000;
+        background: rgba(0,0,0,.7);
+        color: #fff;
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    #loading-tip.show {
+        opacity: 1;
+    }
+
+    /* Map title (absolute, centered) */
+    .map-title {
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1000;
+        background: rgba(0,0,0,.6);
+        color: #fff;
+        padding: 6px 20px;
+        border-radius: 24px;
+        font-size: 15px;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+        backdrop-filter: blur(4px);
+        pointer-events: none;
+        white-space: nowrap;
+    }
+
+    @media (max-width: 600px) {
+        .map-title {
+            font-size: 12px;
+            padding: 4px 14px;
+            top: 12px;
+        }
+        .month-control {
+            min-width: 120px;
+            padding: 6px 10px 8px 10px;
+            font-size: 12px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <!-- Map title -->
+    <div class="map-title">🌍 Global Rainfall (LTA)</div>
+
+    <!-- Loading tip -->
+    <div id="loading-tip">⏳ Loading map…</div>
+
+    <!-- Map container -->
+    <div id="map"></div>
+{% endblock %}
+
+{% block extra_js %}
+    <!-- Leaflet JS (base only loads CSS) -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <script>
+        // ============================================================
+        // 1. MAP SETUP – zoomed view (Africa focused)
+        // ============================================================
+        var map = L.map('map', {
+            center: [0, 20],      // Africa
+            zoom: 3,              // zoomed in enough
+            zoomControl: true,
+        });
+
+        // Base tile layer (light background)
+        L.tileLayer(
+            'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 18,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+                opacity: 0.3,
+            }
+        ).addTo(map);
+
+        // ============================================================
+        // 2. MONTH CONTROL
+        // ============================================================
+        var MonthControl = L.Control.extend({
+            options: { position: 'topright' },
+            onAdd: function() {
+                var container = L.DomUtil.create('div', 'month-control');
+                container.innerHTML = `
+                    <label for="month-select">📅 Select month</label>
+                    <select id="month-select">
+                        <option value="1">January</option>
+                        <option value="2">February</option>
+                        <option value="3">March</option>
+                        <option value="4">April</option>
+                        <option value="5">May</option>
+                        <option value="6">June</option>
+                        <option value="7">July</option>
+                        <option value="8">August</option>
+                        <option value="9">September</option>
+                        <option value="10">October</option>
+                        <option value="11" selected>November</option>
+                        <option value="12">December</option>
+                    </select>
+                `;
+                L.DomEvent.disableClickPropagation(container);
+                return container;
+            }
+        });
+
+        map.addControl(new MonthControl());
+
+        // ============================================================
+        // 3. RAINFALL OVERLAY (dynamic)
+        // ============================================================
+        var tip = document.getElementById('loading-tip');
+        var imageBounds = [
+            [-85.0511, -180],
+            [85.0511, 180]
+        ];
+        var currentMonth = 11;
+        var rainfallLayer = null;
+
+        function buildRainfallUrl(month) {
+            return 'http://127.0.0.1:8000/earth_observation/api/classified/' + month + '/';
+        }
+
+        function loadRainfall(month) {
+            tip.classList.add('show');
+            tip.textContent = '⏳ Loading map for month ' + month + '…';
+
+            if (rainfallLayer) {
+                map.removeLayer(rainfallLayer);
+            }
+
+            var url = buildRainfallUrl(month);
+            rainfallLayer = L.imageOverlay(url, imageBounds, {
+                opacity: 0.85,
+                interactive: false,
+                alt: 'Global rainfall map for month ' + month
+            });
+
+            rainfallLayer.addTo(map);
+
+            var img = rainfallLayer.getElement();
+            if (img) {
+                img.onload = function() {
+                    tip.classList.remove('show');
+                };
+                img.onerror = function() {
+                    tip.textContent = '⚠️ Failed to load rainfall image for month ' + month;
+                    setTimeout(function() {
+                        tip.classList.remove('show');
+                        tip.textContent = '⏳ Loading map…';
+                    }, 4000);
+                };
+            } else {
+                setTimeout(function() {
+                    tip.classList.remove('show');
+                }, 1500);
+            }
+
+            if (countryLayer) {
+                countryLayer.bringToFront();
+            }
+
+            console.log('🔄 Rainfall layer updated to month ' + month);
+        }
+
+        // ============================================================
+        // 4. COUNTRY BORDERS
+        // ============================================================
+        var countryLayer = null;
+
+        function loadCountryBorders() {
+            fetch('/static/data/geojson/ne_10m_admin_0_countries_sm.geojson')
+                .then(function(res) {
+                    if (!res.ok) throw new Error('GeoJSON HTTP ' + res.status);
+                    return res.json();
+                })
+                .then(function(data) {
+                    countryLayer = L.geoJSON(data, {
+                        style: {
+                            color: '#2c3e50',
+                            weight: 2.2,
+                            opacity: 0.9,
+                            fillOpacity: 0,
+                            lineCap: 'round',
+                            lineJoin: 'round',
+                        },
+                        onEachFeature: function(feature, layer) {
+                            var name = feature.properties && feature.properties.ADMIN ?
+                                feature.properties.ADMIN :
+                                (feature.properties && feature.properties.name ?
+                                    feature.properties.name :
+                                    'Unknown');
+                            layer.bindPopup('<strong>' + name + '</strong>');
+                        }
+                    });
+
+                    countryLayer.addTo(map);
+                    if (rainfallLayer) {
+                        countryLayer.bringToFront();
+                    }
+                    console.log('✅ Country borders loaded');
+                })
+                .catch(function(err) {
+                    console.error('❌ GeoJSON load error:', err);
+                });
+        }
+
+        // ============================================================
+        // 5. INITIAL LOAD
+        // ============================================================
+        loadCountryBorders();
+        loadRainfall(11);
+
+        // ============================================================
+        // 6. EVENT LISTENER FOR DROPDOWN
+        // ============================================================
+        document.addEventListener('change', function(e) {
+            if (e.target && e.target.id === 'month-select') {
+                var month = parseInt(e.target.value, 10);
+                if (!isNaN(month) && month >= 1 && month <= 12) {
+                    currentMonth = month;
+                    loadRainfall(month);
+                }
+            }
+        });
+
+        // ============================================================
+        // 7. LEGEND
+        // ============================================================
+        var legend = L.control({ position: 'bottomright' });
+        legend.onAdd = function() {
+            var div = L.DomUtil.create('div', 'legend');
+            div.innerHTML =
+                '<h4>🌧️ Rainfall (mm)</h4>' +
+                '<i style="background:#deebf7"></i> 0 – 25<br>' +
+                '<i style="background:#9ecae1"></i> 25 – 75<br>' +
+                '<i style="background:#3182bd"></i> 75 – 150<br>' +
+                '<i style="background:#08306b; border-color:#08306b;"></i> &gt; 150' +
+                '<div class="clearfix"></div>' +
+                '<hr style="margin:6px 0 4px; border:0; border-top:1px solid #eee;">' +
+                '<span style="font-size:12px; color:#777;">Country borders shown in dark grey</span>';
+            return div;
+        };
+        legend.addTo(map);
+
+        // ============================================================
+        // 8. DEBUG
+        // ============================================================
+        window.__map = map;
+        console.log('🗺️ Static rainfall map ready – zoomed view (Africa)');
+    </script>
+{% endblock %}
+
+
+
+

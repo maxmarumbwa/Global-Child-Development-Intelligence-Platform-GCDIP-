@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Global PNG Overlay</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        html,
+        body,
+        #map {
+            height: 100%;
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        const map = L.map("map").setView([0, 0], 2);
+
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution: "&copy; OSM"
+        }).addTo(map);
+
+        // Your global PNG (replace with your URL)
+        const pngUrl = "/static/world_3857.png"; // Ensure this is a valid URL to your PNG file
+        // Full world bounds in WGS84
+        const bounds = [[-90, -180], [90, 180]];
+
+        L.imageOverlay(pngUrl, bounds, {
+            opacity: 0.7,
+            interactive: true
+        }).addTo(map);
+    </script>
+</body>
+
+</html>
