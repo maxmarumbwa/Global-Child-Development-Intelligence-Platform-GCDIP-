@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Raster Viewer</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    body, html { margin:0; padding:0; }
+    #map { height:100vh; width:100%; }
+    #controls {
+      position: absolute; top: 20px; left: 20px; z-index: 1000;
+      background: white; padding: 12px 18px; border-radius: 8px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.3);
+      display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+      font-family: sans-serif; font-size: 14px;
+    }
+    #controls select, #controls input {
+      padding: 6px 10px; border-radius: 4px; border: 1px solid #ccc;
+      font-size: 14px;
+    }
+    #month-group { display: none; align-items: center; gap: 5px; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <div id="controls">
+    <label for="dataset">Dataset:</label>
+    <select id="dataset"></select>
+    <span id="month-group">
+      <label for="month">Month:</label>
+      <input type="number" id="month" min="1" max="12" value="1" style="width:60px;" />
+    </span>
+  </div>
+
+  <script>
+    // -------- 1. Dataset registry (mirrors your Django config) --------
+    const DATASETS = {
+      // Monthly
+      rainfall:          { type: 'month' },
+      temperature_avg:   { type: 'month' },
+      temperature_min:   { type: 'month' },
+      temperature_max:   { type: 'month' },
+      wind_speed:        { type: 'month' },
+      // Static
+      demographics_children_female: { type: 'static' },
+      demographics_children_male:   { type: 'static' },
+      demographics_children:        { type: 'static' },
+      land_degradation:             { type: 'static' },
+      flood_risk_coastal:           { type: 'static' },
+      flood_risk_fluvial:           { type: 'static' },
+      drought_risk:                 { type: 'static' },
+      pollution_air:                { type: 'static' },
+      pollution_water:              { type: 'static' },
+      cyclone_risk:                 { type: 'static' },
+      diseases_cholera:             { type: 'static' },
+      diseases_malaria:             { type: 'static' },
+      // (Add your commented flood_risk_*_param with type: 'rp' if needed)
+    };
+
+    // -------- 2. Leaflet map (centred on Africa) --------
+    const map = L.map('map', {
+      center: [0, 20],
+      zoom: 3,
+      maxBounds: [[-90, -180], [90, 180]],
+      maxBoundsViscosity: 1.0
+    });
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+
+    const BOUNDS = [[-90, -180], [90, 180]];
+    let currentOverlay = null;
+
+    // -------- 3. Populate dropdown --------
+    const select = document.getElementById('dataset');
+    const monthGroup = document.getElementById('month-group');
+    const monthInput = document.getElementById('month');
+
+    // Sort keys for nicer ordering
+    const sortedKeys = Object.keys(DATASETS).sort();
+    sortedKeys.forEach(key => {
+      const opt = document.createElement('option');
+      opt.value = key;
+      opt.textContent = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      select.appendChild(opt);
+    });
+
+    // -------- 4. Load raster (auto) --------
+    function loadRaster() {
+      const dataset = select.value;
+      const config = DATASETS[dataset];
+      if (!config) return;
+
+      // Build URL
+      let url = `/earth_observation/raster/${dataset}/`;
+      if (config.type === 'month') {
+        const month = parseInt(monthInput.value, 10);
+        if (isNaN(month) || month < 1 || month > 12) return;
+        url += `${month}/`;
+      }
+      // (Add 'rp' handling later if needed)
+
+      // Remove old overlay
+      if (currentOverlay) {
+        map.removeLayer(currentOverlay);
+        currentOverlay = null;
+      }
+
+      // Add new overlay
+      currentOverlay = L.imageOverlay(url, BOUNDS, {
+        opacity: 0.7,
+        attribution: dataset.replace(/_/g, ' ').toUpperCase()
+      }).addTo(map);
+    }
+
+    // -------- 5. Events: auto-load on change --------
+    select.addEventListener('change', function() {
+      const config = DATASETS[this.value];
+      if (config && config.type === 'month') {
+        monthGroup.style.display = 'flex';
+      } else {
+        monthGroup.style.display = 'none';
+      }
+      loadRaster();
+    });
+
+    monthInput.addEventListener('input', loadRaster);
+
+    // -------- 6. Initial load --------
+    // Set default to first dataset (rainfall) and trigger
+    select.value = sortedKeys[0];
+    select.dispatchEvent(new Event('change'));
+  </script>
+</body>
+</html>

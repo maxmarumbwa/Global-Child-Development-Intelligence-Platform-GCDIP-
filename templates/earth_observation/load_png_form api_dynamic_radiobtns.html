@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Raster Viewer</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    body, html { margin:0; padding:0; }
+    #map { height:100vh; width:100%; }
+    #controls {
+      position: absolute; top: 20px; left: 20px; z-index: 1000;
+      background: white; padding: 15px 20px; border-radius: 8px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.3);
+      font-family: sans-serif; font-size: 14px;
+      max-height: 80vh; overflow-y: auto;
+      min-width: 200px;
+    }
+    #controls label { display: block; margin: 4px 0; cursor: pointer; }
+    #controls input[type="radio"] { margin-right: 8px; }
+    #month-group {
+      margin-top: 10px;
+      border-top: 1px solid #ddd;
+      padding-top: 10px;
+      display: none;
+    }
+    #month-group label { display: inline-block; margin-right: 8px; }
+    #month-group input[type="range"] { width: 120px; vertical-align: middle; }
+    #month-group span { display: inline-block; min-width: 30px; text-align: center; }
+    .product-group { margin-bottom: 6px; }
+    .group-title { font-weight: bold; margin-top: 10px; margin-bottom: 4px; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <div id="controls">
+    <div style="font-weight:bold; margin-bottom:8px;">Select Product</div>
+
+    <div id="radio-container"></div>
+
+    <div id="month-group">
+      <label for="month-slider">Month:</label>
+      <input type="range" id="month-slider" min="1" max="12" value="1" step="1" />
+      <span id="month-display">1</span>
+    </div>
+  </div>
+
+  <script>
+    // -------- 1. Dataset registry (mirrors your Django config) --------
+    const DATASETS = {
+      // Monthly
+      rainfall:          { type: 'month', group: 'Climate' },
+      temperature_avg:   { type: 'month', group: 'Climate' },
+      temperature_min:   { type: 'month', group: 'Climate' },
+      temperature_max:   { type: 'month', group: 'Climate' },
+      wind_speed:        { type: 'month', group: 'Climate' },
+      // Static
+      demographics_children_female: { type: 'static', group: 'Demographics' },
+      demographics_children_male:   { type: 'static', group: 'Demographics' },
+      demographics_children:        { type: 'static', group: 'Demographics' },
+      land_degradation:             { type: 'static', group: 'Land' },
+      flood_risk_coastal:           { type: 'static', group: 'Floods' },
+      flood_risk_fluvial:           { type: 'static', group: 'Floods' },
+      drought_risk:                 { type: 'static', group: 'Drought' },
+      pollution_air:                { type: 'static', group: 'Pollution' },
+      pollution_water:              { type: 'static', group: 'Pollution' },
+      cyclone_risk:                 { type: 'static', group: 'Cyclones' },
+      diseases_cholera:             { type: 'static', group: 'Diseases' },
+      diseases_malaria:             { type: 'static', group: 'Diseases' },
+    };
+
+    // -------- 2. Leaflet map (centred on Africa) --------
+    const map = L.map('map', {
+      center: [0, 20],
+      zoom: 3,
+      maxBounds: [[-90, -180], [90, 180]],
+      maxBoundsViscosity: 1.0
+    });
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+
+    const BOUNDS = [[-90, -180], [90, 180]];
+    let currentOverlay = null;
+
+    // -------- 3. Build radio buttons by group --------
+    const container = document.getElementById('radio-container');
+    const monthGroup = document.getElementById('month-group');
+    const monthSlider = document.getElementById('month-slider');
+    const monthDisplay = document.getElementById('month-display');
+
+    // Group datasets by group
+    const groups = {};
+    for (const [key, val] of Object.entries(DATASETS)) {
+      const g = val.group || 'Other';
+      if (!groups[g]) groups[g] = [];
+      groups[g].push({ key, ...val });
+    }
+
+    // Sort groups alphabetically for consistency
+    const sortedGroups = Object.keys(groups).sort();
+    sortedGroups.forEach(group => {
+      const div = document.createElement('div');
+      div.className = 'group-title';
+      div.textContent = group;
+      container.appendChild(div);
+
+      groups[group].sort((a,b) => a.key.localeCompare(b.key)).forEach(item => {
+        const label = document.createElement('label');
+        const radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = 'dataset';
+        radio.value = item.key;
+        label.appendChild(radio);
+        label.appendChild(document.createTextNode(
+          item.key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+        ));
+        container.appendChild(label);
+      });
+    });
+
+    // Select first radio (rainfall) by default
+    const firstRadio = container.querySelector('input[type="radio"]');
+    if (firstRadio) firstRadio.checked = true;
+
+    // -------- 4. Load raster (auto) --------
+    function loadRaster() {
+      const selected = document.querySelector('input[name="dataset"]:checked');
+      if (!selected) return;
+      const dataset = selected.value;
+      const config = DATASETS[dataset];
+      if (!config) return;
+
+      let url = `/earth_observation/raster/${dataset}/`;
+      if (config.type === 'month') {
+        const month = parseInt(monthSlider.value, 10);
+        if (isNaN(month) || month < 1 || month > 12) return;
+        url += `${month}/`;
+      }
+
+      if (currentOverlay) {
+        map.removeLayer(currentOverlay);
+        currentOverlay = null;
+      }
+
+      currentOverlay = L.imageOverlay(url, BOUNDS, {
+        opacity: 0.7,
+        attribution: dataset.replace(/_/g, ' ').toUpperCase()
+      }).addTo(map);
+    }
+
+    // -------- 5. Events --------
+    // Radio change: show/hide month slider, load raster
+    container.addEventListener('change', function(e) {
+      if (e.target && e.target.name === 'dataset') {
+        const config = DATASETS[e.target.value];
+        if (config && config.type === 'month') {
+          monthGroup.style.display = 'block';
+        } else {
+          monthGroup.style.display = 'none';
+        }
+        loadRaster();
+      }
+    });
+
+    // Month slider change: update display and reload
+    monthSlider.addEventListener('input', function() {
+      monthDisplay.textContent = this.value;
+      loadRaster();
+    });
+
+    // -------- 6. Initial load --------
+    // Trigger change on first radio to set initial state
+    if (firstRadio) {
+      firstRadio.dispatchEvent(new Event('change'));
+    }
+  </script>
+</body>
+</html>

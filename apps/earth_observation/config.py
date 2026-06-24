@@ -170,18 +170,35 @@ DATASET_REGISTRY = {
     },
     'flood_risk_coastal': {
         'folder': 'natural_hazards/floods/coastal',
-        'file_pattern': 'inuncoast_historical_nosub_hist_rp0050_0 .tif',
+        'file_pattern': 'inuncoast_historical_nosub_hist_rp0500_0.tif',
         #'file_pattern':rp0100_0 rp0500_0 etc
         'classify': classify_flood_risk,   # reuse or define new
         'params': [],
     },
-    'flood_risk_inland': {
+    'flood_risk_fluvial': {
         'folder': 'natural_hazards/floods/inland',
-        'file_pattern': 'inunriver_historical_nosub_hist_rp0050_0.tif',
+        'file_pattern': 'inunriver_historical_nosub_hist_rp0100_0.tif',
         #'file_pattern':rp0100_0 rp0500_0 etc
         'classify': classify_flood_risk,   # reuse or define new
         'params': [],
     },
+    # 'flood_risk_coastal_param': {
+    #     'folder': 'natural_hazards/floods/coastal/raster/tif',  # adjust as needed
+    #     'file_pattern': 'inuncoast_historical_nosub_hist_rp{rp}_0.tif',  # rp is string
+    #     'classify': classify_flood_risk,
+    #     'params': ['rp'],
+    #     'valid_options': {
+    #         'rp': ['0002', '0005', '0010', '0025', '0050', '0100', '0250', '0500', '1000']
+    #     }
+    # },
+    # 'flood_risk_fluvial_param': {
+    #     'folder': 'natural_hazards/floods/fluvial/raster/tif',
+    #     'file_pattern': 'inunriver_historical_nosub_hist_rp{rp}_0.tif',   # example pattern
+    #     'classify': classify_flood_risk,
+    #     'params': ['rp'],
+    #     'valid_options': {'rp': ['0002', '0005', '0010', '0025', '0050', '0100', '0250', '0500', '1000']}
+    # },
+    
     'drought_risk': {
         'folder': 'natural_hazards/drought',
         'file_pattern': 'drought_risk.tif',

@@ -100,6 +100,9 @@ def raster_metadata_view(request, dataset, month=None):
         })
 
 
+def test(request):
+    """Render the HTML page with the map"""
+    return render(request, 'earth_observation/test.html')
 
 #
 ########### Old code for rendering raster to png image
