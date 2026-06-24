@@ -3,75 +3,306 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Raster Viewer</title>
+  <title>Remote Sensing Viewer</title>
+  <!-- Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <style>
-    body, html { margin:0; padding:0; }
-    #map { height:100vh; width:100%; }
-    #controls {
-      position: absolute; top: 20px; left: 20px; z-index: 1000;
-      background: white; padding: 15px 20px; border-radius: 8px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.3);
-      font-family: sans-serif; font-size: 14px;
-      max-height: 80vh; overflow-y: auto;
-      min-width: 200px;
+    /* ----- Global Reset ----- */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body, html { height: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+    /* ----- Map ----- */
+    #map { height: 100vh; width: 100%; }
+
+    /* ----- Menu (floating left) ----- */
+    .menu-container {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      z-index: 1000;
+      width: 300px;
+      max-height: calc(100vh - 100px);
+      overflow-y: auto;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 8px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.3);
+      padding: 12px 10px;
+      font-size: 14px;
     }
-    #controls label { display: block; margin: 4px 0; cursor: pointer; }
-    #controls input[type="radio"] { margin-right: 8px; }
-    #month-group {
-      margin-top: 10px;
-      border-top: 1px solid #ddd;
-      padding-top: 10px;
+    .menu-container::-webkit-scrollbar { width: 6px; }
+    .menu-container::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+
+    .menu-section-title, .sub-section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      padding: 6px 4px;
+      font-weight: 600;
+      color: #2c3e50;
+      border-bottom: 1px solid #eee;
+      transition: background 0.15s;
+    }
+    .menu-section-title:hover, .sub-section-title:hover {
+      background: #f5f7fa;
+    }
+    .sub-section-title {
+      padding-left: 16px;
+      font-weight: 500;
+      font-size: 0.95em;
+      border-bottom: 1px dashed #e9ecef;
+    }
+    .toggle-icon {
+      font-size: 0.8em;
+      transition: transform 0.2s;
+    }
+    .toggle-icon.rotated {
+      transform: rotate(180deg);
+    }
+
+    .sub-menu {
+      padding-left: 12px;
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height 0.3s ease;
+    }
+    .sub-menu.open {
+      max-height: 2000px; /* enough for all items */
+    }
+
+    .menu-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 6px 4px 20px;
+      color: #34495e;
+      text-decoration: none;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: background 0.15s, color 0.15s;
+      font-weight: 400;
+    }
+    .menu-item i { width: 18px; color: #7f8c8d; }
+    .menu-item:hover {
+      background: #e8f4fd;
+      color: #1a5276;
+    }
+    .menu-item.active {
+      background: #d4e6f1;
+      color: #1a5276;
+      font-weight: 500;
+    }
+
+    /* ----- Month Control (floating right) ----- */
+    #month-control {
+      position: absolute;
+      bottom: 30px;
+      right: 30px;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 12px 18px;
+      border-radius: 8px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
       display: none;
+      align-items: center;
+      gap: 12px;
+      font-family: 'Segoe UI', sans-serif;
     }
-    #month-group label { display: inline-block; margin-right: 8px; }
-    #month-group input[type="range"] { width: 120px; vertical-align: middle; }
-    #month-group span { display: inline-block; min-width: 30px; text-align: center; }
-    .product-group { margin-bottom: 6px; }
-    .group-title { font-weight: bold; margin-top: 10px; margin-bottom: 4px; }
+    #month-control label { font-weight: 600; }
+    #month-control input[type="range"] {
+      width: 150px;
+      cursor: pointer;
+    }
+    #month-control span {
+      min-width: 30px;
+      text-align: center;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
+
   <div id="map"></div>
 
-  <div id="controls">
-    <div style="font-weight:bold; margin-bottom:8px;">Select Product</div>
-
-    <div id="radio-container"></div>
-
-    <div id="month-group">
-      <label for="month-slider">Month:</label>
-      <input type="range" id="month-slider" min="1" max="12" value="1" step="1" />
-      <span id="month-display">1</span>
+  <!-- ===== MENU ===== -->
+  <div class="menu-container" id="menuContainer">
+    <div class="menu-section" id="section-remote">
+      <div class="menu-section-title" onclick="toggleSection(this)">
+        🛰 Remote Sensing Indicators
+        <i class="fa-solid fa-chevron-down toggle-icon"></i>
+      </div>
+      <div class="sub-menu open" id="sub-remote">
+        <!-- generated by JavaScript -->
+      </div>
     </div>
   </div>
 
+  <!-- ===== MONTH CONTROL ===== -->
+  <div id="month-control">
+    <label for="monthSlider">Month:</label>
+    <input type="range" id="monthSlider" min="1" max="12" value="1" step="1" />
+    <span id="monthDisplay">1</span>
+  </div>
+
   <script>
-    // -------- 1. Dataset registry (mirrors your Django config) --------
+    // ------------------------------------------------------------
+    // 1. DATASET REGISTRY (mirrors your Django config)
+    // ------------------------------------------------------------
     const DATASETS = {
       // Monthly
-      rainfall:          { type: 'month', group: 'Climate' },
-      temperature_avg:   { type: 'month', group: 'Climate' },
-      temperature_min:   { type: 'month', group: 'Climate' },
-      temperature_max:   { type: 'month', group: 'Climate' },
-      wind_speed:        { type: 'month', group: 'Climate' },
+      rainfall:          { type: 'month', label: 'Mean Annual Rainfall' },
+      temperature_avg:   { type: 'month', label: 'Mean Temperature' },
+      temperature_max:   { type: 'month', label: 'Maximum Temperature' },
+      temperature_min:   { type: 'month', label: 'Minimum Temperature' },
+      wind_speed:        { type: 'month', label: 'Wind Speed' },
       // Static
-      demographics_children_female: { type: 'static', group: 'Demographics' },
-      demographics_children_male:   { type: 'static', group: 'Demographics' },
-      demographics_children:        { type: 'static', group: 'Demographics' },
-      land_degradation:             { type: 'static', group: 'Land' },
-      flood_risk_coastal:           { type: 'static', group: 'Floods' },
-      flood_risk_fluvial:           { type: 'static', group: 'Floods' },
-      drought_risk:                 { type: 'static', group: 'Drought' },
-      pollution_air:                { type: 'static', group: 'Pollution' },
-      pollution_water:              { type: 'static', group: 'Pollution' },
-      cyclone_risk:                 { type: 'static', group: 'Cyclones' },
-      diseases_cholera:             { type: 'static', group: 'Diseases' },
-      diseases_malaria:             { type: 'static', group: 'Diseases' },
+      demographics_children_female: { type: 'static', label: 'Child Population (Female)' },
+      demographics_children_male:   { type: 'static', label: 'Child Population (Male)' },
+      demographics_children:        { type: 'static', label: 'Total Child Population' },
+      land_degradation:             { type: 'static', label: 'Land Degradation' },
+      flood_risk_coastal:           { type: 'static', label: 'Coastal Flood Risk' },
+      flood_risk_fluvial:           { type: 'static', label: 'Fluvial Flood Risk' },
+      drought_risk:                 { type: 'static', label: 'Drought Risk' },
+      pollution_air:                { type: 'static', label: 'Air Pollution' },
+      pollution_water:              { type: 'static', label: 'Water Pollution' },
+      cyclone_risk:                 { type: 'static', label: 'Cyclone Risk' },
+      diseases_cholera:             { type: 'static', label: 'Cholera Risk' },
+      diseases_malaria:             { type: 'static', label: 'Malaria Risk' },
     };
 
-    // -------- 2. Leaflet map (centred on Africa) --------
+    // ------------------------------------------------------------
+    // 2. MENU STRUCTURE (nested)
+    //    Use the exact hierarchy from your sample, but with our datasets.
+    // ------------------------------------------------------------
+    const MENU = {
+      "Population & Demographics": {
+        items: [
+          { slug: "demographics_children", label: "Total Child Population" },
+          { slug: "demographics_children_female", label: "Child Population (Female)" },
+          { slug: "demographics_children_male", label: "Child Population (Male)" },
+        ]
+      },
+      "Baseline Climate & Environmental Conditions": {
+        subsections: {
+          "Rainfall": {
+            items: [
+              { slug: "rainfall", label: "Mean Annual Rainfall" },
+            ]
+          },
+          "Temperature": {
+            items: [
+              { slug: "temperature_avg", label: "Mean Temperature" },
+              { slug: "temperature_max", label: "Maximum Temperature" },
+              { slug: "temperature_min", label: "Minimum Temperature" },
+            ]
+          },
+          "Wind": {
+            items: [
+              { slug: "wind_speed", label: "Wind Speed" },
+            ]
+          },
+          "Vegetation & Land": {
+            items: [
+              { slug: "land_degradation", label: "Land Degradation" },
+            ]
+          }
+        }
+      },
+      "Water-Related Hazards": {
+        items: [
+          { slug: "flood_risk_coastal", label: "Coastal Flood Risk" },
+          { slug: "flood_risk_fluvial", label: "Fluvial Flood Risk" },
+          { slug: "drought_risk", label: "Drought Risk" },
+        ]
+      },
+      "Pollution & Health": {
+        items: [
+          { slug: "pollution_air", label: "Air Pollution" },
+          { slug: "pollution_water", label: "Water Pollution" },
+          { slug: "diseases_cholera", label: "Cholera Risk" },
+          { slug: "diseases_malaria", label: "Malaria Risk" },
+          { slug: "cyclone_risk", label: "Cyclone Risk" },
+        ]
+      }
+    };
+
+    // ------------------------------------------------------------
+    // 3. RENDER MENU FROM STRUCTURE
+    // ------------------------------------------------------------
+    const container = document.getElementById('sub-remote');
+
+    function buildMenu() {
+      let html = '';
+      for (const [sectionTitle, sectionData] of Object.entries(MENU)) {
+        const sectionId = `sec-${sectionTitle.replace(/\s/g, '-')}`;
+        html += `<div class="sub-section-title" onclick="toggleSection(this)" data-toggle-id="${sectionId}">
+                   ${sectionTitle}
+                   <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                 </div>`;
+        html += `<div class="sub-menu" id="${sectionId}">`;
+
+        if (sectionData.subsections) {
+          // Nested subsections (like Rainfall, Temperature)
+          for (const [subTitle, subData] of Object.entries(sectionData.subsections)) {
+            const subId = `sub-${subTitle.replace(/\s/g, '-')}`;
+            html += `<div class="sub-section-title" onclick="toggleSection(this)" data-toggle-id="${subId}" style="padding-left:20px;">
+                       ${subTitle}
+                       <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                     </div>`;
+            html += `<div class="sub-menu" id="${subId}">`;
+            subData.items.forEach(item => {
+              const label = item.label || DATASETS[item.slug]?.label || item.slug;
+              html += `<a class="menu-item" data-slug="${item.slug}"><i class="fa-regular fa-circle"></i> ${label}</a>`;
+            });
+            html += `</div>`;
+          }
+        } else {
+          // Direct items under this section
+          sectionData.items.forEach(item => {
+            const label = item.label || DATASETS[item.slug]?.label || item.slug;
+            html += `<a class="menu-item" data-slug="${item.slug}"><i class="fa-regular fa-circle"></i> ${label}</a>`;
+          });
+        }
+
+        html += `</div>`;
+      }
+      container.innerHTML = html;
+
+      // Open all top-level sub-sections initially? Maybe open first level.
+      // We'll leave them closed; user can expand.
+      // For convenience, we can open the first section (Population & Demographics) by default.
+      const firstSub = container.querySelector('.sub-menu');
+      if (firstSub) {
+        firstSub.classList.add('open');
+        const icon = firstSub.previousElementSibling?.querySelector('.toggle-icon');
+        if (icon) icon.classList.add('rotated');
+      }
+    }
+
+    buildMenu();
+
+    // ------------------------------------------------------------
+    // 4. TOGGLE FUNCTION (used in onclick)
+    // ------------------------------------------------------------
+    window.toggleSection = function(el) {
+      // Find the next sibling with class 'sub-menu'
+      let subMenu = el.nextElementSibling;
+      while (subMenu && !subMenu.classList.contains('sub-menu')) {
+        subMenu = subMenu.nextElementSibling;
+      }
+      if (!subMenu) return;
+
+      subMenu.classList.toggle('open');
+      const icon = el.querySelector('.toggle-icon');
+      if (icon) icon.classList.toggle('rotated');
+    };
+
+    // ------------------------------------------------------------
+    // 5. LEAFLET MAP
+    // ------------------------------------------------------------
     const map = L.map('map', {
       center: [0, 20],
       zoom: 3,
@@ -85,98 +316,103 @@
 
     const BOUNDS = [[-90, -180], [90, 180]];
     let currentOverlay = null;
+    let currentSlug = null;
 
-    // -------- 3. Build radio buttons by group --------
-    const container = document.getElementById('radio-container');
-    const monthGroup = document.getElementById('month-group');
-    const monthSlider = document.getElementById('month-slider');
-    const monthDisplay = document.getElementById('month-display');
-
-    // Group datasets by group
-    const groups = {};
-    for (const [key, val] of Object.entries(DATASETS)) {
-      const g = val.group || 'Other';
-      if (!groups[g]) groups[g] = [];
-      groups[g].push({ key, ...val });
-    }
-
-    // Sort groups alphabetically for consistency
-    const sortedGroups = Object.keys(groups).sort();
-    sortedGroups.forEach(group => {
-      const div = document.createElement('div');
-      div.className = 'group-title';
-      div.textContent = group;
-      container.appendChild(div);
-
-      groups[group].sort((a,b) => a.key.localeCompare(b.key)).forEach(item => {
-        const label = document.createElement('label');
-        const radio = document.createElement('input');
-        radio.type = 'radio';
-        radio.name = 'dataset';
-        radio.value = item.key;
-        label.appendChild(radio);
-        label.appendChild(document.createTextNode(
-          item.key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
-        ));
-        container.appendChild(label);
-      });
-    });
-
-    // Select first radio (rainfall) by default
-    const firstRadio = container.querySelector('input[type="radio"]');
-    if (firstRadio) firstRadio.checked = true;
-
-    // -------- 4. Load raster (auto) --------
-    function loadRaster() {
-      const selected = document.querySelector('input[name="dataset"]:checked');
-      if (!selected) return;
-      const dataset = selected.value;
-      const config = DATASETS[dataset];
-      if (!config) return;
-
-      let url = `/earth_observation/raster/${dataset}/`;
-      if (config.type === 'month') {
-        const month = parseInt(monthSlider.value, 10);
-        if (isNaN(month) || month < 1 || month > 12) return;
-        url += `${month}/`;
+    // ------------------------------------------------------------
+    // 6. LOAD RASTER
+    // ------------------------------------------------------------
+    function loadRaster(slug) {
+      const config = DATASETS[slug];
+      if (!config) {
+        console.warn('Unknown dataset:', slug);
+        return;
       }
 
+      // Build URL
+      let url = `/earth_observation/raster/${slug}/`;
+      let monthVal = 1;
+      if (config.type === 'month') {
+        // Show month control
+        const ctrl = document.getElementById('month-control');
+        ctrl.style.display = 'flex';
+        // Get current month value
+        const slider = document.getElementById('monthSlider');
+        monthVal = parseInt(slider.value, 10);
+        if (isNaN(monthVal) || monthVal < 1 || monthVal > 12) monthVal = 1;
+        url += `${monthVal}/`;
+      } else {
+        document.getElementById('month-control').style.display = 'none';
+      }
+
+      // Remove old overlay
       if (currentOverlay) {
         map.removeLayer(currentOverlay);
         currentOverlay = null;
       }
 
+      // Add new overlay
       currentOverlay = L.imageOverlay(url, BOUNDS, {
         opacity: 0.7,
-        attribution: dataset.replace(/_/g, ' ').toUpperCase()
+        attribution: slug.replace(/_/g, ' ').toUpperCase()
       }).addTo(map);
+
+      // Highlight active menu item
+      document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll(`.menu-item[data-slug="${slug}"]`).forEach(el => el.classList.add('active'));
+
+      currentSlug = slug;
     }
 
-    // -------- 5. Events --------
-    // Radio change: show/hide month slider, load raster
-    container.addEventListener('change', function(e) {
-      if (e.target && e.target.name === 'dataset') {
-        const config = DATASETS[e.target.value];
-        if (config && config.type === 'month') {
-          monthGroup.style.display = 'block';
-        } else {
-          monthGroup.style.display = 'none';
-        }
-        loadRaster();
+    // ------------------------------------------------------------
+    // 7. EVENT BINDING
+    // ------------------------------------------------------------
+    // Click on menu item
+    container.addEventListener('click', function(e) {
+      const item = e.target.closest('.menu-item');
+      if (!item) return;
+      const slug = item.dataset.slug;
+      if (slug) {
+        e.preventDefault();
+        loadRaster(slug);
       }
     });
 
-    // Month slider change: update display and reload
+    // Month slider change
+    const monthSlider = document.getElementById('monthSlider');
+    const monthDisplay = document.getElementById('monthDisplay');
     monthSlider.addEventListener('input', function() {
       monthDisplay.textContent = this.value;
-      loadRaster();
+      if (currentSlug) {
+        // Reload current dataset with new month
+        loadRaster(currentSlug);
+      }
     });
 
-    // -------- 6. Initial load --------
-    // Trigger change on first radio to set initial state
-    if (firstRadio) {
-      firstRadio.dispatchEvent(new Event('change'));
+    // ------------------------------------------------------------
+    // 8. INITIAL LOAD – load first item (or default)
+    // ------------------------------------------------------------
+    // Find the first menu item and load it
+    const firstItem = container.querySelector('.menu-item');
+    if (firstItem) {
+      const slug = firstItem.dataset.slug;
+      // Open the section containing it (for visibility)
+      let parentSub = firstItem.closest('.sub-menu');
+      while (parentSub) {
+        parentSub.classList.add('open');
+        const parentTitle = parentSub.previousElementSibling;
+        if (parentTitle && parentTitle.classList.contains('sub-section-title')) {
+          const icon = parentTitle.querySelector('.toggle-icon');
+          if (icon) icon.classList.add('rotated');
+        }
+        parentSub = parentSub.parentElement?.closest?.('.sub-menu');
+      }
+      // Load it
+      loadRaster(slug);
+    } else {
+      // fallback
+      console.warn('No menu item found');
     }
+
   </script>
 </body>
 </html>
