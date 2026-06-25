@@ -99,14 +99,97 @@ def raster_metadata_view(request, dataset, month=None):
             'crs': str(src.crs),
         })
 
-
+############# Views for rendering HTML pages ###########
 def test(request):
     """Render the HTML page with the map"""
     return render(request, 'earth_observation/test.html')
+def remote_sensing_view(request):
+    """Render the HTML page with the map"""
+    return render(request, 'earth_observation/remote_sensing.html')
+def view_raster(request):
+    """Render the HTML page with the map"""
+    return render(request, 'earth_observation/view-raster.html')
 
+
+
+
+
+
+###########################################################################################
 #
+# ################################ DATA ANALYSIS VIEWS ######################\
+    
+###########################################################################################
+    
+############################ Get pixel location from raster ################
+import os
+import math
+import numpy as np
+import rasterio
+from django.http import JsonResponse
+from .config import DATA_ROOT, DATASET_REGISTRY
+
+def lonlat_to_webmercator(lon, lat):
+    """Convert EPSG:4326 lon/lat to EPSG:3857 meters."""
+    x = lon * 20037508.34 / 180.0
+    y = math.log(math.tan((90 + lat) * math.pi / 360.0)) / (math.pi / 180.0)
+    y = y * 20037508.34 / 180.0
+    return x, y
+
+def raster_point_query(request, dataset, month=None):
+    try:
+        config = DATASET_REGISTRY.get(dataset)
+        if not config:
+            return JsonResponse({'error': 'Unknown dataset'}, status=404)
+
+        lat = float(request.GET.get('lat', 0))
+        lon = float(request.GET.get('lon', 0))
+
+        param_values = {}
+        if 'month' in config.get('params', []):
+            if month is None:
+                return JsonResponse({'error': 'Month required'}, status=400)
+            param_values['month'] = int(month)
+
+        filename = config['file_pattern'].format(**param_values)
+        file_path = os.path.join(DATA_ROOT, config['folder'], filename)
+
+        if not os.path.exists(file_path):
+            return JsonResponse({'error': 'File not found'}, status=404)
+
+        # Convert lat/lon to EPSG:3857
+        x, y = lonlat_to_webmercator(lon, lat)
+
+        with rasterio.open(file_path) as src:
+            row, col = src.index(x, y)
+
+            if row < 0 or row >= src.height or col < 0 or col >= src.width:
+                return JsonResponse({'error': 'Point outside raster'}, status=400)
+
+            value = src.read(1)[row, col]
+
+            # Handle nodata and convert numpy type to Python float
+            if src.nodata is not None and value == src.nodata:
+                value = None
+            else:
+                value = float(value)  # Convert numpy int16/float32 to Python float
+
+            return JsonResponse({
+                'value': value,
+                'lat': lat,
+                'lon': lon
+            })
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'error': str(e)}, status=500)
+    
+####################################################################################
+#####################################################################################
 ########### Old code for rendering raster to png image
-##
+######################################################################################
+####################################################################################
 import io
 import os
 import numpy as np
@@ -125,12 +208,6 @@ def get_file_path(month):
         raise ValueError("Month must be 1-12")
     return os.path.join(DATA_DIR2, f"wc2.1_10m_prec_{month:02d}_cog.tif")
 
-def remote_sensing_view(request):
-    """Render the HTML page with the map"""
-    return render(request, 'earth_observation/remote_sensing.html')
-def view_raster(request):
-    """Render the HTML page with the map"""
-    return render(request, 'earth_observation/view-raster.html')
 
 def rain_classified(request, month):
     """

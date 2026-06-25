@@ -1,0 +1,133 @@
+{
+    "categories": [
+        {
+            "name": "Population & Demographics",
+            "items": [
+                {
+                    "name": "Total Child Population",
+                    "slug": "demographics_children",
+                    "icon": "fa-regular fa-circle"
+                },
+                {
+                    "name": "Child Population (Female)",
+                    "slug": "demographics_children_female",
+                    "icon": "fa-regular fa-circle"
+                },
+                {
+                    "name": "Child Population (Male)",
+                    "slug": "demographics_children_male",
+                    "icon": "fa-regular fa-circle"
+                }
+            ]
+        },
+        {
+            "name": "Baseline Climate",
+            "subcategories": [
+                {
+                    "name": "Rainfall",
+                    "icon": "🌧",
+                    "items": [
+                        {
+                            "name": "Mean Annual Rainfall",
+                            "slug": "rainfall",
+                            "icon": "fa-regular fa-circle"
+                        }
+                    ]
+                },
+                {
+                    "name": "Temperature",
+                    "icon": "🌡",
+                    "items": [
+                        {
+                            "name": "Mean Temperature",
+                            "slug": "temperature_avg",
+                            "icon": "fa-regular fa-circle"
+                        },
+                        {
+                            "name": "Maximum Temperature",
+                            "slug": "temperature_max",
+                            "icon": "fa-regular fa-circle"
+                        },
+                        {
+                            "name": "Minimum Temperature",
+                            "slug": "temperature_min",
+                            "icon": "fa-regular fa-circle"
+                        }
+                    ]
+                },
+                {
+                    "name": "Wind",
+                    "icon": "💨",
+                    "items": [
+                        {
+                            "name": "Wind Speed",
+                            "slug": "wind_speed",
+                            "icon": "fa-regular fa-circle"
+                        }
+                    ]
+                },
+                {
+                    "name": "Vegetation & Land",
+                    "icon": "🌿",
+                    "items": [
+                        {
+                            "name": "Land Degradation",
+                            "slug": "land_degradation",
+                            "icon": "fa-regular fa-circle"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Water‑Related Hazards",
+            "items": [
+                {
+                    "name": "Coastal Flood Risk",
+                    "slug": "flood_risk_coastal",
+                    "icon": "fa-regular fa-circle"
+                },
+                {
+                    "name": "Fluvial Flood Risk",
+                    "slug": "flood_risk_fluvial",
+                    "icon": "fa-regular fa-circle"
+                },
+                {
+                    "name": "Drought Risk",
+                    "slug": "drought_risk",
+                    "icon": "fa-regular fa-circle"
+                }
+            ]
+        },
+        {
+            "name": "Pollution & Health",
+            "items": [
+                {
+                    "name": "Air Pollution",
+                    "slug": "pollution_air",
+                    "icon": "fa-regular fa-circle"
+                },
+                {
+                    "name": "Water Pollution",
+                    "slug": "pollution_water",
+                    "icon": "fa-regular fa-circle"
+                },
+                {
+                    "name": "Cholera Risk",
+                    "slug": "diseases_cholera",
+                    "icon": "fa-regular fa-circle"
+                },
+                {
+                    "name": "Malaria Risk",
+                    "slug": "diseases_malaria",
+                    "icon": "fa-regular fa-circle"
+                },
+                {
+                    "name": "Cyclone Risk",
+                    "slug": "cyclone_risk",
+                    "icon": "fa-regular fa-circle"
+                }
+            ]
+        }
+    ]
+}

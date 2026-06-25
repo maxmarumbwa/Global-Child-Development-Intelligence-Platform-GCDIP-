@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Raster Viewer</title>
+
+  <!-- Leaflet CSS + JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body, html { height:100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+    /* Navbar */
+    .navbar {
+      height: 50px;
+      background: #003366;
+      color: white;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      font-size: 18px;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+
+    /* Main layout */
+    .app {
+      display: flex;
+      height: calc(100vh - 50px);
+    }
+
+    /* Sidebar – only products */
+    .sidebar {
+      width: 270px;
+      background: white;
+      border-right: 1px solid #ddd;
+      overflow-y: auto;
+      padding: 10px 14px;
+      flex-shrink: 0;
+      font-size: 13px;
+    }
+    .sidebar h5 {
+      color: #003366;
+      border-bottom: 2px solid #003366;
+      padding-bottom: 4px;
+      margin: 0 0 6px 0;
+      font-size: 14px;
+    }
+
+    /* Menu items */
+    .menu-item {
+      display: block;
+      padding: 3px 8px 3px 20px;
+      color: #333;
+      cursor: pointer;
+      border-radius: 3px;
+      margin: 1px 0;
+      text-decoration: none;
+      font-size: 13px;
+    }
+    .menu-item:hover { background: #e8f4fd; }
+    .menu-item.active { background: #d4e6f1; font-weight: 600; }
+
+    .section-title {
+      cursor: pointer;
+      font-weight: 600;
+      padding: 4px 0;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+    }
+    .section-title:hover { background: #f5f8fc; }
+
+    .sub-menu {
+      padding-left: 10px;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.25s ease;
+    }
+    .sub-menu.open { max-height: 2000px; }
+
+    .toggle-icon { font-size: 11px; color: #888; transition: 0.2s; }
+    .toggle-icon.rotated { transform: rotate(180deg); }
+
+    /* Map area */
+    .map-area {
+      flex: 1;
+      position: relative;
+    }
+    #map {
+      height: 100%;
+      width: 100%;
+      background: #e0e7ef;
+    }
+
+    /* Legend (floating) */
+    #legend {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      z-index: 1000;
+      background: rgba(255,255,255,0.95);
+      padding: 8px 12px;
+      border-radius: 6px;
+      box-shadow: 0 0 12px rgba(0,0,0,0.2);
+      font-size: 11px;
+      display: none;
+      max-width: 180px;
+    }
+    #legend h6 { margin:0 0 3px 0; color:#003366; border-bottom:1px solid #ddd; padding-bottom:2px; }
+    .legend-item { display:flex; align-items:center; gap:6px; margin:1px 0; }
+    .color-box { width:14px; height:12px; border:1px solid #aaa; flex-shrink:0; }
+
+    /* Month control */
+    #month-control {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      z-index: 1000;
+      background: rgba(255,255,255,0.95);
+      padding: 10px 14px;
+      border-radius: 6px;
+      box-shadow: 0 0 12px rgba(0,0,0,0.2);
+      display: none;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+    }
+    #month-control input[type="range"] { width: 120px; cursor: pointer; }
+    #month-control span { min-width: 28px; text-align: center; font-weight: bold; }
+
+    /* ---- Custom Leaflet control for vector layers (collapsible) ---- */
+    .vector-control {
+      background: rgba(255,255,255,0.95);
+      padding: 6px 10px;
+      border-radius: 6px;
+      box-shadow: 0 0 12px rgba(0,0,0,0.2);
+      font-size: 13px;
+      min-width: 140px;
+      max-width: 200px;
+    }
+    .vector-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .vector-header h6 {
+      margin: 0;
+      color: #003366;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .vector-header .toggle-btn {
+      font-size: 12px;
+      color: #888;
+      transition: transform 0.2s;
+      margin-left: 8px;
+    }
+    .vector-header .toggle-btn.rotated {
+      transform: rotate(180deg);
+    }
+    .vector-rows {
+      margin-top: 4px;
+      padding-top: 4px;
+      border-top: 1px solid #eee;
+      display: block; /* visible by default */
+    }
+    .vector-rows.hidden {
+      display: none;
+    }
+    .vector-row {
+      display: flex;
+      align-items: center;
+      padding: 2px 0;
+    }
+    .vector-row label {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 400;
+    }
+    .vector-row input[type="checkbox"] {
+      cursor: pointer;
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== TOP NAVBAR ===== -->
+<div class="navbar">🛰 Raster Viewer</div>
+
+<!-- ===== APP ===== -->
+<div class="app">
+
+  <!-- ===== SIDEBAR (only products) ===== -->
+  <div class="sidebar">
+    <h5>📋 Products</h5>
+
+    <!-- Population -->
+    <div class="section-title" onclick="toggleMenu(this)">
+      Population & Demographics
+      <i class="fa-solid fa-chevron-down toggle-icon"></i>
+    </div>
+    <div class="sub-menu">
+      <a class="menu-item" data-slug="demographics_children">Total Child Population</a>
+      <a class="menu-item" data-slug="demographics_children_female">Child Population (Female)</a>
+      <a class="menu-item" data-slug="demographics_children_male">Child Population (Male)</a>
+    </div>
+
+    <!-- Climate -->
+    <div class="section-title" onclick="toggleMenu(this)">
+      Baseline Climate
+      <i class="fa-solid fa-chevron-down toggle-icon"></i>
+    </div>
+    <div class="sub-menu">
+      <div class="section-title" onclick="toggleMenu(this)" style="padding-left:6px; border-bottom:1px dashed #ddd; font-weight:500;">
+        🌧 Rainfall <i class="fa-solid fa-chevron-down toggle-icon"></i>
+      </div>
+      <div class="sub-menu">
+        <a class="menu-item" data-slug="rainfall">Mean Annual Rainfall</a>
+      </div>
+
+      <div class="section-title" onclick="toggleMenu(this)" style="padding-left:6px; border-bottom:1px dashed #ddd; font-weight:500;">
+        🌡 Temperature <i class="fa-solid fa-chevron-down toggle-icon"></i>
+      </div>
+      <div class="sub-menu">
+        <a class="menu-item" data-slug="temperature_avg">Mean Temperature</a>
+        <a class="menu-item" data-slug="temperature_max">Maximum Temperature</a>
+        <a class="menu-item" data-slug="temperature_min">Minimum Temperature</a>
+      </div>
+
+      <div class="section-title" onclick="toggleMenu(this)" style="padding-left:6px; border-bottom:1px dashed #ddd; font-weight:500;">
+        💨 Wind <i class="fa-solid fa-chevron-down toggle-icon"></i>
+      </div>
+      <div class="sub-menu">
+        <a class="menu-item" data-slug="wind_speed">Wind Speed</a>
+      </div>
+
+      <div class="section-title" onclick="toggleMenu(this)" style="padding-left:6px; border-bottom:1px dashed #ddd; font-weight:500;">
+        🌿 Vegetation & Land <i class="fa-solid fa-chevron-down toggle-icon"></i>
+      </div>
+      <div class="sub-menu">
+        <a class="menu-item" data-slug="land_degradation">Land Degradation</a>
+      </div>
+    </div>
+
+    <!-- Hazards -->
+    <div class="section-title" onclick="toggleMenu(this)">
+      Water‑Related Hazards
+      <i class="fa-solid fa-chevron-down toggle-icon"></i>
+    </div>
+    <div class="sub-menu">
+      <a class="menu-item" data-slug="flood_risk_coastal">Coastal Flood Risk</a>
+      <a class="menu-item" data-slug="flood_risk_fluvial">Fluvial Flood Risk</a>
+      <a class="menu-item" data-slug="drought_risk">Drought Risk</a>
+    </div>
+
+    <!-- Pollution & Health -->
+    <div class="section-title" onclick="toggleMenu(this)">
+      Pollution & Health
+      <i class="fa-solid fa-chevron-down toggle-icon"></i>
+    </div>
+    <div class="sub-menu">
+      <a class="menu-item" data-slug="pollution_air">Air Pollution</a>
+      <a class="menu-item" data-slug="pollution_water">Water Pollution</a>
+      <a class="menu-item" data-slug="diseases_cholera">Cholera Risk</a>
+      <a class="menu-item" data-slug="diseases_malaria">Malaria Risk</a>
+      <a class="menu-item" data-slug="cyclone_risk">Cyclone Risk</a>
+    </div>
+  </div>
+
+  <!-- ===== MAP AREA ===== -->
+  <div class="map-area">
+    <div id="map"></div>
+
+    <!-- Legend -->
+    <div id="legend">
+      <h6>Legend</h6>
+      <div id="legend-content"></div>
+    </div>
+
+    <!-- Month slider -->
+    <div id="month-control">
+      <label>Month:</label>
+      <input type="range" id="monthSlider" min="1" max="12" value="1" />
+      <span id="monthDisplay">1</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ================================================================
+  // 1. DATASET REGISTRY
+  // ================================================================
+  const LEGEND_RAINFALL = [
+    { color: 'rgb(222,235,247)', label: 'Very Low (0-25 mm)' },
+    { color: 'rgb(158,202,225)', label: 'Low (25-75 mm)' },
+    { color: 'rgb(49,130,189)',  label: 'Moderate (75-150 mm)' },
+    { color: 'rgb(8,48,107)',    label: 'High (>150 mm)' },
+    { color: '#ffffff',          label: 'No Data' },
+  ];
+  const LEGEND_TEMPERATURE = [
+    { color: 'rgb(103,0,31)',   label: 'Very Cold (< -10°C)' },
+    { color: 'rgb(178,24,43)',  label: 'Cold (-10–0°C)' },
+    { color: 'rgb(214,96,77)',  label: 'Moderate (0–10°C)' },
+    { color: 'rgb(244,165,130)', label: 'Warm (10–20°C)' },
+    { color: 'rgb(253,219,199)', label: 'Hot (>20°C)' },
+    { color: '#ffffff',          label: 'No Data' },
+  ];
+  const LEGEND_DEMO = [
+    { color: 'rgb(237,248,233)', label: 'Very Low (<10)' },
+    { color: 'rgb(199,233,180)', label: 'Low (10-50)' },
+    { color: 'rgb(127,205,187)', label: 'Moderate (50-200)' },
+    { color: 'rgb(65,182,196)',  label: 'High (200-500)' },
+    { color: 'rgb(29,145,192)',  label: 'Very High (>500)' },
+    { color: '#ffffff',          label: 'No Data' },
+  ];
+  const LEGEND_FLOOD = [
+    { color: 'rgb(254,224,139)', label: 'No Risk' },
+    { color: 'rgb(253,174,97)',  label: 'Very Low' },
+    { color: 'rgb(244,109,67)',  label: 'Low' },
+    { color: 'rgb(213,62,79)',   label: 'Moderate' },
+    { color: 'rgb(158,1,66)',    label: 'High' },
+    { color: '#ffffff',          label: 'No Data' },
+  ];
+  const LEGEND_POLLUTION = [
+    { color: 'rgb(255,255,204)', label: 'Low' },
+    { color: 'rgb(255,237,160)', label: 'Moderate' },
+    { color: 'rgb(254,196,79)',  label: 'High' },
+    { color: 'rgb(254,153,41)',  label: 'Very High' },
+    { color: 'rgb(217,95,14)',   label: 'Extreme' },
+    { color: '#ffffff',          label: 'No Data' },
+  ];
+  const LEGEND_CYCLONE = LEGEND_DEMO;
+  const LEGEND_DISEASE = LEGEND_POLLUTION;
+
+  const DATASETS = {
+    rainfall:          { type: 'month', legend: LEGEND_RAINFALL },
+    temperature_avg:   { type: 'month', legend: LEGEND_TEMPERATURE },
+    temperature_max:   { type: 'month', legend: LEGEND_TEMPERATURE },
+    temperature_min:   { type: 'month', legend: LEGEND_TEMPERATURE },
+    wind_speed:        { type: 'month', legend: LEGEND_DEMO },
+    demographics_children_female: { type: 'static', legend: LEGEND_DEMO },
+    demographics_children_male:   { type: 'static', legend: LEGEND_DEMO },
+    demographics_children:        { type: 'static', legend: LEGEND_DEMO },
+    land_degradation:             { type: 'static', legend: LEGEND_DEMO },
+    flood_risk_coastal:           { type: 'static', legend: LEGEND_FLOOD },
+    flood_risk_fluvial:           { type: 'static', legend: LEGEND_FLOOD },
+    drought_risk:                 { type: 'static', legend: LEGEND_FLOOD },
+    pollution_air:                { type: 'static', legend: LEGEND_POLLUTION },
+    pollution_water:              { type: 'static', legend: LEGEND_POLLUTION },
+    cyclone_risk:                 { type: 'static', legend: LEGEND_CYCLONE },
+    diseases_cholera:             { type: 'static', legend: LEGEND_DISEASE },
+    diseases_malaria:             { type: 'static', legend: LEGEND_DISEASE },
+  };
+
+  // ================================================================
+  // 2. SIDEBAR TOGGLE
+  // ================================================================
+  function toggleMenu(element) {
+    let sub = element.nextElementSibling;
+    while (sub && !sub.classList.contains('sub-menu')) {
+      sub = sub.nextElementSibling;
+    }
+    if (!sub) return;
+    sub.classList.toggle('open');
+    const icon = element.querySelector('.toggle-icon');
+    if (icon) icon.classList.toggle('rotated');
+  }
+
+  // ================================================================
+  // 3. LEAFLET MAP
+  // ================================================================
+  const map = L.map('map', {
+    center: [0, 20],
+    zoom: 3,
+    maxBounds: [[-90, -180], [90, 180]],
+    maxBoundsViscosity: 1.0
+  });
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap'
+  }).addTo(map);
+
+  map.createPane('rasterPane');
+  map.getPane('rasterPane').style.zIndex = 300;
+
+  const WORLD_BOUNDS = [[-90, -180], [90, 180]];
+  let currentOverlay = null;
+  let currentSlug = null;
+
+  // ================================================================
+  // 4. VECTOR LAYERS – defined for easy extension
+  // ================================================================
+  const VECTOR_LAYERS = [
+    {
+      id: 'chk-countries',
+      label: 'Countries',
+      url: '/static/data/geojson/ne_10m_admin_0_countries_sm.geojson',
+      style: { color: '#3388ff', weight: 1, fill: false },
+      defaultChecked: true,
+    },
+    {
+      id: 'chk-provinces',
+      label: 'Provinces (adm1)',
+      url: '/static/data/geojson/ne_10m_admin_1_countries_sm.geojson',
+      style: { color: '#ff7f0e', weight: 0.8, fill: false, opacity: 0.6 },
+      defaultChecked: true,
+    },
+    {
+      id: 'chk-rivers',
+      label: 'Rivers',
+      url: '/static/data/geojson/world_rivers.geojson',
+      style: { color: '#1f77b4', weight: 1.5, fill: false, opacity: 0.7 },
+      defaultChecked: false,
+    },
+  ];
+
+  const vectorLayers = {};
+
+  // ================================================================
+  // 5. CUSTOM LEAFET CONTROL – collapsible, no swatches
+  // ================================================================
+  const VectorControl = L.Control.extend({
+    options: {
+      position: 'topright'
+    },
+    onAdd: function() {
+      const container = L.DomUtil.create('div', 'vector-control');
+
+      // Header with toggle button
+      const header = L.DomUtil.create('div', 'vector-header', container);
+      header.innerHTML = '<h6>🗺️ Vector Layers</h6><i class="fa-solid fa-chevron-down toggle-btn"></i>';
+
+      // Rows container (collapsible)
+      const rowsContainer = L.DomUtil.create('div', 'vector-rows', container);
+
+      // Build each layer row
+      VECTOR_LAYERS.forEach(layer => {
+        const row = document.createElement('div');
+        row.className = 'vector-row';
+
+        const label = document.createElement('label');
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = layer.id;
+        checkbox.checked = layer.defaultChecked;
+        checkbox.dataset.layerId = layer.id;
+
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(' ' + layer.label));
+        row.appendChild(label);
+        rowsContainer.appendChild(row);
+
+        // Load GeoJSON
+        fetch(layer.url)
+          .then(res => res.ok ? res.json() : Promise.reject())
+          .then(data => {
+            const geojsonLayer = L.geoJSON(data, {
+              style: layer.style,
+              pane: 'overlayPane'
+            });
+            vectorLayers[layer.id] = geojsonLayer;
+
+            if (layer.defaultChecked) {
+              geojsonLayer.addTo(map);
+            }
+
+            checkbox.addEventListener('change', function() {
+              const ref = vectorLayers[layer.id];
+              if (!ref) return;
+              if (this.checked) {
+                if (!map.hasLayer(ref)) ref.addTo(map);
+              } else {
+                if (map.hasLayer(ref)) map.removeLayer(ref);
+              }
+            });
+          })
+          .catch(() => console.warn('Failed to load ' + layer.id));
+      });
+
+      // Toggle logic
+      const toggleBtn = header.querySelector('.toggle-btn');
+      let isCollapsed = false;
+
+      function toggleCollapse() {
+        isCollapsed = !isCollapsed;
+        if (isCollapsed) {
+          rowsContainer.classList.add('hidden');
+          toggleBtn.classList.remove('fa-chevron-down');
+          toggleBtn.classList.add('fa-chevron-right');
+        } else {
+          rowsContainer.classList.remove('hidden');
+          toggleBtn.classList.remove('fa-chevron-right');
+          toggleBtn.classList.add('fa-chevron-down');
+        }
+      }
+
+      header.addEventListener('click', function(e) {
+        e.stopPropagation();
+        toggleCollapse();
+      });
+
+      // Also allow click on the header h6 or icon
+      // The header itself already has click.
+
+      return container;
+    }
+  });
+
+  map.addControl(new VectorControl());
+
+  // ================================================================
+  // 6. LEGEND UPDATE
+  // ================================================================
+  const legendBox = document.getElementById('legend');
+  const legendContent = document.getElementById('legend-content');
+
+  function updateLegend(slug) {
+    const config = DATASETS[slug];
+    if (!config || !config.legend) {
+      legendBox.style.display = 'none';
+      return;
+    }
+    let html = '';
+    config.legend.forEach(item => {
+      html += `<div class="legend-item">
+                <span class="color-box" style="background:${item.color};"></span>
+                <span>${item.label}</span>
+              </div>`;
+    });
+    legendContent.innerHTML = html;
+    legendBox.style.display = 'block';
+  }
+
+  // ================================================================
+  // 7. MONTH CONTROLS
+  // ================================================================
+  const monthControl = document.getElementById('month-control');
+  const monthSlider = document.getElementById('monthSlider');
+  const monthDisplay = document.getElementById('monthDisplay');
+
+  // ================================================================
+  // 8. LOAD RASTER
+  // ================================================================
+  function loadRaster(slug) {
+    const config = DATASETS[slug];
+    if (!config) return;
+
+    let url = `/earth_observation/raster/${slug}/`;
+    let month = 1;
+    if (config.type === 'month') {
+      monthControl.style.display = 'flex';
+      month = parseInt(monthSlider.value, 10) || 1;
+      url += `${month}/`;
+    } else {
+      monthControl.style.display = 'none';
+    }
+
+    if (currentOverlay) {
+      map.removeLayer(currentOverlay);
+      currentOverlay = null;
+    }
+
+    currentOverlay = L.imageOverlay(url, WORLD_BOUNDS, {
+      opacity: 0.7,
+      pane: 'rasterPane'
+    }).addTo(map);
+
+    updateLegend(slug);
+
+    document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll(`.menu-item[data-slug="${slug}"]`).forEach(el => el.classList.add('active'));
+
+    currentSlug = slug;
+  }
+
+  // ================================================================
+  // 9. EVENT LISTENERS
+  // ================================================================
+  document.querySelector('.sidebar').addEventListener('click', function(e) {
+    const item = e.target.closest('.menu-item');
+    if (!item) return;
+    e.preventDefault();
+    const slug = item.dataset.slug;
+    if (slug) loadRaster(slug);
+  });
+
+  monthSlider.addEventListener('input', function() {
+    monthDisplay.textContent = this.value;
+    if (currentSlug) loadRaster(currentSlug);
+  });
+
+  // ================================================================
+  // 10. INITIAL LOAD (first product, menus collapsed)
+  // ================================================================
+  const firstItem = document.querySelector('.menu-item');
+  if (firstItem) loadRaster(firstItem.dataset.slug);
+</script>
+
+</body>
+</html>

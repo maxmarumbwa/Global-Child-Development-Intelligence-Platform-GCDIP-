@@ -17,8 +17,10 @@ urlpatterns = [
     # Metadata (same patterns)
     path('metadata/<str:dataset>/', views.raster_metadata_view, name='metadata_static'),
     path('metadata/<str:dataset>/<int:month>/', views.raster_metadata_view, name='metadata_monthly'),
-    
-    
+    #
+    ######### Data analysis views #############
+    path('api/point/<str:dataset>/', views.raster_point_query, name='point_query_static'),
+    path('api/point/<str:dataset>/<int:month>/', views.raster_point_query, name='point_query_monthly'),
     
     
 ]
