@@ -22,5 +22,9 @@ urlpatterns = [
     path('api/point/<str:dataset>/', views.raster_point_query, name='point_query_static'),
     path('api/point/<str:dataset>/<int:month>/', views.raster_point_query, name='point_query_monthly'),
     
+    path('api/zonal_stats/<str:dataset>/', views.zonal_stats_view, name='zonal_stats_static'),
+    path('api/zonal_stats/<str:dataset>/<int:month>/', views.zonal_stats_view, name='zonal_stats_monthly'),
+    
+    
     
 ]

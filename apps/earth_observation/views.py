@@ -184,7 +184,133 @@ def raster_point_query(request, dataset, month=None):
         import traceback
         traceback.print_exc()
         return JsonResponse({'error': str(e)}, status=500)
-    
+   
+   
+# country zonal statistics view
+import os
+import json
+import math
+import numpy as np
+import rasterio
+from rasterio.mask import mask
+from django.http import JsonResponse
+from django.conf import settings
+from .config import DATA_ROOT, DATASET_REGISTRY
+
+def lonlat_to_webmercator(lon, lat):
+    """Convert EPSG:4326 lon/lat to EPSG:3857 meters."""
+    x = lon * 20037508.34 / 180.0
+    y = math.log(math.tan((90 + lat) * math.pi / 360.0)) / (math.pi / 180.0)
+    y = y * 20037508.34 / 180.0
+    return x, y
+
+def transform_geom_to_3857(geom):
+    """
+    Recursively transform a GeoJSON geometry from EPSG:4326 to EPSG:3857.
+    Works for Point, LineString, Polygon, MultiPolygon, etc.
+    """
+    geom_type = geom['type']
+    if geom_type == 'Point':
+        x, y = lonlat_to_webmercator(geom['coordinates'][0], geom['coordinates'][1])
+        return {'type': 'Point', 'coordinates': [x, y]}
+    elif geom_type in ['LineString', 'MultiPoint']:
+        new_coords = [lonlat_to_webmercator(c[0], c[1]) for c in geom['coordinates']]
+        return {'type': geom_type, 'coordinates': new_coords}
+    elif geom_type == 'Polygon':
+        new_coords = []
+        for ring in geom['coordinates']:
+            new_ring = [lonlat_to_webmercator(c[0], c[1]) for c in ring]
+            new_coords.append(new_ring)
+        return {'type': 'Polygon', 'coordinates': new_coords}
+    elif geom_type == 'MultiPolygon':
+        new_coords = []
+        for poly in geom['coordinates']:
+            new_poly = []
+            for ring in poly:
+                new_ring = [lonlat_to_webmercator(c[0], c[1]) for c in ring]
+                new_poly.append(new_ring)
+            new_coords.append(new_poly)
+        return {'type': 'MultiPolygon', 'coordinates': new_coords}
+    else:
+        # Fallback for other types (e.g., GeometryCollection)
+        return geom
+
+def zonal_stats_view(request, dataset, month=None):
+    try:
+        config = DATASET_REGISTRY.get(dataset)
+        if not config:
+            return JsonResponse({'error': 'Unknown dataset'}, status=404)
+
+        country_name = request.GET.get('country')
+        if not country_name:
+            return JsonResponse({'error': 'Missing country parameter'}, status=400)
+
+        # 1. Load countries GeoJSON
+        geojson_path = os.path.join(settings.BASE_DIR, 'static', 'data', 'geojson', 'ne_10m_admin_0_countries_sm.geojson')
+        if not os.path.exists(geojson_path):
+            return JsonResponse({'error': 'Countries GeoJSON not found'}, status=404)
+
+        with open(geojson_path, encoding='utf-8') as f:
+            countries = json.load(f)
+
+        # Find the feature with matching NAME_EN
+        feature = None
+        for feat in countries['features']:
+            if feat['properties'].get('NAME_EN') == country_name:
+                feature = feat
+                break
+        if not feature:
+            return JsonResponse({'error': f'Country "{country_name}" not found'}, status=404)
+
+        # 2. Build raster file path
+        param_values = {}
+        if 'month' in config.get('params', []):
+            if month is None:
+                return JsonResponse({'error': 'Month required for this dataset'}, status=400)
+            param_values['month'] = int(month)
+        filename = config['file_pattern'].format(**param_values)
+        file_path = os.path.join(DATA_ROOT, config['folder'], filename)
+
+        if not os.path.exists(file_path):
+            return JsonResponse({'error': f'Raster file not found: {filename}'}, status=404)
+
+        # 3. Transform geometry to EPSG:3857 (manual, no PROJ)
+        geom_3857 = transform_geom_to_3857(feature['geometry'])
+
+        # 4. Open raster and mask with transformed geometry
+        with rasterio.open(file_path) as src:
+            # Since we transformed to EPSG:3857 and the raster is also EPSG:3857,
+            # we can pass the geometry directly without further reprojection.
+            out_image, out_transform = mask(src, [geom_3857], crop=True)
+            data = out_image[0]  # first band
+
+            # Handle nodata
+            nodata = src.nodata
+            if nodata is not None:
+                data = np.where(data == nodata, np.nan, data)
+
+            # Flatten and remove nan
+            flat = data.flatten()
+            valid = flat[~np.isnan(flat)]
+
+            if len(valid) == 0:
+                return JsonResponse({'error': 'No valid pixels in the country'}, status=400)
+
+            stats = {
+                'mean': float(np.mean(valid)),
+                'min': float(np.min(valid)),
+                'max': float(np.max(valid)),
+                'sum': float(np.sum(valid)),
+                'count': int(len(valid)),
+                'std': float(np.std(valid)),
+            }
+            return JsonResponse(stats)
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'error': str(e)}, status=500)
+ 
 ####################################################################################
 #####################################################################################
 ########### Old code for rendering raster to png image

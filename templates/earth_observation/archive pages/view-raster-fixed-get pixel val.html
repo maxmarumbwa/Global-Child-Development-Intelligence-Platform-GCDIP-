@@ -15,7 +15,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 
   <style>
-    /* --- Reset & base --- */
+    /* --- Base reset --- */
     * { margin:0; padding:0; box-sizing:border-box; }
     body, html { height:100%; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; }
     .navbar { height:50px; background:#003366; color:#fff; display:flex; align-items:center; padding:0 16px; font-size:18px; font-weight:bold; flex-shrink:0; }
@@ -69,136 +69,15 @@
     #geocode-control { position:absolute; top:10px; right:50px; z-index:1000; background:#fff; padding:4px 8px; border-radius:4px; box-shadow:0 0 12px rgba(0,0,0,0.2); display:none; align-items:center; gap:6px; }
     #geocode-control input { border:1px solid #ccc; border-radius:3px; padding:4px 8px; font-size:13px; width:200px; }
     #geocode-control button { background:#003366; color:#fff; border:none; border-radius:3px; padding:4px 10px; cursor:pointer; font-size:13px; }
-
-    /* Zonal Stats Panel – movable, with blue header */
-    #zonal-panel {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 1001;
-      background: rgba(255,255,255,0.95);
-      border-radius: 8px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.2);
-      display: none;
-      min-width: 350px;
-      border: 1px solid #ccc;
-      overflow: hidden;
-    }
-    .zonal-header {
-      background: #003366;
-      color: #fff;
-      padding: 8px 14px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      cursor: move;
-      user-select: none;
-      font-weight: 600;
-      font-size: 14px;
-      border-radius: 8px 8px 0 0;
-    }
-    .zonal-header .title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .zonal-header .title i {
-      font-size: 16px;
-    }
-    .zonal-header .close-btn {
-      background: none;
-      border: none;
-      color: #fff;
-      font-size: 18px;
-      cursor: pointer;
-      padding: 0 4px;
-      line-height: 1;
-    }
-    .zonal-header .close-btn:hover {
-      color: #ffdddd;
-    }
-    .zonal-body {
-      padding: 14px 20px 16px;
-      font-size: 13px;
-    }
-    .zonal-body .row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 8px;
-      flex-wrap: wrap;
-    }
-    .zonal-body .row label {
-      font-weight: 500;
-      min-width: 70px;
-    }
-    .zonal-body select,
-    .zonal-body input[type="number"] {
-      padding: 4px 8px;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-      font-size: 13px;
-      flex: 1;
-    }
-    .zonal-body .actions {
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-      margin-top: 6px;
-    }
-    .zonal-body .actions button {
-      padding: 5px 16px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 13px;
-    }
-    .zonal-body .actions .apply-btn {
-      background: #003366;
-      color: #fff;
-    }
-    .zonal-body .actions .apply-btn:hover {
-      background: #002244;
-    }
-    .zonal-body .actions .close-btn-body {
-      background: #e0e0e0;
-      color: #333;
-    }
-    .zonal-body .actions .close-btn-body:hover {
-      background: #ccc;
-    }
-    .zonal-month {
-      width: 60px;
-    }
-    .zonal-result-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 6px;
-    }
-    .zonal-result-table td {
-      padding: 3px 6px;
-      border-bottom: 1px solid #eee;
-    }
-    .zonal-result-table td:first-child {
-      font-weight: 500;
-      color: #555;
-    }
-    .zonal-result-table td:last-child {
-      text-align: right;
-      font-weight: 600;
-      color: #003366;
-    }
   </style>
 </head>
 <body>
   <!-- ===== NAVBAR ===== -->
   <div class="navbar">🛰 Raster Viewer</div>
 
-  <!-- ===== TOOLBAR ===== -->
+  <!-- ===== TOOLBAR (Swipe removed) ===== -->
   <div class="gis-toolbar">
     <button class="tool-btn" id="btnIdentify"><i class="fa-solid fa-crosshairs"></i><span>Identify</span></button>
-    <button class="tool-btn" id="btnZonal"><i class="fa-solid fa-table-cells-large"></i><span>Zonal Stats</span></button>
     <button class="tool-btn" id="btnMeasure"><i class="fa-solid fa-ruler"></i><span>Measure</span></button>
     <button class="tool-btn" id="btnBuffer"><i class="fa-solid fa-circle-dot"></i><span>Buffer</span></button>
     <button class="tool-btn" id="btnGeocode"><i class="fa-solid fa-magnifying-glass-location"></i><span>Search</span></button>
@@ -292,38 +171,12 @@
         <input type="text" id="geocode-input" placeholder="Search place..." />
         <button id="geocode-btn">Go</button>
       </div>
-      <!-- Zonal Stats Panel – movable with blue header -->
-      <div id="zonal-panel">
-        <div class="zonal-header">
-          <span class="title"><i class="fa-solid fa-table-cells-large"></i> Zonal Statistics</span>
-          <button class="close-btn" id="zonal-close" title="Close panel">✕</button>
-        </div>
-        <div class="zonal-body">
-          <div class="row">
-            <label>Country:</label>
-            <select id="zonal-country"></select>
-          </div>
-          <div class="row">
-            <label>Dataset:</label>
-            <select id="zonal-dataset"></select>
-          </div>
-          <div class="row">
-            <label>Month:</label>
-            <input type="number" id="zonal-month" class="zonal-month" min="1" max="12" value="1" />
-          </div>
-          <div class="actions">
-            <button class="apply-btn" id="zonal-apply">Get Stats</button>
-            <button class="close-btn-body" id="zonal-close-body">✕</button>
-          </div>
-          <div id="zonal-result"></div>
-        </div>
-      </div>
     </div>
   </div>
 
   <script>
     // =============================================================
-    // 1. DATASET REGISTRY & LEGEND (same as before)
+    // 1. DATASET REGISTRY & LEGEND
     // =============================================================
     const LEGEND_RAINFALL = [
       { color: 'rgb(222,235,247)', label: 'Very Low (0-25 mm)' },
@@ -441,7 +294,7 @@
     let currentSlug = null;
 
     // =============================================================
-    // 4. VECTOR LAYERS (same)
+    // 4. VECTOR LAYERS
     // =============================================================
     const VECTOR_LAYERS = [
       {
@@ -550,14 +403,14 @@
     }
 
     // =============================================================
-    // 6. MONTH CONTROLS
+    // 6. MONTH CONTROLS (single layer)
     // =============================================================
     const monthControl = document.getElementById('month-control');
     const monthSlider = document.getElementById('monthSlider');
     const monthDisplay = document.getElementById('monthDisplay');
 
     // =============================================================
-    // 7. LOAD RASTER
+    // 7. LOAD RASTER (single)
     // =============================================================
     function loadRaster(slug) {
       const config = DATASETS[slug];
@@ -689,205 +542,7 @@
     });
 
     // =============================================================
-    // 11. ZONAL STATS TOOL – with draggable panel & blue header
-    // =============================================================
-    const zonalPanel = document.getElementById('zonal-panel');
-    const zonalHeader = zonalPanel.querySelector('.zonal-header');
-    const countrySelect = document.getElementById('zonal-country');
-    const datasetSelect = document.getElementById('zonal-dataset');
-    const monthInput = document.getElementById('zonal-month');
-    const resultDiv = document.getElementById('zonal-result');
-
-    // Drag state
-    let isDragging = false;
-    let dragOffsetX = 0;
-    let dragOffsetY = 0;
-
-    // Populate dataset dropdown
-    function populateDatasetSelect() {
-      datasetSelect.innerHTML = '';
-      const slugs = Object.keys(PRODUCT_NAMES).sort();
-      slugs.forEach(slug => {
-        const opt = document.createElement('option');
-        opt.value = slug;
-        opt.textContent = PRODUCT_NAMES[slug] || slug;
-        datasetSelect.appendChild(opt);
-      });
-    }
-    populateDatasetSelect();
-
-    // Populate country dropdown from countries GeoJSON
-    function populateCountries() {
-      const url = '/static/data/geojson/ne_10m_admin_0_countries_sm.geojson';
-      fetch(url)
-        .then(res => res.json())
-        .then(data => {
-          const names = data.features
-            .map(f => f.properties.NAME_EN)
-            .filter(n => n)
-            .sort();
-          countrySelect.innerHTML = '';
-          names.forEach(name => {
-            const opt = document.createElement('option');
-            opt.value = name;
-            opt.textContent = name;
-            countrySelect.appendChild(opt);
-          });
-        })
-        .catch(err => console.warn('Failed to load countries:', err));
-    }
-    populateCountries();
-
-    function updateZonalMonthVisibility() {
-      const slug = datasetSelect.value;
-      const config = DATASETS[slug];
-      monthInput.style.display = (config && config.type === 'month') ? 'inline-block' : 'none';
-    }
-    datasetSelect.addEventListener('change', updateZonalMonthVisibility);
-    updateZonalMonthVisibility();
-
-    // Toggle panel
-    document.getElementById('btnZonal').addEventListener('click', function() {
-      const isOpen = zonalPanel.style.display === 'block';
-      zonalPanel.style.display = isOpen ? 'none' : 'block';
-      if (!isOpen) {
-        resultDiv.innerHTML = '';
-        // Reset position to center (remove custom left/top)
-        zonalPanel.style.left = '50%';
-        zonalPanel.style.top = '50%';
-        zonalPanel.style.transform = 'translate(-50%, -50%)';
-        if (currentSlug) {
-          const options = datasetSelect.options;
-          for (let i=0; i<options.length; i++) {
-            if (options[i].value === currentSlug) {
-              datasetSelect.selectedIndex = i;
-              break;
-            }
-          }
-          updateZonalMonthVisibility();
-        }
-      }
-    });
-
-    // Close buttons
-    document.getElementById('zonal-close').addEventListener('click', function() {
-      zonalPanel.style.display = 'none';
-    });
-    document.getElementById('zonal-close-body').addEventListener('click', function() {
-      zonalPanel.style.display = 'none';
-    });
-
-    // Apply button
-    document.getElementById('zonal-apply').addEventListener('click', function() {
-      const country = countrySelect.value;
-      const dataset = datasetSelect.value;
-      if (!country || !dataset) {
-        alert('Please select both country and dataset.');
-        return;
-      }
-      let month = 1;
-      const config = DATASETS[dataset];
-      if (config.type === 'month') {
-        month = parseInt(monthInput.value) || 1;
-        if (month < 1 || month > 12) {
-          alert('Month must be 1–12.');
-          return;
-        }
-      }
-
-      let url = `/earth_observation/api/zonal_stats/${dataset}/`;
-      if (config.type === 'month') {
-        url += `${month}/`;
-      }
-      url += `?country=${encodeURIComponent(country)}`;
-
-      resultDiv.innerHTML = '<p>Loading...</p>';
-
-      fetch(url)
-        .then(res => res.json())
-        .then(data => {
-          if (data.error) {
-            resultDiv.innerHTML = `<p style="color:red;">Error: ${data.error}</p>`;
-            return;
-          }
-          const rows = [
-            ['Mean', data.mean],
-            ['Min', data.min],
-            ['Max', data.max],
-            ['Sum', data.sum],
-            ['Count', data.count],
-            ['Std Dev', data.std],
-          ];
-          let html = '<table class="zonal-result-table">';
-          rows.forEach(([label, value]) => {
-            const val = typeof value === 'number' ? value.toFixed(2) : value;
-            html += `<tr><td>${label}</td><td>${val}</td></tr>`;
-          });
-          html += '</table>';
-          resultDiv.innerHTML = html;
-        })
-        .catch(err => {
-          resultDiv.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
-        });
-    });
-
-    // ---------- Drag functionality ----------
-    function startDrag(e) {
-      e.preventDefault();
-      const ev = e.touches ? e.touches[0] : e;
-      // Get the panel's current position
-      const rect = zonalPanel.getBoundingClientRect();
-      // If we are using transform: translate, we need to account for that.
-      // We'll convert to left/top based on current position.
-      // We'll compute the left/top from the bounding rect relative to the map container.
-      const mapRect = document.getElementById('map').getBoundingClientRect();
-      // Current panel position relative to map container
-      const panelLeft = rect.left - mapRect.left;
-      const panelTop = rect.top - mapRect.top;
-      // Store offset from mouse to panel top-left
-      dragOffsetX = ev.clientX - rect.left;
-      dragOffsetY = ev.clientY - rect.top;
-      // Set the panel's position explicitly using left/top, and remove transform
-      zonalPanel.style.left = panelLeft + 'px';
-      zonalPanel.style.top = panelTop + 'px';
-      zonalPanel.style.transform = 'none';
-      isDragging = true;
-      document.addEventListener('mousemove', onDrag);
-      document.addEventListener('touchmove', onDrag, { passive: false });
-      document.addEventListener('mouseup', stopDrag);
-      document.addEventListener('touchend', stopDrag);
-    }
-
-    function onDrag(e) {
-      e.preventDefault();
-      const ev = e.touches ? e.touches[0] : e;
-      const mapRect = document.getElementById('map').getBoundingClientRect();
-      let newLeft = ev.clientX - mapRect.left - dragOffsetX;
-      let newTop = ev.clientY - mapRect.top - dragOffsetY;
-      // Keep within map bounds (optional)
-      const panelWidth = zonalPanel.offsetWidth;
-      const panelHeight = zonalPanel.offsetHeight;
-      const mapWidth = mapRect.width;
-      const mapHeight = mapRect.height;
-      newLeft = Math.max(0, Math.min(mapWidth - panelWidth, newLeft));
-      newTop = Math.max(0, Math.min(mapHeight - panelHeight, newTop));
-      zonalPanel.style.left = newLeft + 'px';
-      zonalPanel.style.top = newTop + 'px';
-    }
-
-    function stopDrag(e) {
-      isDragging = false;
-      document.removeEventListener('mousemove', onDrag);
-      document.removeEventListener('touchmove', onDrag);
-      document.removeEventListener('mouseup', stopDrag);
-      document.removeEventListener('touchend', stopDrag);
-    }
-
-    zonalHeader.addEventListener('mousedown', startDrag);
-    zonalHeader.addEventListener('touchstart', startDrag, { passive: false });
-
-    // =============================================================
-    // 12. MEASURE (same)
+    // 11. MEASURE (Leaflet.draw)
     // =============================================================
     let measureControl = null;
     document.getElementById('btnMeasure').addEventListener('click', function() {
@@ -921,7 +576,7 @@
     });
 
     // =============================================================
-    // 13. BUFFER (same)
+    // 12. BUFFER
     // =============================================================
     let bufferMode = false;
     let bufferCircle = null;
@@ -951,7 +606,7 @@
     });
 
     // =============================================================
-    // 14. GEOCODE (same)
+    // 13. GEOCODE (Search)
     // =============================================================
     document.getElementById('btnGeocode').addEventListener('click', function() {
       const panel = document.getElementById('geocode-control');
@@ -980,7 +635,7 @@
     });
 
     // =============================================================
-    // 15. LOCATE (same)
+    // 14. LOCATE (geolocation)
     // =============================================================
     document.getElementById('btnLocate').addEventListener('click', function() {
       if (!navigator.geolocation) { alert('Geolocation not supported.'); return; }
@@ -998,7 +653,7 @@
     });
 
     // =============================================================
-    // 16. GRID (same)
+    // 15. GRID (toggle 10° grid)
     // =============================================================
     let gridLayer = null;
     document.getElementById('btnGrid').addEventListener('click', function() {
@@ -1022,7 +677,7 @@
     });
 
     // =============================================================
-    // 17. EXPORT (same)
+    // 16. EXPORT (placeholder)
     // =============================================================
     document.getElementById('btnScreenshot').addEventListener('click', function() {
       alert('Export map: you can implement screenshot using html2canvas.');
