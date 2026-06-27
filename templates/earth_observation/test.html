@@ -8,14 +8,14 @@
   <!-- Leaflet CSS + JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <!-- Leaflet.draw (for measure) -->
+  <!-- Leaflet.draw -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 
   <style>
-    /* --- Reset & base --- */
+    /* --- Reset & base (unchanged) --- */
     * { margin:0; padding:0; box-sizing:border-box; }
     body, html { height:100%; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; }
     .navbar { height:50px; background:#003366; color:#fff; display:flex; align-items:center; padding:0 16px; font-size:18px; font-weight:bold; flex-shrink:0; }
@@ -70,7 +70,7 @@
     #geocode-control input { border:1px solid #ccc; border-radius:3px; padding:4px 8px; font-size:13px; width:200px; }
     #geocode-control button { background:#003366; color:#fff; border:none; border-radius:3px; padding:4px 10px; cursor:pointer; font-size:13px; }
 
-    /* Zonal Stats Panel – movable, with blue header */
+    /* --- Zonal Stats Panel --- */
     #zonal-panel {
       position: absolute;
       top: 50%;
@@ -81,7 +81,7 @@
       border-radius: 8px;
       box-shadow: 0 2px 12px rgba(0,0,0,0.2);
       display: none;
-      min-width: 350px;
+      min-width: 380px;
       border: 1px solid #ccc;
       overflow: hidden;
     }
@@ -103,9 +103,7 @@
       align-items: center;
       gap: 8px;
     }
-    .zonal-header .title i {
-      font-size: 16px;
-    }
+    .zonal-header .title i { font-size:16px; }
     .zonal-header .close-btn {
       background: none;
       border: none;
@@ -115,80 +113,164 @@
       padding: 0 4px;
       line-height: 1;
     }
-    .zonal-header .close-btn:hover {
-      color: #ffdddd;
-    }
+    .zonal-header .close-btn:hover { color:#ffdddd; }
     .zonal-body {
       padding: 14px 20px 16px;
       font-size: 13px;
     }
-    .zonal-body .row {
+
+    /* Welcome area – two big buttons */
+    .zonal-welcome {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 0 6px;
+    }
+    .zonal-welcome .welcome-btn {
+      width: 100%;
+      padding: 10px 0;
+      border: 2px solid #003366;
+      border-radius: 6px;
+      background: #f0f6fc;
+      color: #003366;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      transition: 0.2s;
       display: flex;
       align-items: center;
-      gap: 12px;
+      justify-content: center;
+      gap: 8px;
+    }
+    .zonal-welcome .welcome-btn:hover {
+      background: #d4e6f1;
+      transform: scale(1.02);
+    }
+    .zonal-welcome .welcome-btn i { font-size: 18px; }
+
+    /* Main area – dropdowns, actions, result */
+    .zonal-main {
+      display: none;
+    }
+    .zonal-main .row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
       margin-bottom: 8px;
       flex-wrap: wrap;
     }
-    .zonal-body .row label {
+    .zonal-main .row label {
       font-weight: 500;
       min-width: 70px;
     }
-    .zonal-body select,
-    .zonal-body input[type="number"] {
+    .zonal-main select,
+    .zonal-main input[type="number"] {
       padding: 4px 8px;
       border-radius: 4px;
       border: 1px solid #ccc;
       font-size: 13px;
       flex: 1;
     }
-    .zonal-body .actions {
+    .zonal-main .pick-btn {
+      background: #e0e0e0;
+      border: none;
+      border-radius: 4px;
+      padding: 4px 8px;
+      cursor: pointer;
+      color: #333;
+      font-size: 14px;
+      transition: 0.2s;
+      white-space: nowrap;
+    }
+    .zonal-main .pick-btn:hover { background: #b3d4f0; }
+    .zonal-main .pick-btn.active { background: #003366; color: #fff; }
+    .zonal-main .actions {
       display: flex;
       gap: 10px;
       justify-content: flex-end;
       margin-top: 6px;
     }
-    .zonal-body .actions button {
+    .zonal-main .actions button {
       padding: 5px 16px;
       border: none;
       border-radius: 4px;
       cursor: pointer;
       font-size: 13px;
     }
-    .zonal-body .actions .apply-btn {
+    .zonal-main .actions .apply-btn {
       background: #003366;
       color: #fff;
     }
-    .zonal-body .actions .apply-btn:hover {
-      background: #002244;
-    }
-    .zonal-body .actions .close-btn-body {
+    .zonal-main .actions .apply-btn:hover { background:#002244; }
+    .zonal-main .actions .close-btn-body {
       background: #e0e0e0;
       color: #333;
     }
-    .zonal-body .actions .close-btn-body:hover {
-      background: #ccc;
+    .zonal-main .actions .close-btn-body:hover { background:#ccc; }
+    .zonal-month { width:60px; }
+
+    /* Pick view – simplified for map picking */
+    .zonal-pick-view {
+      display: none;
+      text-align: center;
+      padding: 10px 0 6px;
     }
-    .zonal-month {
-      width: 60px;
+    .zonal-pick-view .pick-message {
+      font-size: 14px;
+      color: #333;
+      margin-bottom: 12px;
     }
+    .zonal-pick-view .pick-message i {
+      color: #003366;
+      margin-right: 6px;
+    }
+    .zonal-pick-view .pick-cancel {
+      background: none;
+      border: none;
+      color: #003366;
+      cursor: pointer;
+      font-size: 13px;
+      padding: 4px 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .zonal-pick-view .pick-cancel:hover { text-decoration: underline; }
+
     .zonal-result-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 6px;
+      width:100%;
+      border-collapse:collapse;
+      margin-top:6px;
     }
     .zonal-result-table td {
-      padding: 3px 6px;
-      border-bottom: 1px solid #eee;
+      padding:3px 6px;
+      border-bottom:1px solid #eee;
     }
     .zonal-result-table td:first-child {
-      font-weight: 500;
-      color: #555;
+      font-weight:500;
+      color:#555;
     }
     .zonal-result-table td:last-child {
-      text-align: right;
-      font-weight: 600;
-      color: #003366;
+      text-align:right;
+      font-weight:600;
+      color:#003366;
     }
+
+    /* back button (for main) */
+    .zonal-back {
+      background: none;
+      border: none;
+      color: #003366;
+      cursor: pointer;
+      font-size: 13px;
+      padding: 4px 0;
+      margin-bottom: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .zonal-back:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
@@ -292,30 +374,59 @@
         <input type="text" id="geocode-input" placeholder="Search place..." />
         <button id="geocode-btn">Go</button>
       </div>
-      <!-- Zonal Stats Panel – movable with blue header -->
+      <!-- Zonal Stats Panel -->
       <div id="zonal-panel">
         <div class="zonal-header">
           <span class="title"><i class="fa-solid fa-table-cells-large"></i> Zonal Statistics</span>
           <button class="close-btn" id="zonal-close" title="Close panel">✕</button>
         </div>
         <div class="zonal-body">
-          <div class="row">
-            <label>Country:</label>
-            <select id="zonal-country"></select>
+          <!-- Welcome: two options -->
+          <div class="zonal-welcome" id="zonal-welcome">
+            <button class="welcome-btn" id="welcome-pick">
+              <i class="fa-solid fa-location-dot"></i> Pick from map
+            </button>
+            <button class="welcome-btn" id="welcome-select">
+              <i class="fa-solid fa-list"></i> Select from list
+            </button>
           </div>
-          <div class="row">
-            <label>Dataset:</label>
-            <select id="zonal-dataset"></select>
+          <!-- Pick view (simplified, no dropdowns) -->
+          <div class="zonal-pick-view" id="zonal-pick-view">
+            <div class="pick-message">
+              <i class="fa-solid fa-hand-pointer"></i>
+              Click on the map to select a country
+            </div>
+            <button class="pick-cancel" id="pick-cancel">
+              <i class="fa-solid fa-arrow-left"></i> Cancel
+            </button>
+            <div id="zonal-pick-result"></div>
           </div>
-          <div class="row">
-            <label>Month:</label>
-            <input type="number" id="zonal-month" class="zonal-month" min="1" max="12" value="1" />
+          <!-- Main area (dropdowns, etc.) -->
+          <div class="zonal-main" id="zonal-main">
+            <button class="zonal-back" id="zonal-back">
+              <i class="fa-solid fa-arrow-left"></i> Back
+            </button>
+            <div class="row">
+              <label>Country:</label>
+              <select id="zonal-country"></select>
+              <button class="pick-btn" id="zonal-pick-country" title="Pick country from map">
+                <i class="fa-solid fa-location-dot"></i>
+              </button>
+            </div>
+            <div class="row">
+              <label>Dataset:</label>
+              <select id="zonal-dataset"></select>
+            </div>
+            <div class="row">
+              <label>Month:</label>
+              <input type="number" id="zonal-month" class="zonal-month" min="1" max="12" value="1" />
+            </div>
+            <div class="actions">
+              <button class="apply-btn" id="zonal-apply">Get Stats</button>
+              <button class="close-btn-body" id="zonal-close-body">✕</button>
+            </div>
+            <div id="zonal-result"></div>
           </div>
-          <div class="actions">
-            <button class="apply-btn" id="zonal-apply">Get Stats</button>
-            <button class="close-btn-body" id="zonal-close-body">✕</button>
-          </div>
-          <div id="zonal-result"></div>
         </div>
       </div>
     </div>
@@ -614,7 +725,7 @@
     if (firstItem) loadRaster(firstItem.dataset.slug);
 
     // =============================================================
-    // 10. IDENTIFY TOOL
+    // 10. IDENTIFY TOOL (unchanged)
     // =============================================================
     let identifyMode = false;
     let identifyPopup = null;
@@ -689,21 +800,68 @@
     });
 
     // =============================================================
-    // 11. ZONAL STATS TOOL – with draggable panel & blue header
+    // 11. ZONAL STATS TOOL – two‑step interface
     // =============================================================
     const zonalPanel = document.getElementById('zonal-panel');
     const zonalHeader = zonalPanel.querySelector('.zonal-header');
+    const zonalWelcome = document.getElementById('zonal-welcome');
+    const zonalMain = document.getElementById('zonal-main');
+    const zonalPickView = document.getElementById('zonal-pick-view');
     const countrySelect = document.getElementById('zonal-country');
     const datasetSelect = document.getElementById('zonal-dataset');
     const monthInput = document.getElementById('zonal-month');
     const resultDiv = document.getElementById('zonal-result');
+    const pickResultDiv = document.getElementById('zonal-pick-result');
+    const pickBtn = document.getElementById('zonal-pick-country');
 
-    // Drag state
+    // ---------- Drag logic (unchanged) ----------
     let isDragging = false;
-    let dragOffsetX = 0;
-    let dragOffsetY = 0;
+    let dragOffsetX = 0, dragOffsetY = 0;
 
-    // Populate dataset dropdown
+    function startDrag(e) {
+      e.preventDefault();
+      const ev = e.touches ? e.touches[0] : e;
+      const rect = zonalPanel.getBoundingClientRect();
+      const mapRect = document.getElementById('map').getBoundingClientRect();
+      const panelLeft = rect.left - mapRect.left;
+      const panelTop = rect.top - mapRect.top;
+      dragOffsetX = ev.clientX - rect.left;
+      dragOffsetY = ev.clientY - rect.top;
+      zonalPanel.style.left = panelLeft + 'px';
+      zonalPanel.style.top = panelTop + 'px';
+      zonalPanel.style.transform = 'none';
+      isDragging = true;
+      document.addEventListener('mousemove', onDrag);
+      document.addEventListener('touchmove', onDrag, { passive: false });
+      document.addEventListener('mouseup', stopDrag);
+      document.addEventListener('touchend', stopDrag);
+    }
+    function onDrag(e) {
+      e.preventDefault();
+      const ev = e.touches ? e.touches[0] : e;
+      const mapRect = document.getElementById('map').getBoundingClientRect();
+      let newLeft = ev.clientX - mapRect.left - dragOffsetX;
+      let newTop = ev.clientY - mapRect.top - dragOffsetY;
+      const panelWidth = zonalPanel.offsetWidth;
+      const panelHeight = zonalPanel.offsetHeight;
+      const mapWidth = mapRect.width;
+      const mapHeight = mapRect.height;
+      newLeft = Math.max(0, Math.min(mapWidth - panelWidth, newLeft));
+      newTop = Math.max(0, Math.min(mapHeight - panelHeight, newTop));
+      zonalPanel.style.left = newLeft + 'px';
+      zonalPanel.style.top = newTop + 'px';
+    }
+    function stopDrag() {
+      isDragging = false;
+      document.removeEventListener('mousemove', onDrag);
+      document.removeEventListener('touchmove', onDrag);
+      document.removeEventListener('mouseup', stopDrag);
+      document.removeEventListener('touchend', stopDrag);
+    }
+    zonalHeader.addEventListener('mousedown', startDrag);
+    zonalHeader.addEventListener('touchstart', startDrag, { passive: false });
+
+    // ---------- Populate dropdowns ----------
     function populateDatasetSelect() {
       datasetSelect.innerHTML = '';
       const slugs = Object.keys(PRODUCT_NAMES).sort();
@@ -716,13 +874,14 @@
     }
     populateDatasetSelect();
 
-    // Populate country dropdown from countries GeoJSON
+    let countryFeatures = [];
     function populateCountries() {
       const url = '/static/data/geojson/ne_10m_admin_0_countries_sm.geojson';
       fetch(url)
         .then(res => res.json())
         .then(data => {
-          const names = data.features
+          countryFeatures = data.features;
+          const names = countryFeatures
             .map(f => f.properties.NAME_EN)
             .filter(n => n)
             .sort();
@@ -746,40 +905,84 @@
     datasetSelect.addEventListener('change', updateZonalMonthVisibility);
     updateZonalMonthVisibility();
 
-    // Toggle panel
+    // ---------- Show/hide views ----------
+    function showWelcome() {
+      zonalWelcome.style.display = 'flex';
+      zonalMain.style.display = 'none';
+      zonalPickView.style.display = 'none';
+      if (pickCountryMode) togglePickMode();
+    }
+    function showMain() {
+      zonalWelcome.style.display = 'none';
+      zonalMain.style.display = 'block';
+      zonalPickView.style.display = 'none';
+      if (pickCountryMode) togglePickMode();
+      if (currentSlug) {
+        const options = datasetSelect.options;
+        for (let i=0; i<options.length; i++) {
+          if (options[i].value === currentSlug) {
+            datasetSelect.selectedIndex = i;
+            break;
+          }
+        }
+        updateZonalMonthVisibility();
+      }
+    }
+    function showPickView() {
+      zonalWelcome.style.display = 'none';
+      zonalMain.style.display = 'none';
+      zonalPickView.style.display = 'block';
+      // Clear previous result
+      pickResultDiv.innerHTML = '';
+      // Activate pick mode if not already
+      if (!pickCountryMode) togglePickMode();
+    }
+
+    // ---------- Open panel ----------
     document.getElementById('btnZonal').addEventListener('click', function() {
       const isOpen = zonalPanel.style.display === 'block';
       zonalPanel.style.display = isOpen ? 'none' : 'block';
       if (!isOpen) {
-        resultDiv.innerHTML = '';
-        // Reset position to center (remove custom left/top)
         zonalPanel.style.left = '50%';
         zonalPanel.style.top = '50%';
         zonalPanel.style.transform = 'translate(-50%, -50%)';
-        if (currentSlug) {
-          const options = datasetSelect.options;
-          for (let i=0; i<options.length; i++) {
-            if (options[i].value === currentSlug) {
-              datasetSelect.selectedIndex = i;
-              break;
-            }
-          }
-          updateZonalMonthVisibility();
-        }
+        showWelcome();
+        resultDiv.innerHTML = '';
+        pickResultDiv.innerHTML = '';
+        if (pickCountryMode) togglePickMode();
+      } else {
+        if (pickCountryMode) togglePickMode();
       }
     });
 
     // Close buttons
-    document.getElementById('zonal-close').addEventListener('click', function() {
+    function closePanel() {
       zonalPanel.style.display = 'none';
+      if (pickCountryMode) togglePickMode();
+    }
+    document.getElementById('zonal-close').addEventListener('click', closePanel);
+    document.getElementById('zonal-close-body').addEventListener('click', closePanel);
+
+    // ---------- Welcome buttons ----------
+    document.getElementById('welcome-pick').addEventListener('click', function() {
+      showPickView();
     });
-    document.getElementById('zonal-close-body').addEventListener('click', function() {
-      zonalPanel.style.display = 'none';
+    document.getElementById('welcome-select').addEventListener('click', function() {
+      showMain();
     });
 
-    // Apply button
-    document.getElementById('zonal-apply').addEventListener('click', function() {
-      const country = countrySelect.value;
+    // ---------- Back / Cancel buttons ----------
+    document.getElementById('zonal-back').addEventListener('click', function() {
+      showWelcome();
+      if (pickCountryMode) togglePickMode();
+    });
+    document.getElementById('pick-cancel').addEventListener('click', function() {
+      showWelcome();
+      if (pickCountryMode) togglePickMode();
+    });
+
+    // ---------- "Get Stats" button (for main view) ----------
+    function runZonalStats(country, resultContainer, showDatasetInfo = false) {
       const dataset = datasetSelect.value;
       if (!country || !dataset) {
         alert('Please select both country and dataset.');
@@ -794,21 +997,27 @@
           return;
         }
       }
-
       let url = `/earth_observation/api/zonal_stats/${dataset}/`;
       if (config.type === 'month') {
         url += `${month}/`;
       }
       url += `?country=${encodeURIComponent(country)}`;
-
-      resultDiv.innerHTML = '<p>Loading...</p>';
-
+      resultContainer.innerHTML = '<p>Loading...</p>';
       fetch(url)
         .then(res => res.json())
         .then(data => {
           if (data.error) {
-            resultDiv.innerHTML = `<p style="color:red;">Error: ${data.error}</p>`;
+            resultContainer.innerHTML = `<p style="color:red;">Error: ${data.error}</p>`;
             return;
+          }
+          // Show dataset info if requested
+          let info = '';
+          if (showDatasetInfo) {
+            const dsName = PRODUCT_NAMES[dataset] || dataset;
+            info = `<div style="font-size:12px; color:#555; margin-bottom:6px;">
+                      Dataset: <strong>${dsName}</strong>
+                      ${config.type === 'month' ? ` | Month: ${month}` : ''}
+                    </div>`;
           }
           const rows = [
             ['Mean', data.mean],
@@ -818,73 +1027,180 @@
             ['Count', data.count],
             ['Std Dev', data.std],
           ];
-          let html = '<table class="zonal-result-table">';
+          let html = info + '<table class="zonal-result-table">';
           rows.forEach(([label, value]) => {
-            const val = typeof value === 'number' ? value.toFixed(2) : value;
+            const val = (typeof value === 'number') ? Math.round(value) : value;
             html += `<tr><td>${label}</td><td>${val}</td></tr>`;
           });
           html += '</table>';
-          resultDiv.innerHTML = html;
+          resultContainer.innerHTML = html;
         })
         .catch(err => {
-          resultDiv.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
+          resultContainer.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
         });
+    }
+
+    document.getElementById('zonal-apply').addEventListener('click', function() {
+      runZonalStats(countrySelect.value, resultDiv, false);
     });
 
-    // ---------- Drag functionality ----------
-    function startDrag(e) {
-      e.preventDefault();
-      const ev = e.touches ? e.touches[0] : e;
-      // Get the panel's current position
-      const rect = zonalPanel.getBoundingClientRect();
-      // If we are using transform: translate, we need to account for that.
-      // We'll convert to left/top based on current position.
-      // We'll compute the left/top from the bounding rect relative to the map container.
-      const mapRect = document.getElementById('map').getBoundingClientRect();
-      // Current panel position relative to map container
-      const panelLeft = rect.left - mapRect.left;
-      const panelTop = rect.top - mapRect.top;
-      // Store offset from mouse to panel top-left
-      dragOffsetX = ev.clientX - rect.left;
-      dragOffsetY = ev.clientY - rect.top;
-      // Set the panel's position explicitly using left/top, and remove transform
-      zonalPanel.style.left = panelLeft + 'px';
-      zonalPanel.style.top = panelTop + 'px';
-      zonalPanel.style.transform = 'none';
-      isDragging = true;
-      document.addEventListener('mousemove', onDrag);
-      document.addEventListener('touchmove', onDrag, { passive: false });
-      document.addEventListener('mouseup', stopDrag);
-      document.addEventListener('touchend', stopDrag);
+    // ---------- "Pick from map" mode (shared between pick view and main) ----------
+    let pickCountryMode = false;
+    // We'll store which dataset/month to use for pick mode (defaults to currentSlug or first dataset)
+    let pickDataset = null;
+    let pickMonth = 1;
+
+    function togglePickMode() {
+      pickCountryMode = !pickCountryMode;
+      pickBtn.classList.toggle('active', pickCountryMode);
+      map.getContainer().style.cursor = pickCountryMode ? 'crosshair' : '';
+      if (!pickCountryMode) {
+        if (window.tempPickPopup) {
+          map.removeLayer(window.tempPickPopup);
+          window.tempPickPopup = null;
+        }
+      }
+    }
+    pickBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      togglePickMode();
+    });
+
+    // Point-in-polygon
+    function pointInPolygon(lat, lng, polygon) {
+      let inside = false;
+      const coords = polygon.type === 'Polygon' ? [polygon.coordinates] : polygon.coordinates;
+      for (let poly of coords) {
+        const ring = poly[0];
+        for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+          const xi = ring[i][0], yi = ring[i][1];
+          const xj = ring[j][0], yj = ring[j][1];
+          const intersect = ((yi > lat) !== (yj > lat)) &&
+              (lng < (xj - xi) * (lat - yi) / (yj - yi) + xi);
+          if (intersect) inside = !inside;
+        }
+      }
+      return inside;
     }
 
-    function onDrag(e) {
-      e.preventDefault();
-      const ev = e.touches ? e.touches[0] : e;
-      const mapRect = document.getElementById('map').getBoundingClientRect();
-      let newLeft = ev.clientX - mapRect.left - dragOffsetX;
-      let newTop = ev.clientY - mapRect.top - dragOffsetY;
-      // Keep within map bounds (optional)
-      const panelWidth = zonalPanel.offsetWidth;
-      const panelHeight = zonalPanel.offsetHeight;
-      const mapWidth = mapRect.width;
-      const mapHeight = mapRect.height;
-      newLeft = Math.max(0, Math.min(mapWidth - panelWidth, newLeft));
-      newTop = Math.max(0, Math.min(mapHeight - panelHeight, newTop));
-      zonalPanel.style.left = newLeft + 'px';
-      zonalPanel.style.top = newTop + 'px';
+    // Determine default dataset/month for pick mode
+    function getDefaultPickDataset() {
+      if (currentSlug) {
+        return currentSlug;
+      }
+      const slugs = Object.keys(PRODUCT_NAMES).sort();
+      return slugs.length > 0 ? slugs[0] : null;
     }
 
-    function stopDrag(e) {
-      isDragging = false;
-      document.removeEventListener('mousemove', onDrag);
-      document.removeEventListener('touchmove', onDrag);
-      document.removeEventListener('mouseup', stopDrag);
-      document.removeEventListener('touchend', stopDrag);
-    }
+    map.on('click', function(e) {
+      if (!pickCountryMode) return;
+      const { lat, lng } = e.latlng;
+      let foundCountry = null;
+      for (let feat of countryFeatures) {
+        const geom = feat.geometry;
+        if (pointInPolygon(lat, lng, geom)) {
+          foundCountry = feat.properties.NAME_EN;
+          break;
+        }
+      }
+      if (!foundCountry) {
+        alert('No country found at this location (ocean or outside coverage).');
+        return;
+      }
 
-    zonalHeader.addEventListener('mousedown', startDrag);
-    zonalHeader.addEventListener('touchstart', startDrag, { passive: false });
+      // Set the dataset/month to use
+      const ds = getDefaultPickDataset();
+      if (!ds) {
+        alert('No dataset available.');
+        return;
+      }
+      // For pick view, we use the currently selected dataset in the main dropdown? Actually we want a consistent default.
+      // We'll use the dataset from the main dropdown if we are in main view, else use currentSlug or first.
+      // But for simplicity, we'll set the datasetSelect to this ds and run stats.
+      // If we are in pick view, we don't want to affect the dropdowns, so we'll just use the default.
+      // We'll store the chosen dataset/month in a variable.
+      let chosenDataset = ds;
+      let chosenMonth = 1;
+      const config = DATASETS[chosenDataset];
+      if (config.type === 'month') {
+        chosenMonth = parseInt(monthInput.value) || 1; // use the month from main input if available, else 1
+        if (chosenMonth < 1 || chosenMonth > 12) chosenMonth = 1;
+      }
+
+      // Build URL with chosenDataset and chosenMonth
+      let url = `/earth_observation/api/zonal_stats/${chosenDataset}/`;
+      if (config.type === 'month') {
+        url += `${chosenMonth}/`;
+      }
+      url += `?country=${encodeURIComponent(foundCountry)}`;
+
+      // Determine which result container to use
+      let resultContainer = null;
+      let showInfo = false;
+      if (zonalPickView.style.display === 'block') {
+        resultContainer = pickResultDiv;
+        showInfo = true;
+      } else {
+        // if we are in main view, we should update the country dropdown and run stats
+        countrySelect.value = foundCountry;
+        resultContainer = resultDiv;
+        showInfo = false;
+      }
+
+      if (resultContainer) {
+        resultContainer.innerHTML = '<p>Loading...</p>';
+        fetch(url)
+          .then(res => res.json())
+          .then(data => {
+            if (data.error) {
+              resultContainer.innerHTML = `<p style="color:red;">Error: ${data.error}</p>`;
+              return;
+            }
+            // Build info line
+            let info = '';
+            if (showInfo) {
+              const dsName = PRODUCT_NAMES[chosenDataset] || chosenDataset;
+              info = `<div style="font-size:12px; color:#555; margin-bottom:6px;">
+                        Dataset: <strong>${dsName}</strong>
+                        ${config.type === 'month' ? ` | Month: ${chosenMonth}` : ''}
+                      </div>`;
+            }
+            const rows = [
+              ['Mean', data.mean],
+              ['Min', data.min],
+              ['Max', data.max],
+              ['Sum', data.sum],
+              ['Count', data.count],
+              ['Std Dev', data.std],
+            ];
+            let html = info + '<table class="zonal-result-table">';
+            rows.forEach(([label, value]) => {
+              const val = (typeof value === 'number') ? Math.round(value) : value;
+              html += `<tr><td>${label}</td><td>${val}</td></tr>`;
+            });
+            html += '</table>';
+            resultContainer.innerHTML = html;
+          })
+          .catch(err => {
+            resultContainer.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
+          });
+      }
+
+      // Show a temporary popup with the country name
+      if (window.tempPickPopup) {
+        map.removeLayer(window.tempPickPopup);
+      }
+      window.tempPickPopup = L.popup()
+        .setLatLng(e.latlng)
+        .setContent(`<b>${foundCountry}</b>`)
+        .openOn(map);
+      setTimeout(() => {
+        if (window.tempPickPopup) {
+          map.removeLayer(window.tempPickPopup);
+          window.tempPickPopup = null;
+        }
+      }, 3000);
+    });
 
     // =============================================================
     // 12. MEASURE (same)
