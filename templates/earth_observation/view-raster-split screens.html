@@ -709,7 +709,7 @@
       cursor: grabbing;
     }
 
-    /* Movable controls bar - fixed width, maintains dimensions */
+    /* Movable controls bar */
     #split-controls-wrapper {
       position: absolute;
       bottom: 10px;
@@ -722,11 +722,8 @@
       border: 1px solid #ccc;
       cursor: move;
       user-select: none;
-      touch-action: none;
-      width: auto;
-      max-width: calc(100% - 80px);
       min-width: 200px;
-      display: inline-block;
+      touch-action: none;
     }
     #split-controls-wrapper:active {
       cursor: grabbing;
@@ -766,10 +763,10 @@
       flex-wrap: nowrap;
       justify-content: center;
       align-items: center;
-      padding: 3px 8px;
+      padding: 3px 6px;
       font-size: 8px;
+      max-width: 98%;
       overflow-x: auto;
-      white-space: nowrap;
     }
     #split-controls .ctrl-group {
       display: flex;
@@ -811,7 +808,6 @@
       cursor: pointer;
       font-size: 7px;
       transition: 0.2s;
-      white-space: nowrap;
     }
     #split-controls .split-btn-apply {
       background: #003366;
@@ -844,7 +840,6 @@
       height: 14px;
       background: #ddd;
       margin: 0 2px;
-      flex-shrink: 0;
     }
 
     /* Screen selector modal */
@@ -934,10 +929,6 @@
         bottom: 80px;
         right: 2px;
         padding: 2px 3px;
-      }
-      #split-controls-wrapper {
-        max-width: calc(100% - 20px);
-        min-width: 150px;
       }
     }
   </style>
@@ -1063,7 +1054,7 @@
       <div id="split-container">
         <div class="split-grid split-grid-2" id="split-grid"></div>
         
-        <!-- Movable Controls Bar - fixed width -->
+        <!-- Movable Controls Bar -->
         <div id="split-controls-wrapper">
           <div class="controls-header">
             <span>🔧 Tool Bar <span class="drag-icon">⠿</span></span>
@@ -1600,7 +1591,7 @@
     });
 
     // =============================================================
-    // 11. SPLIT MAP TOOL (fixed width toolbar)
+    // 11. SPLIT MAP TOOL (with all features)
     // =============================================================
     let splitMaps = [];
     let splitOverlays = [];
@@ -1617,10 +1608,9 @@
     const splitColors = ['#003366', '#dc3232', '#2e7d32', '#7b1fa2'];
     const labelClasses = ['', 'split-label-right', 'split-label-green', 'split-label-purple'];
 
-    // Make controls draggable - maintain dimensions
+    // Make controls draggable
     let isDraggingControls = false;
     let dragStartX, dragStartY, startLeft, startTop;
-    let wrapperWidth, wrapperHeight;
 
     controlsWrapper.addEventListener('mousedown', function(e) {
       if (e.target.closest('.controls-header') || e.target.closest('.drag-icon')) {
@@ -1629,14 +1619,8 @@
         const parentRect = controlsWrapper.parentElement.getBoundingClientRect();
         dragStartX = e.clientX;
         dragStartY = e.clientY;
-        // Store current position
         startLeft = controlsWrapper.offsetLeft || (rect.left - parentRect.left);
         startTop = controlsWrapper.offsetTop || (rect.top - parentRect.top);
-        // Store current dimensions to maintain them
-        wrapperWidth = controlsWrapper.offsetWidth;
-        wrapperHeight = controlsWrapper.offsetHeight;
-        controlsWrapper.style.width = wrapperWidth + 'px';
-        controlsWrapper.style.height = wrapperHeight + 'px';
         controlsWrapper.style.cursor = 'grabbing';
         e.preventDefault();
       }
@@ -1649,14 +1633,13 @@
       const parentRect = controlsWrapper.parentElement.getBoundingClientRect();
       let newX = startLeft + dx;
       let newY = startTop + dy;
-      // Maintain margins: keep 40px on each side
-      newX = Math.max(40, Math.min(parentRect.width - wrapperWidth - 40, newX));
-      newY = Math.max(0, Math.min(parentRect.height - wrapperHeight - 10, newY));
+      const wrapperWidth = controlsWrapper.offsetWidth || 300;
+      const wrapperHeight = controlsWrapper.offsetHeight || 40;
+      newX = Math.max(0, Math.min(parentRect.width - wrapperWidth, newX));
+      newY = Math.max(0, Math.min(parentRect.height - wrapperHeight, newY));
       controlsWrapper.style.left = newX + 'px';
       controlsWrapper.style.top = newY + 'px';
       controlsWrapper.style.transform = 'none';
-      controlsWrapper.style.width = wrapperWidth + 'px';
-      controlsWrapper.style.height = wrapperHeight + 'px';
     });
 
     document.addEventListener('mouseup', function() {
@@ -1666,7 +1649,6 @@
       }
     });
 
-    // Populate split dropdowns
     function populateSplitSelects(count) {
       const slugs = Object.keys(PRODUCT_NAMES).sort();
       for (let i = 0; i < count; i++) {
@@ -1928,8 +1910,6 @@
       controlsWrapper.style.top = 'auto';
       controlsWrapper.style.bottom = '10px';
       controlsWrapper.style.transform = 'translateX(-50%)';
-      controlsWrapper.style.width = 'auto';
-      controlsWrapper.style.height = 'auto';
     }
 
     function closeSplitMap() {
@@ -1939,8 +1919,6 @@
       document.getElementById('legend').style.display = 'block';
       document.getElementById('month-control').style.display = 'block';
       controlsWrapper.style.display = 'none';
-      controlsWrapper.style.width = 'auto';
-      controlsWrapper.style.height = 'auto';
       
       splitMaps.forEach(m => { if (m) m.remove(); });
       splitMaps = [];

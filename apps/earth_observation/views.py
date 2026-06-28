@@ -185,8 +185,8 @@ def raster_point_query(request, dataset, month=None):
         traceback.print_exc()
         return JsonResponse({'error': str(e)}, status=500)
    
-   
-# country zonal statistics view
+####################################################################################
+############### country zonal statistics view
 import os
 import json
 import math
@@ -196,6 +196,7 @@ from rasterio.mask import mask
 from django.http import JsonResponse
 from django.conf import settings
 from .config import DATA_ROOT, DATASET_REGISTRY
+
 
 def lonlat_to_webmercator(lon, lat):
     """Convert EPSG:4326 lon/lat to EPSG:3857 meters."""
@@ -311,6 +312,100 @@ def zonal_stats_view(request, dataset, month=None):
         traceback.print_exc()
         return JsonResponse({'error': str(e)}, status=500)
  
+ 
+####################################################################################
+############ zonal stats by user defined polygon
+import os
+import json
+import math
+import numpy as np
+import rasterio
+from rasterio.mask import mask
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from .config import DATA_ROOT, DATASET_REGISTRY
+
+def lonlat_to_webmercator(lon, lat):
+    """Convert EPSG:4326 lon/lat to EPSG:3857 meters."""
+    x = lon * 20037508.34 / 180.0
+    y = math.log(math.tan((90 + lat) * math.pi / 360.0)) / (math.pi / 180.0)
+    y = y * 20037508.34 / 180.0
+    return x, y
+
+def transform_geom_to_3857(geom):
+    """Transform GeoJSON geometry from 4326 to 3857."""
+    geom_type = geom['type']
+    if geom_type == 'Polygon':
+        new_coords = []
+        for ring in geom['coordinates']:
+            new_ring = [lonlat_to_webmercator(c[0], c[1]) for c in ring]
+            new_coords.append(new_ring)
+        return {'type': 'Polygon', 'coordinates': new_coords}
+    elif geom_type == 'MultiPolygon':
+        new_coords = []
+        for poly in geom['coordinates']:
+            new_poly = []
+            for ring in poly:
+                new_ring = [lonlat_to_webmercator(c[0], c[1]) for c in ring]
+                new_poly.append(new_ring)
+            new_coords.append(new_poly)
+        return {'type': 'MultiPolygon', 'coordinates': new_coords}
+    return geom
+
+@csrf_exempt
+def zonal_stats_by_polygon(request, dataset, month=None):
+    try:
+        config = DATASET_REGISTRY.get(dataset)
+        if not config:
+            return JsonResponse({'error': 'Unknown dataset'}, status=404)
+
+        # Parse polygon from request body
+        data = json.loads(request.body)
+        geom = data['geometry']
+
+        # Build file path
+        param_values = {}
+        if 'month' in config.get('params', []):
+            if month is None:
+                return JsonResponse({'error': 'Month required'}, status=400)
+            param_values['month'] = int(month)
+        filename = config['file_pattern'].format(**param_values)
+        file_path = os.path.join(DATA_ROOT, config['folder'], filename)
+
+        if not os.path.exists(file_path):
+            return JsonResponse({'error': 'File not found'}, status=404)
+
+        # Transform geometry to EPSG:3857 (manual, no PROJ)
+        geom_3857 = transform_geom_to_3857(geom)
+
+        with rasterio.open(file_path) as src:
+            out_image, out_transform = mask(src, [geom_3857], crop=True)
+            data = out_image[0]
+            nodata = src.nodata
+            if nodata is not None:
+                data = np.where(data == nodata, np.nan, data)
+            flat = data.flatten()
+            valid = flat[~np.isnan(flat)]
+
+            if len(valid) == 0:
+                return JsonResponse({'error': 'No valid pixels in the polygon'}, status=400)
+
+            stats = {
+                'mean': float(np.mean(valid)),
+                'min': float(np.min(valid)),
+                'max': float(np.max(valid)),
+                'sum': float(np.sum(valid)),
+                'count': int(len(valid)),
+                'std': float(np.std(valid)),
+            }
+            return JsonResponse(stats)
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'error': str(e)}, status=500)
+
+
 ####################################################################################
 #####################################################################################
 ########### Old code for rendering raster to png image

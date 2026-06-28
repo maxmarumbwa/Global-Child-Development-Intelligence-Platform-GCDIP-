@@ -88,8 +88,6 @@
       box-shadow: 0 2px 12px rgba(0,0,0,0.2);
       display: none;
       min-width: 380px;
-      min-height: 320px;
-      max-height: 70vh;
       border: 1px solid #ccc;
       overflow: hidden;
     }
@@ -105,7 +103,6 @@
       font-weight: 600;
       font-size: 14px;
       border-radius: 8px 8px 0 0;
-      flex-shrink: 0;
     }
     .zonal-header .title {
       display: flex;
@@ -126,16 +123,13 @@
     .zonal-body {
       padding: 14px 20px 16px;
       font-size: 13px;
-      overflow-y: auto;
-      flex: 1;
-      max-height: calc(70vh - 50px);
     }
     .zonal-welcome {
       display: flex;
       flex-direction: column;
       gap: 12px;
       align-items: center;
-      padding: 6px 0 4px;
+      padding: 10px 0 6px;
     }
     .zonal-welcome .welcome-btn {
       width: 100%;
@@ -241,26 +235,23 @@
       gap: 4px;
     }
     .zonal-pick-view .pick-cancel:hover { text-decoration: underline; }
-    .zonal-result {
-      font-size: 15px;
-      font-weight: 500;
-      color: #003366;
-      padding: 8px 0;
-      text-align: center;
-      border-top: 1px solid #eee;
-      margin-top: 8px;
+    .zonal-result-table {
+      width:100%;
+      border-collapse:collapse;
+      margin-top:6px;
     }
-    .zonal-result .avg-value {
-      font-size: 28px;
-      font-weight: 700;
-      color: #003366;
-      display: block;
-      margin-top: 4px;
+    .zonal-result-table td {
+      padding:3px 6px;
+      border-bottom:1px solid #eee;
     }
-    .zonal-result .avg-label {
-      font-size: 14px;
-      color: #555;
-      font-weight: 400;
+    .zonal-result-table td:first-child {
+      font-weight:500;
+      color:#555;
+    }
+    .zonal-result-table td:last-child {
+      text-align:right;
+      font-weight:600;
+      color:#003366;
     }
     .zonal-back {
       background: none;
@@ -411,7 +402,7 @@
       background: #d4e6f1;
     }
 
-    /* --- Time Series Graph Panel --- */
+    /* --- Time Series Graph Panel (resizable) --- */
     #timeseries-panel {
       position: absolute;
       bottom: 80px;
@@ -517,6 +508,8 @@
       opacity: 0.5;
       cursor: not-allowed;
     }
+
+    /* Time Series Mode Selector */
     .timeseries-mode-selector {
       display: flex;
       gap: 6px;
@@ -545,6 +538,8 @@
       color: #fff;
       border-color: #003366;
     }
+
+    /* Resize handle */
     .resize-handle {
       position: absolute;
       bottom: 0;
@@ -560,386 +555,6 @@
     .resize-handle:hover {
       opacity: 1;
     }
-
-    /* --- Split Map Styles --- */
-    #split-container {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 500;
-      display: none;
-      background: #e0e7ef;
-    }
-    .split-grid {
-      display: grid;
-      width: 100%;
-      height: 100%;
-      gap: 2px;
-      background: #003366;
-      padding: 2px;
-    }
-    .split-grid-4 {
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: 1fr 1fr;
-    }
-    .split-grid-2 {
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: 1fr;
-    }
-    .split-grid-3 {
-      grid-template-columns: 1fr 1fr 1fr;
-      grid-template-rows: 1fr 1fr;
-    }
-    .split-grid-3 .split-cell:nth-child(3) {
-      grid-column: 2 / 3;
-    }
-    .split-grid-1 {
-      grid-template-columns: 1fr;
-      grid-template-rows: 1fr;
-    }
-    
-    .split-cell {
-      position: relative;
-      background: #e0e7ef;
-      overflow: hidden;
-      min-height: 100px;
-    }
-    .split-cell .map-container {
-      width: 100%;
-      height: 100%;
-      background: #e0e7ef;
-    }
-    .split-cell .map-container .leaflet-control-zoom {
-      display: none;
-    }
-    .split-label {
-      position: absolute;
-      top: 4px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 1000;
-      background: rgba(0, 51, 102, 0.8);
-      color: #fff;
-      padding: 1px 8px;
-      border-radius: 3px;
-      font-size: 9px;
-      font-weight: 600;
-      pointer-events: none;
-      white-space: nowrap;
-    }
-    .split-label-right {
-      background: rgba(220, 50, 50, 0.8);
-    }
-    .split-label-green {
-      background: rgba(46, 125, 50, 0.8);
-    }
-    .split-label-purple {
-      background: rgba(123, 31, 162, 0.8);
-    }
-    
-    /* Smaller elongated legend - moved up 40px */
-    .split-legend {
-      position: absolute;
-      bottom: 100px;
-      right: 4px;
-      z-index: 1000;
-      background: rgba(255,255,255,0.92);
-      padding: 2px 5px;
-      border-radius: 3px;
-      box-shadow: 0 0 6px rgba(0,0,0,0.1);
-      font-size: 7px;
-      max-width: 90px;
-      border: 1px solid #ddd;
-      cursor: grab;
-      user-select: none;
-      max-height: 50%;
-      overflow-y: auto;
-    }
-    .split-legend:active {
-      cursor: grabbing;
-    }
-    .split-legend h6 {
-      margin: 0 0 1px 0;
-      color: #003366;
-      border-bottom: 1px solid #ddd;
-      padding-bottom: 1px;
-      font-size: 7px;
-      text-align: center;
-    }
-    .split-legend .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 2px;
-      margin: 1px 0;
-    }
-    .split-legend .color-box {
-      width: 7px;
-      height: 5px;
-      border: 1px solid #aaa;
-      flex-shrink: 0;
-    }
-    .split-legend .label {
-      font-size: 6px;
-      color: #333;
-      line-height: 1;
-      word-break: break-word;
-    }
-    .split-legend .legend-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid #ddd;
-      padding-bottom: 1px;
-      margin-bottom: 1px;
-    }
-    .split-legend .legend-header h6 {
-      border-bottom: none;
-      padding-bottom: 0;
-      margin: 0;
-    }
-    .split-legend .legend-drag-handle {
-      color: #999;
-      font-size: 7px;
-      cursor: grab;
-      padding: 0 2px;
-    }
-    .split-legend .legend-drag-handle:active {
-      cursor: grabbing;
-    }
-
-    /* Movable controls bar - fixed width, maintains dimensions */
-    #split-controls-wrapper {
-      position: absolute;
-      bottom: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 1001;
-      background: rgba(255,255,255,0.95);
-      border-radius: 6px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-      border: 1px solid #ccc;
-      cursor: move;
-      user-select: none;
-      touch-action: none;
-      width: auto;
-      max-width: calc(100% - 80px);
-      min-width: 200px;
-      display: inline-block;
-    }
-    #split-controls-wrapper:active {
-      cursor: grabbing;
-    }
-    #split-controls-wrapper .controls-header {
-      background: #003366;
-      color: #fff;
-      padding: 1px 8px;
-      font-size: 8px;
-      font-weight: 600;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-radius: 5px 5px 0 0;
-      cursor: move;
-      user-select: none;
-    }
-    #split-controls-wrapper .controls-header .drag-icon {
-      font-size: 8px;
-      color: rgba(255,255,255,0.6);
-      cursor: move;
-    }
-    #split-controls-wrapper .controls-header .close-btn-mini {
-      background: none;
-      border: none;
-      color: #fff;
-      cursor: pointer;
-      font-size: 9px;
-      padding: 0 4px;
-    }
-    #split-controls-wrapper .controls-header .close-btn-mini:hover {
-      color: #ffdddd;
-    }
-    #split-controls {
-      display: flex;
-      gap: 3px;
-      flex-wrap: nowrap;
-      justify-content: center;
-      align-items: center;
-      padding: 3px 8px;
-      font-size: 8px;
-      overflow-x: auto;
-      white-space: nowrap;
-    }
-    #split-controls .ctrl-group {
-      display: flex;
-      align-items: center;
-      gap: 1px;
-      white-space: nowrap;
-    }
-    #split-controls .ctrl-group label {
-      font-weight: 500;
-      color: #333;
-      font-size: 7px;
-    }
-    #split-controls select {
-      padding: 1px 2px;
-      border-radius: 2px;
-      border: 1px solid #ccc;
-      font-size: 7px;
-      max-width: 60px;
-    }
-    #split-controls input[type="number"] {
-      padding: 1px 2px;
-      border-radius: 2px;
-      border: 1px solid #ccc;
-      font-size: 7px;
-      width: 20px;
-    }
-    #split-controls .color-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      display: inline-block;
-      border: 1px solid #999;
-      flex-shrink: 0;
-    }
-    #split-controls .split-btn {
-      padding: 1px 4px;
-      border: none;
-      border-radius: 2px;
-      cursor: pointer;
-      font-size: 7px;
-      transition: 0.2s;
-      white-space: nowrap;
-    }
-    #split-controls .split-btn-apply {
-      background: #003366;
-      color: #fff;
-    }
-    #split-controls .split-btn-apply:hover {
-      background: #002244;
-    }
-    #split-controls .split-btn-close {
-      background: #e0e0e0;
-      color: #333;
-    }
-    #split-controls .split-btn-close:hover {
-      background: #ccc;
-    }
-    #split-controls .split-btn-screen {
-      background: #f0f0f0;
-      color: #333;
-      border: 1px solid #ccc;
-      padding: 1px 3px;
-      font-size: 7px;
-    }
-    #split-controls .month-label {
-      font-size: 6px;
-      color: #888;
-      margin-left: 1px;
-    }
-    .ctrl-separator {
-      width: 1px;
-      height: 14px;
-      background: #ddd;
-      margin: 0 2px;
-      flex-shrink: 0;
-    }
-
-    /* Screen selector modal */
-    #screen-selector {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 2000;
-      background: rgba(255,255,255,0.98);
-      padding: 24px 32px;
-      border-radius: 12px;
-      box-shadow: 0 4px 30px rgba(0,0,0,0.3);
-      display: none;
-      text-align: center;
-      min-width: 300px;
-      border: 2px solid #003366;
-    }
-    #screen-selector h3 {
-      color: #003366;
-      margin-bottom: 16px;
-      font-size: 18px;
-    }
-    #screen-selector .screen-options {
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-    #screen-selector .screen-options button {
-      padding: 12px 20px;
-      border: 2px solid #003366;
-      border-radius: 8px;
-      background: #f0f6fc;
-      color: #003366;
-      cursor: pointer;
-      font-size: 16px;
-      font-weight: 600;
-      transition: 0.2s;
-      min-width: 60px;
-    }
-    #screen-selector .screen-options button:hover {
-      background: #d4e6f1;
-      transform: scale(1.05);
-    }
-    #screen-selector .screen-options button.active {
-      background: #003366;
-      color: #fff;
-    }
-    #screen-selector .close-selector {
-      margin-top: 16px;
-      background: none;
-      border: none;
-      color: #999;
-      cursor: pointer;
-      font-size: 13px;
-    }
-    #screen-selector .close-selector:hover {
-      color: #333;
-    }
-
-    @media (max-width: 768px) {
-      .split-grid-4 {
-        grid-template-columns: 1fr 1fr;
-        grid-template-rows: 1fr 1fr;
-      }
-      .split-grid-3 {
-        grid-template-columns: 1fr 1fr;
-        grid-template-rows: 1fr 1fr;
-      }
-      .split-grid-3 .split-cell:nth-child(3) {
-        grid-column: 1 / 3;
-      }
-      .split-grid-2 {
-        grid-template-columns: 1fr 1fr;
-        grid-template-rows: 1fr;
-      }
-      #split-controls {
-        flex-wrap: wrap;
-        padding: 2px 4px;
-      }
-      #split-controls select {
-        max-width: 45px;
-      }
-      .split-legend {
-        max-width: 70px;
-        bottom: 80px;
-        right: 2px;
-        padding: 2px 3px;
-      }
-      #split-controls-wrapper {
-        max-width: calc(100% - 20px);
-        min-width: 150px;
-      }
-    }
   </style>
 </head>
 <body>
@@ -949,10 +564,10 @@
   <!-- ===== TOOLBAR ===== -->
   <div class="gis-toolbar">
     <button class="tool-btn" id="btnIdentify"><i class="fa-solid fa-crosshairs"></i><span>Identify</span></button>
-    <button class="tool-btn" id="btnSplit"><i class="fa-solid fa-table-cells"></i><span>Split Map</span></button>
     <button class="tool-btn" id="btnTimeseries"><i class="fa-solid fa-chart-line"></i><span>Time Series</span></button>
     <button class="tool-btn" id="btnAnimate"><i class="fa-solid fa-play"></i><span>Animate</span></button>
     <button class="tool-btn" id="btnZonal"><i class="fa-solid fa-table-cells-large"></i><span>Zonal Stats</span></button>
+    <button class="tool-btn" id="btnPolygonStats"><i class="fa-solid fa-draw-polygon"></i><span>Draw Stats</span></button>
     <button class="tool-btn" id="btnMeasure"><i class="fa-solid fa-ruler"></i><span>Measure</span></button>
     <button class="tool-btn" id="btnBuffer"><i class="fa-solid fa-circle-dot"></i><span>Buffer</span></button>
     <button class="tool-btn" id="btnGeocode"><i class="fa-solid fa-magnifying-glass-location"></i><span>Search</span></button>
@@ -1047,64 +662,6 @@
         <button id="geocode-btn">Go</button>
       </div>
 
-      <!-- Screen Selector -->
-      <div id="screen-selector">
-        <h3>📊 Select Number of Screens</h3>
-        <div class="screen-options">
-          <button data-screens="1">1</button>
-          <button data-screens="2" class="active">2</button>
-          <button data-screens="3">3</button>
-          <button data-screens="4">4</button>
-        </div>
-        <button class="close-selector" id="screen-selector-close">Cancel</button>
-      </div>
-
-      <!-- Split Map Container -->
-      <div id="split-container">
-        <div class="split-grid split-grid-2" id="split-grid"></div>
-        
-        <!-- Movable Controls Bar - fixed width -->
-        <div id="split-controls-wrapper">
-          <div class="controls-header">
-            <span>🔧 Tool Bar <span class="drag-icon">⠿</span></span>
-            <button class="close-btn-mini" id="split-close-mini">✕</button>
-          </div>
-          <div id="split-controls">
-            <div class="ctrl-group">
-              <span class="color-dot" style="background:#003366;"></span>
-              <select id="split-dataset-0"></select>
-              <label class="month-label">M</label>
-              <input type="number" id="split-month-0" min="1" max="12" value="1" />
-            </div>
-            <div class="ctrl-separator"></div>
-            <div class="ctrl-group">
-              <span class="color-dot" style="background:#dc3232;"></span>
-              <select id="split-dataset-1"></select>
-              <label class="month-label">M</label>
-              <input type="number" id="split-month-1" min="1" max="12" value="1" />
-            </div>
-            <div class="ctrl-separator" id="sep-2" style="display:none;"></div>
-            <div class="ctrl-group" id="ctrl-group-2" style="display:none;">
-              <span class="color-dot" style="background:#2e7d32;"></span>
-              <select id="split-dataset-2"></select>
-              <label class="month-label">M</label>
-              <input type="number" id="split-month-2" min="1" max="12" value="1" />
-            </div>
-            <div class="ctrl-separator" id="sep-3" style="display:none;"></div>
-            <div class="ctrl-group" id="ctrl-group-3" style="display:none;">
-              <span class="color-dot" style="background:#7b1fa2;"></span>
-              <select id="split-dataset-3"></select>
-              <label class="month-label">M</label>
-              <input type="number" id="split-month-3" min="1" max="12" value="1" />
-            </div>
-            <div class="ctrl-separator"></div>
-            <button class="split-btn split-btn-apply" id="split-apply">Apply</button>
-            <button class="split-btn split-btn-close" id="split-close">✕</button>
-            <button class="split-btn split-btn-screen" id="split-change-screens">📐</button>
-          </div>
-        </div>
-      </div>
-
       <!-- Zonal Stats Panel -->
       <div id="zonal-panel">
         <div class="zonal-header">
@@ -1118,9 +675,6 @@
             </button>
             <button class="welcome-btn" id="welcome-select">
               <i class="fa-solid fa-list"></i> Select from list
-            </button>
-            <button class="welcome-btn" id="welcome-draw" style="border-color:#003366; color:#003366;">
-              <i class="fa-solid fa-draw-polygon"></i> Draw Polygon
             </button>
           </div>
           <div class="zonal-pick-view" id="zonal-pick-view">
@@ -1157,17 +711,6 @@
               <button class="close-btn-body" id="zonal-close-body">✕</button>
             </div>
             <div id="zonal-result"></div>
-          </div>
-          <div class="zonal-pick-view" id="zonal-draw-view" style="display:none;">
-            <div class="pick-message">
-              <i class="fa-solid fa-draw-polygon"></i>
-              Draw a polygon, rectangle, or circle on the map<br>
-              <span style="font-size:12px; color:#888;">Double-click to finish drawing</span>
-            </div>
-            <button class="pick-cancel" id="draw-cancel">
-              <i class="fa-solid fa-arrow-left"></i> Cancel
-            </button>
-            <div id="zonal-draw-result"></div>
           </div>
         </div>
       </div>
@@ -1334,7 +877,7 @@
     }
 
     // =============================================================
-    // 3. LEAFLET MAP (Main)
+    // 3. LEAFLET MAP
     // =============================================================
     const map = L.map('map', {
       center: [0, 20],
@@ -1352,7 +895,7 @@
     let currentSlug = null;
 
     // =============================================================
-    // 4. VECTOR LAYERS (Main)
+    // 4. VECTOR LAYERS
     // =============================================================
     const VECTOR_LAYERS = [
       {
@@ -1438,7 +981,7 @@
     map.addControl(new VectorControl());
 
     // =============================================================
-    // 5. LEGEND UPDATE (Main)
+    // 5. LEGEND UPDATE
     // =============================================================
     const legendBox = document.getElementById('legend');
     const legendContent = document.getElementById('legend-content');
@@ -1468,7 +1011,7 @@
     const monthDisplay = document.getElementById('monthDisplay');
 
     // =============================================================
-    // 7. LOAD RASTER (Main)
+    // 7. LOAD RASTER
     // =============================================================
     function loadRaster(slug) {
       const config = DATASETS[slug];
@@ -1600,441 +1143,22 @@
     });
 
     // =============================================================
-    // 11. SPLIT MAP TOOL (fixed width toolbar)
-    // =============================================================
-    let splitMaps = [];
-    let splitOverlays = [];
-    let splitSync = false;
-    let splitVectorLayers = [];
-    let numScreens = 2;
-    let splitActive = false;
-
-    const splitContainer = document.getElementById('split-container');
-    const splitGrid = document.getElementById('split-grid');
-    const screenSelector = document.getElementById('screen-selector');
-    const controlsWrapper = document.getElementById('split-controls-wrapper');
-
-    const splitColors = ['#003366', '#dc3232', '#2e7d32', '#7b1fa2'];
-    const labelClasses = ['', 'split-label-right', 'split-label-green', 'split-label-purple'];
-
-    // Make controls draggable - maintain dimensions
-    let isDraggingControls = false;
-    let dragStartX, dragStartY, startLeft, startTop;
-    let wrapperWidth, wrapperHeight;
-
-    controlsWrapper.addEventListener('mousedown', function(e) {
-      if (e.target.closest('.controls-header') || e.target.closest('.drag-icon')) {
-        isDraggingControls = true;
-        const rect = controlsWrapper.getBoundingClientRect();
-        const parentRect = controlsWrapper.parentElement.getBoundingClientRect();
-        dragStartX = e.clientX;
-        dragStartY = e.clientY;
-        // Store current position
-        startLeft = controlsWrapper.offsetLeft || (rect.left - parentRect.left);
-        startTop = controlsWrapper.offsetTop || (rect.top - parentRect.top);
-        // Store current dimensions to maintain them
-        wrapperWidth = controlsWrapper.offsetWidth;
-        wrapperHeight = controlsWrapper.offsetHeight;
-        controlsWrapper.style.width = wrapperWidth + 'px';
-        controlsWrapper.style.height = wrapperHeight + 'px';
-        controlsWrapper.style.cursor = 'grabbing';
-        e.preventDefault();
-      }
-    });
-
-    document.addEventListener('mousemove', function(e) {
-      if (!isDraggingControls) return;
-      const dx = e.clientX - dragStartX;
-      const dy = e.clientY - dragStartY;
-      const parentRect = controlsWrapper.parentElement.getBoundingClientRect();
-      let newX = startLeft + dx;
-      let newY = startTop + dy;
-      // Maintain margins: keep 40px on each side
-      newX = Math.max(40, Math.min(parentRect.width - wrapperWidth - 40, newX));
-      newY = Math.max(0, Math.min(parentRect.height - wrapperHeight - 10, newY));
-      controlsWrapper.style.left = newX + 'px';
-      controlsWrapper.style.top = newY + 'px';
-      controlsWrapper.style.transform = 'none';
-      controlsWrapper.style.width = wrapperWidth + 'px';
-      controlsWrapper.style.height = wrapperHeight + 'px';
-    });
-
-    document.addEventListener('mouseup', function() {
-      if (isDraggingControls) {
-        isDraggingControls = false;
-        controlsWrapper.style.cursor = 'grab';
-      }
-    });
-
-    // Populate split dropdowns
-    function populateSplitSelects(count) {
-      const slugs = Object.keys(PRODUCT_NAMES).sort();
-      for (let i = 0; i < count; i++) {
-        const sel = document.getElementById(`split-dataset-${i}`);
-        if (!sel) continue;
-        sel.innerHTML = '';
-        slugs.forEach(slug => {
-          const opt = document.createElement('option');
-          opt.value = slug;
-          opt.textContent = PRODUCT_NAMES[slug] || slug;
-          sel.appendChild(opt);
-        });
-        if (slugs.length > i) {
-          sel.value = slugs[i % slugs.length];
-        }
-        updateSplitMonthVisibility(i);
-      }
-    }
-
-    function updateSplitMonthVisibility(index) {
-      const sel = document.getElementById(`split-dataset-${index}`);
-      const monthInput = document.getElementById(`split-month-${index}`);
-      if (!sel || !monthInput) return;
-      const slug = sel.value;
-      const config = DATASETS[slug];
-      const isMonthly = config && config.type === 'month';
-      monthInput.style.display = isMonthly ? 'inline-block' : 'none';
-      const label = monthInput.previousElementSibling;
-      if (label && label.tagName === 'LABEL') {
-        label.style.display = isMonthly ? 'inline-block' : 'none';
-      }
-    }
-
-    function buildSplitGrid(count) {
-      splitGrid.innerHTML = '';
-      
-      let gridClass = 'split-grid-1';
-      if (count === 2) gridClass = 'split-grid-2';
-      else if (count === 3) gridClass = 'split-grid-3';
-      else if (count === 4) gridClass = 'split-grid-4';
-      splitGrid.className = `split-grid ${gridClass}`;
-      
-      for (let i = 0; i < count; i++) {
-        const cell = document.createElement('div');
-        cell.className = 'split-cell';
-        cell.id = `split-cell-${i}`;
-        
-        const label = document.createElement('div');
-        label.className = `split-label ${labelClasses[i] || ''}`;
-        label.textContent = `Map ${i+1}`;
-        cell.appendChild(label);
-        
-        const mapContainer = document.createElement('div');
-        mapContainer.className = 'map-container';
-        mapContainer.id = `split-map-${i}`;
-        cell.appendChild(mapContainer);
-        
-        const legendContainer = document.createElement('div');
-        legendContainer.className = 'split-legend';
-        legendContainer.id = `split-legend-${i}`;
-        legendContainer.style.display = 'none';
-        cell.appendChild(legendContainer);
-        
-        splitGrid.appendChild(cell);
-      }
-
-      for (let i = 0; i < 4; i++) {
-        const group = document.getElementById(`ctrl-group-${i}`);
-        if (group) {
-          group.style.display = i < count ? 'flex' : 'none';
-        }
-        const sep = document.getElementById(`sep-${i}`);
-        if (sep) {
-          sep.style.display = (i > 0 && i < count) ? 'block' : 'none';
-        }
-      }
-    }
-
-    function createSplitMaps(count) {
-      splitMaps.forEach(m => { if (m) m.remove(); });
-      splitMaps = [];
-      splitOverlays = [];
-      splitVectorLayers = [];
-
-      for (let i = 0; i < count; i++) {
-        const container = document.getElementById(`split-map-${i}`);
-        if (!container) continue;
-
-        const mapObj = L.map(container, {
-          center: [0, 20],
-          zoom: 3,
-          maxBounds: [[-90, -180], [90, 180]],
-          maxBoundsViscosity: 1.0,
-          zoomControl: false
-        });
-        splitMaps.push(mapObj);
-
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '&copy; OpenStreetMap'
-        }).addTo(mapObj);
-
-        mapObj.createPane('rasterPane');
-        mapObj.getPane('rasterPane').style.zIndex = 300;
-
-        splitVectorLayers[i] = {};
-        VECTOR_LAYERS.forEach(layer => {
-          fetch(layer.url)
-            .then(res => res.ok ? res.json() : Promise.reject())
-            .then(data => {
-              const geojsonLayer = L.geoJSON(data, {
-                style: layer.style,
-                pane: 'overlayPane'
-              });
-              splitVectorLayers[i][layer.id] = geojsonLayer;
-              if (layer.defaultChecked) {
-                geojsonLayer.addTo(mapObj);
-              }
-            })
-            .catch(() => console.warn('Failed to load ' + layer.id + ' for split map ' + i));
-        });
-
-        splitOverlays.push(null);
-
-        if (i === 0) {
-          mapObj.on('move', function(e) {
-            if (splitSync) {
-              splitMaps.forEach((m, idx) => {
-                if (idx !== 0 && m) {
-                  m.setView(e.target.getCenter(), e.target.getZoom(), { animate: false });
-                }
-              });
-            }
-          });
-        }
-      }
-
-      splitSync = true;
-    }
-
-    function updateSplitLegend(slug, index) {
-      const legendContainer = document.getElementById(`split-legend-${index}`);
-      if (!legendContainer) return;
-      const config = DATASETS[slug];
-      if (!config || !config.legend) {
-        legendContainer.style.display = 'none';
-        return;
-      }
-      let html = '<div class="legend-header"><h6>Legend</h6><span class="legend-drag-handle">⠿</span></div>';
-      config.legend.forEach(item => {
-        html += `<div class="legend-item">
-                  <span class="color-box" style="background:${item.color};"></span>
-                  <span class="label">${item.label}</span>
-                </div>`;
-      });
-      legendContainer.innerHTML = html;
-      legendContainer.style.display = 'block';
-      
-      makeLegendDraggable(legendContainer);
-    }
-
-    function makeLegendDraggable(legend) {
-      let isDragging = false;
-      let startX, startY, origX, origY;
-      
-      legend.addEventListener('mousedown', function(e) {
-        if (e.target.closest('.legend-drag-handle') || e.target === legend || e.target.closest('.split-legend')) {
-          isDragging = true;
-          const rect = legend.getBoundingClientRect();
-          const parentRect = legend.parentElement.getBoundingClientRect();
-          startX = e.clientX;
-          startY = e.clientY;
-          origX = legend.offsetLeft || (rect.left - parentRect.left);
-          origY = legend.offsetTop || (rect.top - parentRect.top);
-          legend.style.cursor = 'grabbing';
-          e.preventDefault();
-        }
-      });
-      
-      document.addEventListener('mousemove', function(e) {
-        if (!isDragging) return;
-        const dx = e.clientX - startX;
-        const dy = e.clientY - startY;
-        const parentRect = legend.parentElement.getBoundingClientRect();
-        let newX = origX + dx;
-        let newY = origY + dy;
-        const legendWidth = legend.offsetWidth || 90;
-        const legendHeight = legend.offsetHeight || 70;
-        newX = Math.max(0, Math.min(parentRect.width - legendWidth, newX));
-        newY = Math.max(0, Math.min(parentRect.height - legendHeight, newY));
-        legend.style.left = newX + 'px';
-        legend.style.top = newY + 'px';
-        legend.style.right = 'auto';
-        legend.style.bottom = 'auto';
-        legend.style.position = 'absolute';
-      });
-      
-      document.addEventListener('mouseup', function() {
-        if (isDragging) {
-          isDragging = false;
-          legend.style.cursor = 'grab';
-        }
-      });
-    }
-
-    function applySplitLayers(count) {
-      for (let i = 0; i < count; i++) {
-        const sel = document.getElementById(`split-dataset-${i}`);
-        const monthInput = document.getElementById(`split-month-${i}`);
-        if (!sel) continue;
-        const slug = sel.value;
-        let month = 1;
-        const config = DATASETS[slug];
-        if (config && config.type === 'month' && monthInput) {
-          month = parseInt(monthInput.value) || 1;
-        }
-
-        if (splitOverlays[i]) {
-          splitMaps[i].removeLayer(splitOverlays[i]);
-          splitOverlays[i] = null;
-        }
-
-        let url = `/earth_observation/raster/${slug}/`;
-        if (config && config.type === 'month') {
-          url += `${month}/`;
-        }
-
-        splitOverlays[i] = L.imageOverlay(url, WORLD_BOUNDS, {
-          opacity: 0.7,
-          pane: 'rasterPane'
-        }).addTo(splitMaps[i]);
-
-        updateSplitLegend(slug, i);
-      }
-    }
-
-    function openSplitMap(count) {
-      numScreens = count;
-      splitActive = true;
-      splitContainer.style.display = 'block';
-      
-      buildSplitGrid(count);
-      populateSplitSelects(count);
-      createSplitMaps(count);
-      
-      setTimeout(() => {
-        applySplitLayers(count);
-      }, 200);
-      
-      document.getElementById('map').style.display = 'none';
-      document.getElementById('legend').style.display = 'none';
-      document.getElementById('month-control').style.display = 'none';
-      
-      document.getElementById('zonal-panel').style.display = 'none';
-      document.getElementById('animate-panel').style.display = 'none';
-      document.getElementById('timeseries-panel').style.display = 'none';
-      
-      controlsWrapper.style.display = 'block';
-      controlsWrapper.style.left = '50%';
-      controlsWrapper.style.top = 'auto';
-      controlsWrapper.style.bottom = '10px';
-      controlsWrapper.style.transform = 'translateX(-50%)';
-      controlsWrapper.style.width = 'auto';
-      controlsWrapper.style.height = 'auto';
-    }
-
-    function closeSplitMap() {
-      splitActive = false;
-      splitContainer.style.display = 'none';
-      document.getElementById('map').style.display = 'block';
-      document.getElementById('legend').style.display = 'block';
-      document.getElementById('month-control').style.display = 'block';
-      controlsWrapper.style.display = 'none';
-      controlsWrapper.style.width = 'auto';
-      controlsWrapper.style.height = 'auto';
-      
-      splitMaps.forEach(m => { if (m) m.remove(); });
-      splitMaps = [];
-      splitOverlays = [];
-      splitVectorLayers = [];
-      
-      if (currentSlug) {
-        loadRaster(currentSlug);
-      }
-    }
-
-    document.getElementById('btnSplit').addEventListener('click', function() {
-      if (splitActive) {
-        closeSplitMap();
-        this.style.background = 'none';
-        this.style.color = '#444';
-        return;
-      }
-      screenSelector.style.display = 'block';
-      this.style.background = '#e8f4fd';
-      this.style.color = '#003366';
-    });
-
-    document.querySelectorAll('#screen-selector .screen-options button').forEach(btn => {
-      btn.addEventListener('click', function() {
-        document.querySelectorAll('#screen-selector .screen-options button').forEach(b => b.classList.remove('active'));
-        this.classList.add('active');
-        const screens = parseInt(this.dataset.screens);
-        screenSelector.style.display = 'none';
-        openSplitMap(screens);
-        document.getElementById('btnSplit').style.background = '#e8f4fd';
-        document.getElementById('btnSplit').style.color = '#003366';
-      });
-    });
-
-    document.getElementById('screen-selector-close').addEventListener('click', function() {
-      screenSelector.style.display = 'none';
-      document.getElementById('btnSplit').style.background = 'none';
-      document.getElementById('btnSplit').style.color = '#444';
-    });
-
-    document.getElementById('split-change-screens').addEventListener('click', function() {
-      screenSelector.style.display = 'block';
-      document.querySelectorAll('#screen-selector .screen-options button').forEach(b => {
-        b.classList.toggle('active', parseInt(b.dataset.screens) === numScreens);
-      });
-    });
-
-    document.getElementById('split-apply').addEventListener('click', function() {
-      if (splitActive && splitMaps.length > 0) {
-        applySplitLayers(splitMaps.length);
-      }
-    });
-
-    document.getElementById('split-close').addEventListener('click', function() {
-      closeSplitMap();
-      document.getElementById('btnSplit').style.background = 'none';
-      document.getElementById('btnSplit').style.color = '#444';
-    });
-
-    document.getElementById('split-close-mini').addEventListener('click', function() {
-      closeSplitMap();
-      document.getElementById('btnSplit').style.background = 'none';
-      document.getElementById('btnSplit').style.color = '#444';
-    });
-
-    document.addEventListener('change', function(e) {
-      if (e.target && e.target.id && e.target.id.startsWith('split-dataset-')) {
-        const idx = parseInt(e.target.id.split('-')[2]);
-        updateSplitMonthVisibility(idx);
-      }
-    });
-
-    // =============================================================
-    // 12. ZONAL STATS TOOL (fully restored)
+    // 11. ZONAL STATS TOOL (fully restored)
     // =============================================================
     const zonalPanel = document.getElementById('zonal-panel');
     const zonalHeader = zonalPanel.querySelector('.zonal-header');
     const zonalWelcome = document.getElementById('zonal-welcome');
     const zonalMain = document.getElementById('zonal-main');
     const zonalPickView = document.getElementById('zonal-pick-view');
-    const zonalDrawView = document.getElementById('zonal-draw-view');
     const countrySelect = document.getElementById('zonal-country');
     const datasetSelect = document.getElementById('zonal-dataset');
     const monthInput = document.getElementById('zonal-month');
     const resultDiv = document.getElementById('zonal-result');
     const pickResultDiv = document.getElementById('zonal-pick-result');
-    const drawResultDiv = document.getElementById('zonal-draw-result');
     const pickBtn = document.getElementById('zonal-pick-country');
 
     let zonalIsDragging = false;
     let zonalDragOffsetX = 0, zonalDragOffsetY = 0;
-    let drawStatsControl = null;
-    let drawnPolygonLayer = null;
 
     function startZonalDrag(e) {
       e.preventDefault();
@@ -2132,14 +1256,12 @@
       zonalWelcome.style.display = 'flex';
       zonalMain.style.display = 'none';
       zonalPickView.style.display = 'none';
-      zonalDrawView.style.display = 'none';
       if (pickCountryMode) togglePickMode();
     }
     function showMain() {
       zonalWelcome.style.display = 'none';
       zonalMain.style.display = 'block';
       zonalPickView.style.display = 'none';
-      zonalDrawView.style.display = 'none';
       if (pickCountryMode) togglePickMode();
       if (currentSlug) {
         const options = datasetSelect.options;
@@ -2156,183 +1278,8 @@
       zonalWelcome.style.display = 'none';
       zonalMain.style.display = 'none';
       zonalPickView.style.display = 'block';
-      zonalDrawView.style.display = 'none';
       pickResultDiv.innerHTML = '';
       if (!pickCountryMode) togglePickMode();
-    }
-    function showDrawView() {
-      zonalWelcome.style.display = 'none';
-      zonalMain.style.display = 'none';
-      zonalPickView.style.display = 'none';
-      zonalDrawView.style.display = 'block';
-      drawResultDiv.innerHTML = '';
-      activateDrawMode();
-    }
-
-    function activateDrawMode() {
-      if (drawStatsControl) {
-        map.removeControl(drawStatsControl);
-        drawStatsControl = null;
-      }
-      if (drawnPolygonLayer) {
-        map.removeLayer(drawnPolygonLayer);
-        drawnPolygonLayer = null;
-      }
-      
-      drawStatsControl = new L.Control.Draw({
-        draw: {
-          polygon: {
-            allowIntersection: false,
-            showArea: true,
-            shapeOptions: {
-              color: '#003366',
-              weight: 2,
-              fillColor: '#003366',
-              fillOpacity: 0.2
-            }
-          },
-          rectangle: {
-            shapeOptions: {
-              color: '#003366',
-              weight: 2,
-              fillColor: '#003366',
-              fillOpacity: 0.2
-            }
-          },
-          circle: {
-            shapeOptions: {
-              color: '#003366',
-              weight: 2,
-              fillColor: '#003366',
-              fillOpacity: 0.2
-            }
-          },
-          polyline: false,
-          marker: false,
-          circlemarker: false
-        },
-        edit: {
-          featureGroup: new L.FeatureGroup()
-        }
-      });
-      
-      map.addControl(drawStatsControl);
-      
-      map.once('draw:created', function(e) {
-        const layer = e.layer;
-        const layerType = e.layerType;
-        drawnPolygonLayer = layer;
-        
-        let coords, geojson;
-        if (layerType === 'rectangle') {
-          const bounds = layer.getBounds();
-          const corners = [
-            bounds.getSouthWest(),
-            bounds.getSouthEast(),
-            bounds.getNorthEast(),
-            bounds.getNorthWest()
-          ];
-          coords = corners.map(p => [p.lng, p.lat]);
-          geojson = {
-            type: 'Feature',
-            geometry: {
-              type: 'Polygon',
-              coordinates: [coords]
-            }
-          };
-        } else if (layerType === 'circle') {
-          const center = layer.getLatLng();
-          const radius = layer.getRadius();
-          const points = 64;
-          coords = [];
-          for (let i = 0; i <= points; i++) {
-            const angle = (i / points) * 2 * Math.PI;
-            const lat = center.lat + (radius / 111320) * Math.cos(angle);
-            const lng = center.lng + (radius / (111320 * Math.cos(center.lat * Math.PI / 180))) * Math.sin(angle);
-            coords.push([lng, lat]);
-          }
-          geojson = {
-            type: 'Feature',
-            geometry: {
-              type: 'Polygon',
-              coordinates: [coords]
-            }
-          };
-        } else {
-          const latlngs = layer.getLatLngs()[0];
-          coords = latlngs.map(p => [p.lng, p.lat]);
-          geojson = {
-            type: 'Feature',
-            geometry: {
-              type: 'Polygon',
-              coordinates: [coords]
-            }
-          };
-        }
-        
-        computeDrawStats(geojson, layer, layerType);
-        
-        if (drawStatsControl) {
-          map.removeControl(drawStatsControl);
-          drawStatsControl = null;
-        }
-      });
-    }
-
-    function computeDrawStats(geojson, layer, layerType) {
-      if (!currentSlug) {
-        drawResultDiv.innerHTML = '<p style="color:red;">Please load a raster first.</p>';
-        return;
-      }
-
-      const dataset = currentSlug;
-      const config = DATASETS[dataset];
-      let month = 1;
-      if (config.type === 'month') {
-        month = parseInt(monthSlider.value) || 1;
-      }
-
-      let url = `/earth_observation/api/zonal_stats_by_polygon/${dataset}/`;
-      if (config.type === 'month') {
-        url += `${month}/`;
-      }
-
-      drawResultDiv.innerHTML = '<p>Loading...</p>';
-      fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(geojson)
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.error) {
-          drawResultDiv.innerHTML = `<p style="color:red;">Error: ${data.error}</p>`;
-          return;
-        }
-
-        const prodName = PRODUCT_NAMES[dataset] || dataset;
-        const shapeNames = {
-          'polygon': 'Polygon',
-          'rectangle': 'Rectangle',
-          'circle': 'Circle'
-        };
-        const avgValue = data.mean !== undefined ? Math.round(data.mean) : 'N/A';
-        
-        let html = `
-          <div class="zonal-result">
-            <span class="avg-label">Average (${prodName})</span>
-            <span class="avg-value">${avgValue}</span>
-            <div style="font-size:11px; color:#888; margin-top:4px;">
-              ${shapeNames[layerType] || 'Shape'} 
-              ${config.type === 'month' ? `• Month ${month}` : ''}
-            </div>
-          </div>
-        `;
-        drawResultDiv.innerHTML = html;
-      })
-      .catch(err => {
-        drawResultDiv.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
-      });
     }
 
     document.getElementById('btnZonal').addEventListener('click', function() {
@@ -2345,40 +1292,15 @@
         showWelcome();
         resultDiv.innerHTML = '';
         pickResultDiv.innerHTML = '';
-        drawResultDiv.innerHTML = '';
         if (pickCountryMode) togglePickMode();
-        if (drawStatsControl) {
-          map.removeControl(drawStatsControl);
-          drawStatsControl = null;
-        }
-        if (drawnPolygonLayer) {
-          map.removeLayer(drawnPolygonLayer);
-          drawnPolygonLayer = null;
-        }
       } else {
         if (pickCountryMode) togglePickMode();
-        if (drawStatsControl) {
-          map.removeControl(drawStatsControl);
-          drawStatsControl = null;
-        }
-        if (drawnPolygonLayer) {
-          map.removeLayer(drawnPolygonLayer);
-          drawnPolygonLayer = null;
-        }
       }
     });
 
     function closeZonalPanel() {
       zonalPanel.style.display = 'none';
       if (pickCountryMode) togglePickMode();
-      if (drawStatsControl) {
-        map.removeControl(drawStatsControl);
-        drawStatsControl = null;
-      }
-      if (drawnPolygonLayer) {
-        map.removeLayer(drawnPolygonLayer);
-        drawnPolygonLayer = null;
-      }
     }
     document.getElementById('zonal-close').addEventListener('click', closeZonalPanel);
     document.getElementById('zonal-close-body').addEventListener('click', closeZonalPanel);
@@ -2389,9 +1311,6 @@
     document.getElementById('welcome-select').addEventListener('click', function() {
       showMain();
     });
-    document.getElementById('welcome-draw').addEventListener('click', function() {
-      showDrawView();
-    });
 
     document.getElementById('zonal-back').addEventListener('click', function() {
       showWelcome();
@@ -2400,17 +1319,6 @@
     document.getElementById('pick-cancel').addEventListener('click', function() {
       showWelcome();
       if (pickCountryMode) togglePickMode();
-    });
-    document.getElementById('draw-cancel').addEventListener('click', function() {
-      showWelcome();
-      if (drawStatsControl) {
-        map.removeControl(drawStatsControl);
-        drawStatsControl = null;
-      }
-      if (drawnPolygonLayer) {
-        map.removeLayer(drawnPolygonLayer);
-        drawnPolygonLayer = null;
-      }
     });
 
     function runZonalStats(country, resultContainer, showDatasetInfo = false) {
@@ -2441,23 +1349,28 @@
             resultContainer.innerHTML = `<p style="color:red;">Error: ${data.error}</p>`;
             return;
           }
-          
-          const dsName = PRODUCT_NAMES[dataset] || dataset;
-          const avgValue = data.mean !== undefined ? Math.round(data.mean) : 'N/A';
-          
           let info = '';
           if (showDatasetInfo) {
-            info = `<div style="font-size:12px; color:#555; margin-bottom:4px;">
-                      ${dsName} ${config.type === 'month' ? `(Month ${month})` : ''}
+            const dsName = PRODUCT_NAMES[dataset] || dataset;
+            info = `<div style="font-size:12px; color:#555; margin-bottom:6px;">
+                      Dataset: <strong>${dsName}</strong>
+                      ${config.type === 'month' ? ` | Month: ${month}` : ''}
                     </div>`;
           }
-          
-          let html = info + `
-            <div class="zonal-result">
-              <span class="avg-label">Average (${dsName})</span>
-              <span class="avg-value">${avgValue}</span>
-            </div>
-          `;
+          const rows = [
+            ['Mean', data.mean],
+            ['Min', data.min],
+            ['Max', data.max],
+            ['Sum', data.sum],
+            ['Count', data.count],
+            ['Std Dev', data.std],
+          ];
+          let html = info + '<table class="zonal-result-table">';
+          rows.forEach(([label, value]) => {
+            const val = (typeof value === 'number') ? Math.round(value) : value;
+            html += `<tr><td>${label}</td><td>${val}</td></tr>`;
+          });
+          html += '</table>';
           resultContainer.innerHTML = html;
         })
         .catch(err => {
@@ -2470,6 +1383,8 @@
     });
 
     let pickCountryMode = false;
+    let pickDataset = null;
+    let pickMonth = 1;
 
     function togglePickMode() {
       pickCountryMode = !pickCountryMode;
@@ -2566,22 +1481,28 @@
               resultContainer.innerHTML = `<p style="color:red;">Error: ${data.error}</p>`;
               return;
             }
-            const dsName = PRODUCT_NAMES[chosenDataset] || chosenDataset;
-            const avgValue = data.mean !== undefined ? Math.round(data.mean) : 'N/A';
-            
             let info = '';
             if (showInfo) {
-              info = `<div style="font-size:12px; color:#555; margin-bottom:4px;">
-                        ${dsName} ${config.type === 'month' ? `(Month ${chosenMonth})` : ''}
+              const dsName = PRODUCT_NAMES[chosenDataset] || chosenDataset;
+              info = `<div style="font-size:12px; color:#555; margin-bottom:6px;">
+                        Dataset: <strong>${dsName}</strong>
+                        ${config.type === 'month' ? ` | Month: ${chosenMonth}` : ''}
                       </div>`;
             }
-            
-            let html = info + `
-              <div class="zonal-result">
-                <span class="avg-label">Average (${dsName})</span>
-                <span class="avg-value">${avgValue}</span>
-              </div>
-            `;
+            const rows = [
+              ['Mean', data.mean],
+              ['Min', data.min],
+              ['Max', data.max],
+              ['Sum', data.sum],
+              ['Count', data.count],
+              ['Std Dev', data.std],
+            ];
+            let html = info + '<table class="zonal-result-table">';
+            rows.forEach(([label, value]) => {
+              const val = (typeof value === 'number') ? Math.round(value) : value;
+              html += `<tr><td>${label}</td><td>${val}</td></tr>`;
+            });
+            html += '</table>';
             resultContainer.innerHTML = html;
           })
           .catch(err => {
@@ -2605,7 +1526,7 @@
     });
 
     // =============================================================
-    // 13. ANIMATION TOOL (fully restored)
+    // 12. ANIMATION TOOL (fully restored)
     // =============================================================
     const animatePanel = document.getElementById('animate-panel');
     const animateSlider = document.getElementById('animateSlider');
@@ -2921,7 +1842,196 @@
     updateAnimateStatus();
 
     // =============================================================
-    // 14. TIME SERIES GRAPH TOOL (fully restored)
+    // 13. DRAW STATS TOOL (fully restored)
+    // =============================================================
+    let drawStatsControl = null;
+    let drawnFeatureGroup = new L.FeatureGroup();
+    map.addLayer(drawnFeatureGroup);
+
+    document.getElementById('btnPolygonStats').addEventListener('click', function() {
+      if (drawStatsControl) {
+        map.removeControl(drawStatsControl);
+        drawStatsControl = null;
+        this.style.background = 'none';
+        this.style.color = '#444';
+        drawnFeatureGroup.clearLayers();
+        return;
+      }
+
+      drawStatsControl = new L.Control.Draw({
+        draw: {
+          polygon: {
+            allowIntersection: false,
+            showArea: true,
+            shapeOptions: {
+              color: '#003366',
+              weight: 2,
+              fillColor: '#003366',
+              fillOpacity: 0.2
+            }
+          },
+          polyline: {
+            shapeOptions: {
+              color: '#ff7f0e',
+              weight: 2
+            }
+          },
+          circle: {
+            shapeOptions: {
+              color: '#2ca02c',
+              weight: 2,
+              fillColor: '#2ca02c',
+              fillOpacity: 0.2
+            }
+          },
+          rectangle: {
+            shapeOptions: {
+              color: '#d62728',
+              weight: 2,
+              fillColor: '#d62728',
+              fillOpacity: 0.2
+            }
+          },
+          marker: {
+            shapeOptions: {
+              color: '#9467bd'
+            }
+          },
+          circlemarker: false
+        },
+        edit: {
+          featureGroup: drawnFeatureGroup,
+          remove: true
+        }
+      });
+
+      map.addControl(drawStatsControl);
+      this.style.background = '#e8f4fd';
+      this.style.color = '#003366';
+
+      map.once('draw:created', function(e) {
+        const layer = e.layer;
+        const layerType = e.layerType;
+        drawnFeatureGroup.addLayer(layer);
+
+        if (layerType === 'polygon' || layerType === 'rectangle' || layerType === 'circle') {
+          let geojson;
+          if (layerType === 'circle') {
+            const center = layer.getLatLng();
+            const radius = layer.getRadius();
+            const points = 64;
+            const coords = [];
+            for (let i = 0; i <= points; i++) {
+              const angle = (i / points) * 2 * Math.PI;
+              const lat = center.lat + (radius / 111320) * Math.cos(angle);
+              const lng = center.lng + (radius / (111320 * Math.cos(center.lat * Math.PI / 180))) * Math.sin(angle);
+              coords.push([lng, lat]);
+            }
+            geojson = {
+              type: 'Feature',
+              geometry: {
+                type: 'Polygon',
+                coordinates: [coords]
+              }
+            };
+          } else {
+            const latlngs = layer.getLatLngs()[0];
+            geojson = {
+              type: 'Feature',
+              geometry: {
+                type: 'Polygon',
+                coordinates: [latlngs.map(p => [p.lng, p.lat])]
+              }
+            };
+          }
+          computeDrawnStats(geojson, layer, layerType);
+        }
+      });
+    });
+
+    function computeDrawnStats(geojson, layer, layerType) {
+      if (!currentSlug) {
+        alert('Please load a raster first.');
+        return;
+      }
+
+      const dataset = currentSlug;
+      const config = DATASETS[dataset];
+      let month = 1;
+      if (config.type === 'month') {
+        month = parseInt(monthSlider.value) || 1;
+      }
+
+      let url = `/earth_observation/api/zonal_stats_by_polygon/${dataset}/`;
+      if (config.type === 'month') {
+        url += `${month}/`;
+      }
+
+      fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(geojson)
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) {
+          alert('Error: ' + data.error);
+          return;
+        }
+
+        const prodName = PRODUCT_NAMES[dataset] || dataset;
+        const shapeNames = {
+          'polygon': 'Polygon',
+          'rectangle': 'Rectangle',
+          'circle': 'Circle'
+        };
+        const rows = [
+          ['Mean', data.mean],
+          ['Min', data.min],
+          ['Max', data.max],
+          ['Sum', data.sum],
+          ['Count', data.count],
+          ['Std Dev', data.std],
+        ];
+
+        let html = `
+          <div class="identify-popup">
+            <div class="header">
+              <i class="fa-solid fa-draw-polygon"></i>
+              ${shapeNames[layerType] || 'Shape'} Stats
+            </div>
+            <div class="body">
+              <div class="field">
+                <span class="label">Dataset</span>
+                <span class="value">${prodName}</span>
+              </div>
+              ${config.type === 'month' ? `<div class="field"><span class="label">Month</span><span class="value">${month}</span></div>` : ''}
+        `;
+        rows.forEach(([label, value]) => {
+          const val = (typeof value === 'number') ? Math.round(value) : value;
+          html += `
+            <div class="field">
+              <span class="label">${label}</span>
+              <span class="value">${val}</span>
+            </div>
+          `;
+        });
+        html += `</div></div>`;
+
+        const center = layer.getBounds().getCenter();
+        L.popup({ maxWidth: 300 })
+          .setLatLng(center)
+          .setContent(html)
+          .openOn(map);
+      })
+      .catch(err => {
+        console.error(err);
+        alert('Error computing stats: ' + err.message);
+      });
+    }
+
+    // =============================================================
+    // 14. TIME SERIES GRAPH TOOL (with polygon name on chart)
     // =============================================================
     const timeseriesPanel = document.getElementById('timeseries-panel');
     const timeseriesInfo = document.getElementById('timeseries-info');
@@ -2931,10 +2041,11 @@
     let currentTimeSeriesData = null;
     let currentTimeSeriesMode = 'pixel';
     let selectedPolygonLayer = null;
-    let drawnPolygonLayerTS = null;
-    let polygonDrawControlTS = null;
+    let drawnPolygonLayer = null;
+    let polygonDrawControl = null;
     let currentPolygonName = '';
 
+    // --- Resize functionality ---
     const resizeHandle = document.getElementById('resizeHandle');
     let isResizing = false;
     let resizeStartX, resizeStartY, resizeStartWidth, resizeStartHeight;
@@ -2970,6 +2081,7 @@
       document.removeEventListener('mouseup', stopResize);
     }
 
+    // --- Time Series Mode Selector ---
     const modeButtons = document.querySelectorAll('.timeseries-mode-selector button');
     modeButtons.forEach(btn => {
       btn.addEventListener('click', function() {
@@ -2981,13 +2093,13 @@
           map.removeLayer(selectedPolygonLayer);
           selectedPolygonLayer = null;
         }
-        if (drawnPolygonLayerTS) {
-          map.removeLayer(drawnPolygonLayerTS);
-          drawnPolygonLayerTS = null;
+        if (drawnPolygonLayer) {
+          map.removeLayer(drawnPolygonLayer);
+          drawnPolygonLayer = null;
         }
-        if (polygonDrawControlTS) {
-          map.removeControl(polygonDrawControlTS);
-          polygonDrawControlTS = null;
+        if (polygonDrawControl) {
+          map.removeControl(polygonDrawControl);
+          polygonDrawControl = null;
         }
 
         const modeNames = {
@@ -2998,7 +2110,7 @@
         timeseriesInfo.innerHTML = `<span class="highlight">${modeNames[currentTimeSeriesMode]}</span>`;
         
         if (currentTimeSeriesMode === 'draw') {
-          activateDrawModeTS();
+          activateDrawMode();
         }
         
         if (timeseriesChart) {
@@ -3009,13 +2121,13 @@
       });
     });
 
-    function activateDrawModeTS() {
-      if (polygonDrawControlTS) {
-        map.removeControl(polygonDrawControlTS);
-        polygonDrawControlTS = null;
+    function activateDrawMode() {
+      if (polygonDrawControl) {
+        map.removeControl(polygonDrawControl);
+        polygonDrawControl = null;
       }
       
-      polygonDrawControlTS = new L.Control.Draw({
+      polygonDrawControl = new L.Control.Draw({
         draw: {
           polygon: {
             allowIntersection: false,
@@ -3052,14 +2164,15 @@
         }
       });
       
-      map.addControl(polygonDrawControlTS);
+      map.addControl(polygonDrawControl);
       
       map.once('draw:created', function(e) {
         const layer = e.layer;
         const layerType = e.layerType;
-        drawnPolygonLayerTS = layer;
+        drawnPolygonLayer = layer;
         currentPolygonName = 'Drawn ' + (layerType.charAt(0).toUpperCase() + layerType.slice(1));
         
+        // Get polygon coordinates
         let coords, geojson;
         if (layerType === 'rectangle') {
           const bounds = layer.getBounds();
@@ -3096,6 +2209,7 @@
             }
           };
         } else {
+          // Polygon
           const latlngs = layer.getLatLngs()[0];
           coords = latlngs.map(p => [p.lng, p.lat]);
           geojson = {
@@ -3107,16 +2221,16 @@
           };
         }
         
-        computePolygonTimeSeriesTS(geojson, layer);
+        computePolygonTimeSeries(geojson, layer);
         
-        if (polygonDrawControlTS) {
-          map.removeControl(polygonDrawControlTS);
-          polygonDrawControlTS = null;
+        if (polygonDrawControl) {
+          map.removeControl(polygonDrawControl);
+          polygonDrawControl = null;
         }
       });
     }
 
-    function computePolygonTimeSeriesTS(geojson, layer) {
+    function computePolygonTimeSeries(geojson, layer) {
       if (!currentSlug || DATASETS[currentSlug].type !== 'month') {
         timeseriesInfo.innerHTML = 'Please load a <span class="highlight">monthly dataset</span> first.';
         return;
@@ -3148,7 +2262,7 @@
             label: prodName,
             location: displayName
           };
-          renderTimeSeriesChartTS(values, prodName, displayName);
+          renderTimeSeriesChart(values, prodName, displayName);
           const validCount = values.filter(v => v !== null).length;
           timeseriesInfo.innerHTML = `📍 ${displayName} – <span class="highlight">${prodName}</span> (${validCount}/12 months)`;
         })
@@ -3158,6 +2272,7 @@
         });
     }
 
+    // --- Drag functionality for Time Series panel ---
     let tsIsDragging = false;
     let tsDragOffsetX = 0, tsDragOffsetY = 0;
 
@@ -3210,6 +2325,7 @@
     timeseriesHeader.addEventListener('mousedown', startTsDrag);
     timeseriesHeader.addEventListener('touchstart', startTsDrag, { passive: false });
 
+    // --- Toggle Time Series panel ---
     document.getElementById('btnTimeseries').addEventListener('click', function() {
       timeseriesMode = !timeseriesMode;
       this.style.background = timeseriesMode ? '#e8f4fd' : 'none';
@@ -3234,17 +2350,17 @@
           timeseriesChart = null;
         }
         if (currentTimeSeriesMode === 'draw') {
-          activateDrawModeTS();
+          activateDrawMode();
         }
       } else {
         timeseriesPanel.style.display = 'none';
-        if (polygonDrawControlTS) {
-          map.removeControl(polygonDrawControlTS);
-          polygonDrawControlTS = null;
+        if (polygonDrawControl) {
+          map.removeControl(polygonDrawControl);
+          polygonDrawControl = null;
         }
-        if (drawnPolygonLayerTS) {
-          map.removeLayer(drawnPolygonLayerTS);
-          drawnPolygonLayerTS = null;
+        if (drawnPolygonLayer) {
+          map.removeLayer(drawnPolygonLayer);
+          drawnPolygonLayer = null;
         }
         if (selectedPolygonLayer) {
           map.removeLayer(selectedPolygonLayer);
@@ -3263,13 +2379,13 @@
         timeseriesChart.destroy();
         timeseriesChart = null;
       }
-      if (polygonDrawControlTS) {
-        map.removeControl(polygonDrawControlTS);
-        polygonDrawControlTS = null;
+      if (polygonDrawControl) {
+        map.removeControl(polygonDrawControl);
+        polygonDrawControl = null;
       }
-      if (drawnPolygonLayerTS) {
-        map.removeLayer(drawnPolygonLayerTS);
-        drawnPolygonLayerTS = null;
+      if (drawnPolygonLayer) {
+        map.removeLayer(drawnPolygonLayer);
+        drawnPolygonLayer = null;
       }
       if (selectedPolygonLayer) {
         map.removeLayer(selectedPolygonLayer);
@@ -3277,7 +2393,8 @@
       }
     });
 
-    function renderTimeSeriesChartTS(values, label, location) {
+    // --- Render chart function with polygon name ---
+    function renderTimeSeriesChart(values, label, location) {
       const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
       const canvas = document.getElementById('timeseries-chart');
       if (!canvas) return;
@@ -3294,6 +2411,7 @@
         return;
       }
 
+      // Create chart with the polygon name as a custom plugin
       const chartTitle = location || 'Time Series';
       
       timeseriesChart = new Chart(ctx, {
@@ -3326,6 +2444,7 @@
                 }
               }
             },
+            // Add a custom plugin to display the polygon name
             title: {
               display: true,
               text: chartTitle,
@@ -3352,6 +2471,7 @@
       document.getElementById('exportCSVBtn').disabled = false;
     }
 
+    // --- Map click handler for Time Series (with polygon selection) ---
     map.on('click', function(e) {
       if (!timeseriesMode) return;
       
@@ -3386,7 +2506,7 @@
               label: prodName,
               location: `${lat}, ${lng}`
             };
-            renderTimeSeriesChartTS(values, prodName, `${lat}, ${lng}`);
+            renderTimeSeriesChart(values, prodName, `${lat}, ${lng}`);
             const validCount = values.filter(v => v !== null).length;
             timeseriesInfo.innerHTML = `📍 ${lat}, ${lng} – <span class="highlight">${prodName}</span> (${validCount}/12 months)`;
           })
@@ -3401,6 +2521,7 @@
         let foundGeojson = null;
         let foundName = null;
         
+        // Helper to check if a layer is a polygon and contains the point
         function checkPolygonLayer(layer) {
           if (!layer.getLatLngs || typeof layer.getLatLngs !== 'function') return false;
           try {
@@ -3418,16 +2539,20 @@
               foundGeojson = geojson;
               return true;
             }
-          } catch(e) {}
+          } catch(e) {
+            // Skip invalid layers
+          }
           return false;
         }
         
+        // 1. Check country polygons from GeoJSON
         if (!foundPolygon && countryFeatures) {
           for (let feat of countryFeatures) {
             const geom = feat.geometry;
             if (pointInPolygon(latlng.lat, latlng.lng, geom)) {
               foundName = feat.properties.NAME_EN;
               currentPolygonName = foundName;
+              // Create a temporary polygon layer for highlighting
               const coords = geom.coordinates[0].map(c => [c[1], c[0]]);
               foundPolygon = L.polygon(coords, {
                 color: '#ff0000',
@@ -3435,48 +2560,80 @@
                 fillColor: '#ff0000',
                 fillOpacity: 0.3
               }).addTo(map);
-              foundGeojson = { type: 'Feature', geometry: geom };
+              foundGeojson = {
+                type: 'Feature',
+                geometry: geom
+              };
+              // Highlight and then remove after 2 seconds
               setTimeout(() => {
-                if (foundPolygon) { map.removeLayer(foundPolygon); foundPolygon = null; }
+                if (foundPolygon) {
+                  map.removeLayer(foundPolygon);
+                  foundPolygon = null;
+                }
               }, 2000);
               break;
             }
           }
         }
         
+        // 2. Check drawnFeatureGroup (from Draw Stats)
         if (!foundPolygon && drawnFeatureGroup) {
           drawnFeatureGroup.eachLayer(function(layer) {
-            if (!foundPolygon) { checkPolygonLayer(layer); }
+            if (!foundPolygon) {
+              checkPolygonLayer(layer);
+            }
           });
-          if (foundPolygon) { currentPolygonName = 'Drawn Polygon'; }
+          if (foundPolygon) {
+            currentPolygonName = 'Drawn Polygon';
+          }
         }
         
-        if (!foundPolygon && drawnPolygonLayerTS) {
-          checkPolygonLayer(drawnPolygonLayerTS);
-          if (foundPolygon && !foundName) { currentPolygonName = 'Drawn Shape'; }
+        // 3. Check drawnPolygonLayer (from Time Series Draw mode)
+        if (!foundPolygon && drawnPolygonLayer) {
+          checkPolygonLayer(drawnPolygonLayer);
+          if (foundPolygon && !foundName) {
+            currentPolygonName = 'Drawn Shape';
+          }
         }
         
+        // 4. Check all layers on the map (fallback for any other polygons)
         if (!foundPolygon) {
           map.eachLayer(function(layer) {
-            if (!foundPolygon) { checkPolygonLayer(layer); }
+            if (!foundPolygon) {
+              checkPolygonLayer(layer);
+            }
           });
-          if (foundPolygon && !foundName) { currentPolygonName = 'Selected Polygon'; }
+          if (foundPolygon && !foundName) {
+            currentPolygonName = 'Selected Polygon';
+          }
         }
         
         if (foundPolygon && foundGeojson) {
           selectedPolygonLayer = foundPolygon;
-          computePolygonTimeSeriesTS(foundGeojson, foundPolygon);
+          computePolygonTimeSeries(foundGeojson, foundPolygon);
+          // Highlight the polygon (if it's not a temporary country polygon)
           if (foundPolygon.setStyle && !foundName) {
-            foundPolygon.setStyle({ color: '#ff0000', weight: 3, fillOpacity: 0.3 });
+            foundPolygon.setStyle({
+              color: '#ff0000',
+              weight: 3,
+              fillOpacity: 0.3
+            });
             setTimeout(() => {
               if (foundPolygon && foundPolygon.setStyle) {
-                foundPolygon.setStyle({ color: '#003366', weight: 2, fillOpacity: 0.2 });
+                foundPolygon.setStyle({
+                  color: '#003366',
+                  weight: 2,
+                  fillOpacity: 0.2
+                });
               }
             }, 2000);
           }
         } else {
           timeseriesInfo.innerHTML = 'No country or polygon found at this location. Try clicking inside a country or polygon.';
         }
+      }
+      else if (currentTimeSeriesMode === 'draw') {
+        // Draw mode is handled by the draw:created event
       }
     });
 

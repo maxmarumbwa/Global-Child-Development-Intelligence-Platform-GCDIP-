@@ -25,6 +25,12 @@ urlpatterns = [
     path('api/zonal_stats/<str:dataset>/', views.zonal_stats_view, name='zonal_stats_static'),
     path('api/zonal_stats/<str:dataset>/<int:month>/', views.zonal_stats_view, name='zonal_stats_monthly'),
     
-    
-    
+    path('api/zonal_stats_by_polygon/<str:dataset>/', views.zonal_stats_by_polygon, name='zonal_stats_polygon_static'),
+    path('api/zonal_stats_by_polygon/<str:dataset>/<int:month>/', views.zonal_stats_by_polygon, name='zonal_stats_polygon_monthly'),
+
+
+
+
+
+
 ]

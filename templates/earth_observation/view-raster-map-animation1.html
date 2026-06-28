@@ -11,13 +11,11 @@
   <!-- Leaflet.draw -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <!-- gif.js for GIF export -->
-  <script src="https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.js"></script>
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 
   <style>
-    /* --- Reset & base --- */
+    /* --- Reset & base (unchanged) --- */
     * { margin:0; padding:0; box-sizing:border-box; }
     body, html { height:100%; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; }
     .navbar { height:50px; background:#003366; color:#fff; display:flex; align-items:center; padding:0 16px; font-size:18px; font-weight:bold; flex-shrink:0; }
@@ -120,6 +118,8 @@
       padding: 14px 20px 16px;
       font-size: 13px;
     }
+
+    /* Welcome area – two big buttons */
     .zonal-welcome {
       display: flex;
       flex-direction: column;
@@ -148,7 +148,11 @@
       transform: scale(1.02);
     }
     .zonal-welcome .welcome-btn i { font-size: 18px; }
-    .zonal-main { display: none; }
+
+    /* Main area – dropdowns, actions, result */
+    .zonal-main {
+      display: none;
+    }
     .zonal-main .row {
       display: flex;
       align-items: center;
@@ -205,6 +209,8 @@
     }
     .zonal-main .actions .close-btn-body:hover { background:#ccc; }
     .zonal-month { width:60px; }
+
+    /* Pick view – simplified for map picking */
     .zonal-pick-view {
       display: none;
       text-align: center;
@@ -231,6 +237,7 @@
       gap: 4px;
     }
     .zonal-pick-view .pick-cancel:hover { text-decoration: underline; }
+
     .zonal-result-table {
       width:100%;
       border-collapse:collapse;
@@ -249,6 +256,8 @@
       font-weight:600;
       color:#003366;
     }
+
+    /* back button (for main) */
     .zonal-back {
       background: none;
       border: none;
@@ -376,39 +385,17 @@
       color: #003366;
       font-weight: 600;
     }
-    .animate-export-buttons {
-      display: flex;
-      gap: 8px;
-      margin-left: auto;
-    }
-    .animate-export-buttons button {
-      padding: 4px 12px;
-      border: 1px solid #003366;
-      border-radius: 4px;
-      background: #f0f6fc;
-      color: #003366;
-      cursor: pointer;
-      font-size: 12px;
-      transition: 0.2s;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .animate-export-buttons button:hover {
-      background: #d4e6f1;
-    }
   </style>
 </head>
 <body>
   <!-- ===== NAVBAR ===== -->
   <div class="navbar">🛰 Raster Viewer</div>
 
-  <!-- ===== TOOLBAR ===== -->
+  <!-- ===== TOOLBAR (with new Animate button) ===== -->
   <div class="gis-toolbar">
     <button class="tool-btn" id="btnIdentify"><i class="fa-solid fa-crosshairs"></i><span>Identify</span></button>
     <button class="tool-btn" id="btnAnimate"><i class="fa-solid fa-play"></i><span>Animate</span></button>
     <button class="tool-btn" id="btnZonal"><i class="fa-solid fa-table-cells-large"></i><span>Zonal Stats</span></button>
-    <button class="tool-btn" id="btnPolygonStats"><i class="fa-solid fa-draw-polygon"></i><span>Draw Stats</span></button>
     <button class="tool-btn" id="btnMeasure"><i class="fa-solid fa-ruler"></i><span>Measure</span></button>
     <button class="tool-btn" id="btnBuffer"><i class="fa-solid fa-circle-dot"></i><span>Buffer</span></button>
     <button class="tool-btn" id="btnGeocode"><i class="fa-solid fa-magnifying-glass-location"></i><span>Search</span></button>
@@ -419,7 +406,7 @@
 
   <!-- ===== MAIN ===== -->
   <div class="app">
-    <!-- Sidebar (unchanged) -->
+    <!-- Sidebar -->
     <div class="sidebar">
       <h5>📋 Products</h5>
       <!-- Population -->
@@ -509,6 +496,7 @@
           <button class="close-btn" id="zonal-close" title="Close panel">✕</button>
         </div>
         <div class="zonal-body">
+          <!-- Welcome: two options -->
           <div class="zonal-welcome" id="zonal-welcome">
             <button class="welcome-btn" id="welcome-pick">
               <i class="fa-solid fa-location-dot"></i> Pick from map
@@ -517,6 +505,7 @@
               <i class="fa-solid fa-list"></i> Select from list
             </button>
           </div>
+          <!-- Pick view (simplified, no dropdowns) -->
           <div class="zonal-pick-view" id="zonal-pick-view">
             <div class="pick-message">
               <i class="fa-solid fa-hand-pointer"></i>
@@ -527,6 +516,7 @@
             </button>
             <div id="zonal-pick-result"></div>
           </div>
+          <!-- Main area (dropdowns, etc.) -->
           <div class="zonal-main" id="zonal-main">
             <button class="zonal-back" id="zonal-back">
               <i class="fa-solid fa-arrow-left"></i> Back
@@ -576,10 +566,6 @@
               <option value="2000">2s</option>
               <option value="3000">3s</option>
             </select>
-            <div class="animate-export-buttons">
-              <button id="exportGifBtn"><i class="fa-solid fa-file-image"></i> GIF</button>
-              <button id="exportVideoBtn"><i class="fa-solid fa-video"></i> Video</button>
-            </div>
           </div>
           <div class="animate-status" id="animateStatus">
             <span class="highlight" id="animateProductName">No dataset loaded</span>
@@ -591,7 +577,7 @@
 
   <script>
     // =============================================================
-    // 1. DATASET REGISTRY & LEGEND
+    // 1. DATASET REGISTRY & LEGEND (same as before)
     // =============================================================
     const LEGEND_RAINFALL = [
       { color: 'rgb(222,235,247)', label: 'Very Low (0-25 mm)' },
@@ -709,7 +695,7 @@
     let currentSlug = null;
 
     // =============================================================
-    // 4. VECTOR LAYERS
+    // 4. VECTOR LAYERS (same)
     // =============================================================
     const VECTOR_LAYERS = [
       {
@@ -882,7 +868,7 @@
     if (firstItem) loadRaster(firstItem.dataset.slug);
 
     // =============================================================
-    // 10. IDENTIFY TOOL
+    // 10. IDENTIFY TOOL (Pixel Stats) – unchanged
     // =============================================================
     let identifyMode = false;
     let identifyPopup = null;
@@ -957,7 +943,7 @@
     });
 
     // =============================================================
-    // 11. ZONAL STATS TOOL (full, unchanged)
+    // 11. ZONAL STATS TOOL – two‑step interface (unchanged)
     // =============================================================
     const zonalPanel = document.getElementById('zonal-panel');
     const zonalHeader = zonalPanel.querySelector('.zonal-header');
@@ -971,7 +957,7 @@
     const pickResultDiv = document.getElementById('zonal-pick-result');
     const pickBtn = document.getElementById('zonal-pick-country');
 
-    // ---------- Drag logic ----------
+    // ---------- Drag logic (unchanged) ----------
     let isDragging = false;
     let dragOffsetX = 0, dragOffsetY = 0;
 
@@ -1089,10 +1075,13 @@
       zonalWelcome.style.display = 'none';
       zonalMain.style.display = 'none';
       zonalPickView.style.display = 'block';
+      // Clear previous result
       pickResultDiv.innerHTML = '';
+      // Activate pick mode if not already
       if (!pickCountryMode) togglePickMode();
     }
 
+    // ---------- Open panel ----------
     document.getElementById('btnZonal').addEventListener('click', function() {
       const isOpen = zonalPanel.style.display === 'block';
       zonalPanel.style.display = isOpen ? 'none' : 'block';
@@ -1109,6 +1098,7 @@
       }
     });
 
+    // Close buttons
     function closePanel() {
       zonalPanel.style.display = 'none';
       if (pickCountryMode) togglePickMode();
@@ -1116,6 +1106,7 @@
     document.getElementById('zonal-close').addEventListener('click', closePanel);
     document.getElementById('zonal-close-body').addEventListener('click', closePanel);
 
+    // ---------- Welcome buttons ----------
     document.getElementById('welcome-pick').addEventListener('click', function() {
       showPickView();
     });
@@ -1123,6 +1114,7 @@
       showMain();
     });
 
+    // ---------- Back / Cancel buttons ----------
     document.getElementById('zonal-back').addEventListener('click', function() {
       showWelcome();
       if (pickCountryMode) togglePickMode();
@@ -1132,6 +1124,7 @@
       if (pickCountryMode) togglePickMode();
     });
 
+    // ---------- "Get Stats" button (for main view) ----------
     function runZonalStats(country, resultContainer, showDatasetInfo = false) {
       const dataset = datasetSelect.value;
       if (!country || !dataset) {
@@ -1160,6 +1153,7 @@
             resultContainer.innerHTML = `<p style="color:red;">Error: ${data.error}</p>`;
             return;
           }
+          // Show dataset info if requested
           let info = '';
           if (showDatasetInfo) {
             const dsName = PRODUCT_NAMES[dataset] || dataset;
@@ -1193,7 +1187,9 @@
       runZonalStats(countrySelect.value, resultDiv, false);
     });
 
+    // ---------- "Pick from map" mode (shared between pick view and main) ----------
     let pickCountryMode = false;
+    // We'll store which dataset/month to use for pick mode (defaults to currentSlug or first dataset)
     let pickDataset = null;
     let pickMonth = 1;
 
@@ -1213,6 +1209,7 @@
       togglePickMode();
     });
 
+    // Point-in-polygon
     function pointInPolygon(lat, lng, polygon) {
       let inside = false;
       const coords = polygon.type === 'Polygon' ? [polygon.coordinates] : polygon.coordinates;
@@ -1229,6 +1226,7 @@
       return inside;
     }
 
+    // Determine default dataset/month for pick mode
     function getDefaultPickDataset() {
       if (currentSlug) {
         return currentSlug;
@@ -1253,31 +1251,40 @@
         return;
       }
 
+      // Set the dataset/month to use
       const ds = getDefaultPickDataset();
       if (!ds) {
         alert('No dataset available.');
         return;
       }
+      // For pick view, we use the currently selected dataset in the main dropdown? Actually we want a consistent default.
+      // We'll use the dataset from the main dropdown if we are in main view, else use currentSlug or first.
+      // But for simplicity, we'll set the datasetSelect to this ds and run stats.
+      // If we are in pick view, we don't want to affect the dropdowns, so we'll just use the default.
+      // We'll store the chosen dataset/month in a variable.
       let chosenDataset = ds;
       let chosenMonth = 1;
       const config = DATASETS[chosenDataset];
       if (config.type === 'month') {
-        chosenMonth = parseInt(monthInput.value) || 1;
+        chosenMonth = parseInt(monthInput.value) || 1; // use the month from main input if available, else 1
         if (chosenMonth < 1 || chosenMonth > 12) chosenMonth = 1;
       }
 
+      // Build URL with chosenDataset and chosenMonth
       let url = `/earth_observation/api/zonal_stats/${chosenDataset}/`;
       if (config.type === 'month') {
         url += `${chosenMonth}/`;
       }
       url += `?country=${encodeURIComponent(foundCountry)}`;
 
+      // Determine which result container to use
       let resultContainer = null;
       let showInfo = false;
       if (zonalPickView.style.display === 'block') {
         resultContainer = pickResultDiv;
         showInfo = true;
       } else {
+        // if we are in main view, we should update the country dropdown and run stats
         countrySelect.value = foundCountry;
         resultContainer = resultDiv;
         showInfo = false;
@@ -1292,6 +1299,7 @@
               resultContainer.innerHTML = `<p style="color:red;">Error: ${data.error}</p>`;
               return;
             }
+            // Build info line
             let info = '';
             if (showInfo) {
               const dsName = PRODUCT_NAMES[chosenDataset] || chosenDataset;
@@ -1321,6 +1329,7 @@
           });
       }
 
+      // Show a temporary popup with the country name
       if (window.tempPickPopup) {
         map.removeLayer(window.tempPickPopup);
       }
@@ -1337,7 +1346,7 @@
     });
 
     // =============================================================
-    // 12. ANIMATION TOOL (restored)
+    // 12. ANIMATION TOOL (NEW – Draggable, maintains size)
     // =============================================================
     const animatePanel = document.getElementById('animate-panel');
     const animateSlider = document.getElementById('animateSlider');
@@ -1345,25 +1354,36 @@
     const animatePlayBtn = document.getElementById('animatePlayBtn');
     const animateSpeed = document.getElementById('animateSpeed');
     const animateProductName = document.getElementById('animateProductName');
-    const animateCloseBtn = document.getElementById('animate-close');
-    const animateHeader = animatePanel.querySelector('.animate-header');
 
     let animationTimer = null;
     let isAnimating = false;
-    let isPanelOpen = false;
 
+    // --- Helper to load raster with a specific month (used by animation) ---
     function loadRasterWithMonth(slug, month) {
       const config = DATASETS[slug];
-      if (!config || config.type !== 'month') return;
-      let url = `/earth_observation/raster/${slug}/${month}/`;
-      if (currentOverlay) map.removeLayer(currentOverlay);
-      currentOverlay = L.imageOverlay(url, WORLD_BOUNDS, { opacity: 0.7, pane: 'rasterPane' }).addTo(map);
+      if (!config) return;
+      let url = `/earth_observation/raster/${slug}/`;
+      if (config.type === 'month') {
+        url += `${month}/`;
+      } else {
+        return; // static datasets can't animate
+      }
+      if (currentOverlay) {
+        map.removeLayer(currentOverlay);
+        currentOverlay = null;
+      }
+      currentOverlay = L.imageOverlay(url, WORLD_BOUNDS, {
+        opacity: 0.7,
+        pane: 'rasterPane'
+      }).addTo(map);
       updateLegend(slug);
+      // update active item
       document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
       document.querySelectorAll(`.menu-item[data-slug="${slug}"]`).forEach(el => el.classList.add('active'));
       currentSlug = slug;
     }
 
+    // --- Update animation status ---
     function updateAnimateStatus() {
       if (currentSlug && DATASETS[currentSlug] && DATASETS[currentSlug].type === 'month') {
         const name = PRODUCT_NAMES[currentSlug] || currentSlug;
@@ -1390,10 +1410,13 @@
       }
     }
 
+    // --- Animation slider event ---
     animateSlider.addEventListener('input', function() {
       const val = parseInt(this.value);
       animateMonthDisplay.textContent = val;
-      if (isAnimating) stopAnimation();
+      if (isAnimating) {
+        stopAnimation();
+      }
       if (currentSlug && DATASETS[currentSlug] && DATASETS[currentSlug].type === 'month') {
         loadRasterWithMonth(currentSlug, val);
         monthSlider.value = val;
@@ -1401,9 +1424,13 @@
       }
     });
 
+    // --- Play/Pause ---
     animatePlayBtn.addEventListener('click', function() {
-      if (isAnimating) stopAnimation();
-      else startAnimation();
+      if (isAnimating) {
+        stopAnimation();
+      } else {
+        startAnimation();
+      }
     });
 
     function startAnimation() {
@@ -1452,26 +1479,33 @@
       }
     }
 
+    // --- Toggle animation panel ---
     document.getElementById('btnAnimate').addEventListener('click', function() {
-      isPanelOpen = !isPanelOpen;
-      animatePanel.style.display = isPanelOpen ? 'block' : 'none';
-      if (!isPanelOpen && isAnimating) stopAnimation();
-      else {
+      const isOpen = animatePanel.style.display === 'block';
+      animatePanel.style.display = isOpen ? 'none' : 'block';
+      if (isOpen) {
+        if (isAnimating) stopAnimation();
+      } else {
         updateAnimateStatus();
         if (currentSlug && DATASETS[currentSlug] && DATASETS[currentSlug].type === 'month') {
           const m = parseInt(monthSlider.value) || 1;
           animateSlider.value = m;
           animateMonthDisplay.textContent = m;
         }
+        // Reset any explicit width/height from drag if needed
+        animatePanel.style.width = '';
+        animatePanel.style.height = '';
+        animatePanel.style.transform = 'translateX(-50%)';
       }
     });
 
-    animateCloseBtn.addEventListener('click', function() {
+    // --- Close button ---
+    document.getElementById('animate-close').addEventListener('click', function() {
       animatePanel.style.display = 'none';
-      isPanelOpen = false;
       if (isAnimating) stopAnimation();
     });
 
+    // --- Speed change ---
     animateSpeed.addEventListener('change', function() {
       if (isAnimating) {
         stopAnimation();
@@ -1479,7 +1513,13 @@
       }
     });
 
-    // --- Animation Panel Drag ---
+    // Initial status update
+    updateAnimateStatus();
+
+    // =============================================================
+    // 13. ANIMATION PANEL DRAG – FIXED (maintains size)
+    // =============================================================
+    const animateHeader = animatePanel.querySelector('.animate-header');
     let animateIsDragging = false;
     let animateDragOffsetX = 0, animateDragOffsetY = 0;
 
@@ -1488,13 +1528,15 @@
       const ev = e.touches ? e.touches[0] : e;
       const rect = animatePanel.getBoundingClientRect();
       const mapRect = document.getElementById('map').getBoundingClientRect();
+      // Capture current width & height to prevent stretching
       animatePanel.style.width = animatePanel.offsetWidth + 'px';
       animatePanel.style.height = animatePanel.offsetHeight + 'px';
+      // Move to fixed positioning
       let panelLeft = rect.left - mapRect.left;
       let panelTop = rect.top - mapRect.top;
       animatePanel.style.left = panelLeft + 'px';
       animatePanel.style.top = panelTop + 'px';
-      animatePanel.style.transform = 'none';
+      animatePanel.style.transform = 'none'; // remove centering transform
       animateDragOffsetX = ev.clientX - rect.left;
       animateDragOffsetY = ev.clientY - rect.top;
       animateIsDragging = true;
@@ -1511,6 +1553,7 @@
       const mapRect = document.getElementById('map').getBoundingClientRect();
       let newLeft = ev.clientX - mapRect.left - animateDragOffsetX;
       let newTop = ev.clientY - mapRect.top - animateDragOffsetY;
+      // Keep within map bounds
       const panelWidth = animatePanel.offsetWidth;
       const panelHeight = animatePanel.offsetHeight;
       const mapWidth = mapRect.width;
@@ -1534,347 +1577,8 @@
       animateHeader.addEventListener('touchstart', startAnimateDrag, { passive: false });
     }
 
-    // --- Export GIF ---
-    document.getElementById('exportGifBtn').addEventListener('click', function() {
-      if (!currentSlug || !DATASETS[currentSlug] || DATASETS[currentSlug].type !== 'month') {
-        alert('Please load a monthly dataset first.');
-        return;
-      }
-      const gif = new GIF({ workers: 2, quality: 10, width: 800, height: 400 });
-      const totalMonths = 12;
-      let loaded = 0;
-      for (let m = 1; m <= totalMonths; m++) {
-        const url = `/earth_observation/raster/${currentSlug}/${m}/`;
-        fetch(url)
-          .then(res => res.blob())
-          .then(blob => {
-            const imgUrl = URL.createObjectURL(blob);
-            const img = new Image();
-            img.onload = function() {
-              const canvas = document.createElement('canvas');
-              canvas.width = img.width;
-              canvas.height = img.height;
-              const ctx = canvas.getContext('2d');
-              ctx.drawImage(img, 0, 0);
-              gif.addFrame(ctx, { copy: true, delay: 200 });
-              loaded++;
-              if (loaded === totalMonths) gif.render();
-              URL.revokeObjectURL(imgUrl);
-            };
-            img.src = imgUrl;
-          })
-          .catch(err => console.error('Error loading month', m, err));
-      }
-      gif.on('finished', function(blob) {
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = 'animation.gif';
-        link.click();
-        URL.revokeObjectURL(link.href);
-      });
-    });
-
-    // --- Export Video (Canvas-based) ---
-    document.getElementById('exportVideoBtn').addEventListener('click', function() {
-      if (!currentSlug || !DATASETS[currentSlug] || DATASETS[currentSlug].type !== 'month') {
-        alert('Please load a monthly dataset first.');
-        return;
-      }
-      const canvas = document.createElement('canvas');
-      canvas.width = 800;
-      canvas.height = 400;
-      const ctx = canvas.getContext('2d');
-      const stream = canvas.captureStream(30);
-      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
-      let chunks = [];
-      mediaRecorder.ondataavailable = e => chunks.push(e.data);
-      mediaRecorder.onstop = function() {
-        const blob = new Blob(chunks, { type: 'video/webm' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = 'animation.webm';
-        link.click();
-        URL.revokeObjectURL(link.href);
-        chunks = [];
-      };
-      mediaRecorder.start();
-      const totalMonths = 12;
-      const monthImages = [];
-      let loaded = 0;
-      for (let m = 1; m <= totalMonths; m++) {
-        const url = `/earth_observation/raster/${currentSlug}/${m}/`;
-        fetch(url)
-          .then(res => res.blob())
-          .then(blob => {
-            const imgUrl = URL.createObjectURL(blob);
-            const img = new Image();
-            img.onload = function() {
-              monthImages[m] = img;
-              loaded++;
-              if (loaded === totalMonths) {
-                let frameIndex = 0;
-                function captureFrame() {
-                  if (frameIndex >= totalMonths * 2) {
-                    mediaRecorder.stop();
-                    return;
-                  }
-                  const monthNum = (frameIndex % totalMonths) + 1;
-                  const img = monthImages[monthNum];
-                  if (img) {
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    ctx.fillStyle = 'white';
-                    ctx.font = 'bold 24px Arial';
-                    ctx.shadowColor = 'rgba(0,0,0,0.8)';
-                    ctx.shadowBlur = 8;
-                    ctx.fillText(`Month ${monthNum}`, 20, 40);
-                    ctx.shadowBlur = 0;
-                    ctx.font = '16px Arial';
-                    ctx.fillStyle = 'white';
-                    ctx.shadowColor = 'rgba(0,0,0,0.8)';
-                    ctx.shadowBlur = 6;
-                    const dsName = PRODUCT_NAMES[currentSlug] || currentSlug;
-                    ctx.fillText(dsName, 20, 70);
-                    ctx.shadowBlur = 0;
-                  }
-                  frameIndex++;
-                  setTimeout(captureFrame, 200);
-                }
-                captureFrame();
-              }
-              URL.revokeObjectURL(imgUrl);
-            };
-            img.src = imgUrl;
-          })
-          .catch(err => console.error('Error loading month', m, err));
-      }
-    });
-
-    updateAnimateStatus();
-
     // =============================================================
-    // 13. DRAW STATS TOOL – all drawing tools + zonal stats
-    // =============================================================
-    let drawStatsControl = null;
-    let drawnFeatureGroup = new L.FeatureGroup();
-    map.addLayer(drawnFeatureGroup);
-
-    document.getElementById('btnPolygonStats').addEventListener('click', function() {
-      // Toggle drawing mode
-      if (drawStatsControl) {
-        map.removeControl(drawStatsControl);
-        drawStatsControl = null;
-        this.style.background = 'none';
-        this.style.color = '#444';
-        // Clear drawn features
-        drawnFeatureGroup.clearLayers();
-        return;
-      }
-
-      // Create draw control with all tools
-      drawStatsControl = new L.Control.Draw({
-        draw: {
-          polygon: {
-            allowIntersection: false,
-            showArea: true,
-            shapeOptions: {
-              color: '#003366',
-              weight: 2,
-              fillColor: '#003366',
-              fillOpacity: 0.2
-            }
-          },
-          polyline: {
-            shapeOptions: {
-              color: '#ff7f0e',
-              weight: 2
-            }
-          },
-          circle: {
-            shapeOptions: {
-              color: '#2ca02c',
-              weight: 2,
-              fillColor: '#2ca02c',
-              fillOpacity: 0.2
-            }
-          },
-          rectangle: {
-            shapeOptions: {
-              color: '#d62728',
-              weight: 2,
-              fillColor: '#d62728',
-              fillOpacity: 0.2
-            }
-          },
-          marker: {
-            shapeOptions: {
-              color: '#9467bd'
-            }
-          },
-          circlemarker: false
-        },
-        edit: {
-          featureGroup: drawnFeatureGroup,
-          remove: true
-        }
-      });
-
-      map.addControl(drawStatsControl);
-      this.style.background = '#e8f4fd';
-      this.style.color = '#003366';
-
-      // Listen for draw completion
-      map.once('draw:created', function(e) {
-        const layer = e.layer;
-        const layerType = e.layerType;
-        
-        // Add to feature group
-        drawnFeatureGroup.addLayer(layer);
-
-        // Only compute stats for polygon, rectangle, circle
-        if (layerType === 'polygon' || layerType === 'rectangle' || layerType === 'circle') {
-          // Get geometry as GeoJSON
-          let geojson;
-          if (layerType === 'circle') {
-            // Convert circle to polygon approximation
-            const center = layer.getLatLng();
-            const radius = layer.getRadius();
-            const points = 64;
-            const coords = [];
-            for (let i = 0; i <= points; i++) {
-              const angle = (i / points) * 2 * Math.PI;
-              const lat = center.lat + (radius / 111320) * Math.cos(angle);
-              const lng = center.lng + (radius / (111320 * Math.cos(center.lat * Math.PI / 180))) * Math.sin(angle);
-              coords.push([lng, lat]);
-            }
-            geojson = {
-              type: 'Feature',
-              geometry: {
-                type: 'Polygon',
-                coordinates: [coords]
-              }
-            };
-          } else {
-            // Polygon or rectangle
-            const latlngs = layer.getLatLngs()[0];
-            geojson = {
-              type: 'Feature',
-              geometry: {
-                type: 'Polygon',
-                coordinates: [latlngs.map(p => [p.lng, p.lat])]
-              }
-            };
-          }
-
-          computeDrawnStats(geojson, layer, layerType);
-        } else {
-          // For lines and markers, show simple popup
-          const layerTypeNames = {
-            'polyline': 'Line',
-            'marker': 'Marker'
-          };
-          L.popup()
-            .setLatLng(layer.getLatLng ? layer.getLatLng() : layer.getBounds().getCenter())
-            .setContent(`<b>${layerTypeNames[layerType] || layerType}</b> drawn. No stats available.`)
-            .openOn(map);
-        }
-
-        // Keep draw mode active for multiple drawings
-        // We won't remove the control; user can click button again to exit
-      });
-
-      // Listen for edit/delete events
-      map.on('draw:edited', function(e) {
-        console.log('Shapes edited');
-      });
-      map.on('draw:deleted', function(e) {
-        console.log('Shapes deleted');
-      });
-    });
-
-    function computeDrawnStats(geojson, layer, layerType) {
-      if (!currentSlug) {
-        alert('Please load a raster first.');
-        return;
-      }
-
-      const dataset = currentSlug;
-      const config = DATASETS[dataset];
-      let month = 1;
-      if (config.type === 'month') {
-        month = parseInt(monthSlider.value) || 1;
-      }
-
-      let url = `/earth_observation/api/zonal_stats_by_polygon/${dataset}/`;
-      if (config.type === 'month') {
-        url += `${month}/`;
-      }
-
-      fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(geojson)
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.error) {
-          alert('Error: ' + data.error);
-          return;
-        }
-
-        const prodName = PRODUCT_NAMES[dataset] || dataset;
-        const shapeNames = {
-          'polygon': 'Polygon',
-          'rectangle': 'Rectangle',
-          'circle': 'Circle'
-        };
-        const rows = [
-          ['Mean', data.mean],
-          ['Min', data.min],
-          ['Max', data.max],
-          ['Sum', data.sum],
-          ['Count', data.count],
-          ['Std Dev', data.std],
-        ];
-
-        let html = `
-          <div class="identify-popup">
-            <div class="header">
-              <i class="fa-solid fa-draw-polygon"></i>
-              ${shapeNames[layerType] || 'Shape'} Stats
-            </div>
-            <div class="body">
-              <div class="field">
-                <span class="label">Dataset</span>
-                <span class="value">${prodName}</span>
-              </div>
-              ${config.type === 'month' ? `<div class="field"><span class="label">Month</span><span class="value">${month}</span></div>` : ''}
-        `;
-        rows.forEach(([label, value]) => {
-          const val = (typeof value === 'number') ? Math.round(value) : value;
-          html += `
-            <div class="field">
-              <span class="label">${label}</span>
-              <span class="value">${val}</span>
-            </div>
-          `;
-        });
-        html += `</div></div>`;
-
-        const center = layer.getBounds().getCenter();
-        L.popup({ maxWidth: 300 })
-          .setLatLng(center)
-          .setContent(html)
-          .openOn(map);
-      })
-      .catch(err => {
-        console.error(err);
-        alert('Error computing stats: ' + err.message);
-      });
-    }
-
-    // =============================================================
-    // 14. MEASURE (unchanged)
+    // 14. MEASURE (same)
     // =============================================================
     let measureControl = null;
     document.getElementById('btnMeasure').addEventListener('click', function() {
@@ -1908,7 +1612,7 @@
     });
 
     // =============================================================
-    // 15. BUFFER (unchanged)
+    // 15. BUFFER (same)
     // =============================================================
     let bufferMode = false;
     let bufferCircle = null;
@@ -1938,7 +1642,7 @@
     });
 
     // =============================================================
-    // 16. GEOCODE (unchanged)
+    // 16. GEOCODE (same)
     // =============================================================
     document.getElementById('btnGeocode').addEventListener('click', function() {
       const panel = document.getElementById('geocode-control');
@@ -1967,7 +1671,7 @@
     });
 
     // =============================================================
-    // 17. LOCATE (unchanged)
+    // 17. LOCATE (same)
     // =============================================================
     document.getElementById('btnLocate').addEventListener('click', function() {
       if (!navigator.geolocation) { alert('Geolocation not supported.'); return; }
@@ -1985,7 +1689,7 @@
     });
 
     // =============================================================
-    // 18. GRID (unchanged)
+    // 18. GRID (same)
     // =============================================================
     let gridLayer = null;
     document.getElementById('btnGrid').addEventListener('click', function() {
@@ -2009,7 +1713,7 @@
     });
 
     // =============================================================
-    // 19. EXPORT (unchanged)
+    // 19. EXPORT (same)
     // =============================================================
     document.getElementById('btnScreenshot').addEventListener('click', function() {
       alert('Export map: you can implement screenshot using html2canvas.');
