@@ -2,127 +2,155 @@
 <!-- 1. UNICEF PROGRAMME INDICATORS                                -->
 <!-- ============================================================ -->
 <div class="menu-section">
-    <div class="menu-section-title" data-toggle-id="section-children" onclick="toggleSection(this)">
-        Children Indicators
+    <div class="menu-section-title" data-toggle-id="section-unicef" onclick="toggleSection(this)">
+        <span><i class="fa-regular fa-map" style="margin-right: 8px;"></i>UNICEF Indicators</span>
         <i class="fa-solid fa-chevron-down toggle-icon"></i>
     </div>
     <div class="sub-menu hidden">
 
-        <!-- Child Survival & Health -->
-        <div class="sub-section-title" data-toggle-id="subsection-survival" onclick="toggleSection(this)">
-            👶 Child Survival & Health
+        <!-- ============================================================ -->
+        <!-- CHILD SURVIVAL & DEVELOPMENT (Health, Nutrition & Maternal) -->
+        <!-- ============================================================ -->
+        <div class="sub-section-title" data-toggle-id="section-child" onclick="toggleSection(this)">
+            <span><i class="fa-regular fa-heart" style="margin-right: 8px;"></i>Child Survival & Development</span>
             <i class="fa-solid fa-chevron-down toggle-icon"></i>
         </div>
         <div class="sub-menu hidden">
-            <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-1"><i class="fa-regular fa-circle"></i> Under-5 Mortality</a>
-            <a href="{% url 'mortality_table' %}" class="menu-item" data-item-id="item-2"><i class="fa-regular fa-circle"></i> Infant Mortality</a>
-            <a href="{% url 'mortality_map' %}" class="menu-item" data-item-id="item-3"><i class="fa-regular fa-circle"></i> Neonatal Mortality</a>
-            <a href="{% url 'mortality_map' %}" class="menu-item" data-item-id="item-4"><i class="fa-regular fa-circle"></i> Immunization Coverage</a>
-            <a href="{% url 'mortality_map' %}" class="menu-item" data-item-id="item-5"><i class="fa-regular fa-circle"></i> DPT3 Coverage</a>
-            <a href="{% url 'mortality_table' %}" class="menu-item" data-item-id="item-6"><i class="fa-regular fa-circle"></i> Measles Coverage</a>
-            <a href="{% url 'mortality_map' %}" class="menu-item" data-item-id="item-7"><i class="fa-regular fa-circle"></i> Skilled Birth Attendance</a>
-            <a href="{% url 'mortality_map' %}" class="menu-item" data-item-id="item-8"><i class="fa-regular fa-circle"></i> Anaemia Prevalence</a>
-            <a href="{% url 'mortality_map' %}" class="menu-item" data-item-id="item-9"><i class="fa-regular fa-circle"></i> Disease Burden (ARI, Diarrhea)</a>
-        </div>
 
-        <!-- Education -->
-        <div class="sub-section-title" data-toggle-id="subsection-education" onclick="toggleSection(this)">
-            🎓 Education
+            <!-- Mortality & Maternal Health -->
+            <div class="sub-section-title" data-toggle-id="sub-mortality" onclick="toggleSection(this)">
+                <span>🩺 Mortality & Maternal Health</span>
+                <i class="fa-solid fa-chevron-down toggle-icon"></i>
+            </div>
+            <div class="sub-menu hidden">
+                <a href="#" class="menu-item" data-item-id="SH.DTH.IMRT"><i class="fa-regular fa-circle"></i> Infant deaths (SH.DTH.IMRT)</a>
+                <a href="#" class="menu-item" data-item-id="SH.DTH.MORT"><i class="fa-regular fa-circle"></i> Under‑5 deaths (SH.DTH.MORT)</a>
+                <a href="#" class="menu-item" data-item-id="SH.DTH.NMRT"><i class="fa-regular fa-circle"></i> Neonatal deaths (SH.DTH.NMRT)</a>
+                <a href="#" class="menu-item" data-item-id="SH.DTH.STLB"><i class="fa-regular fa-circle"></i> Stillbirths (SH.DTH.STLB)</a>
+                <a href="#" class="menu-item" data-item-id="SH.DYN.0509"><i class="fa-regular fa-circle"></i> 5‑9 mortality (per 1k) (SH.DYN.0509)</a>
+                <a href="#" class="menu-item" data-item-id="SH.DYN.MORT"><i class="fa-regular fa-circle"></i> Under‑5 mortality rate (SH.DYN.MORT)</a>
+                <a href="#" class="menu-item" data-item-id="SH.DYN.STLB"><i class="fa-regular fa-circle"></i> Stillbirth rate (SH.DYN.STLB)</a>
+                <a href="#" class="menu-item" data-item-id="SH.MMR.DTHS"><i class="fa-regular fa-circle"></i> Maternal deaths (SH.MMR.DTHS)</a>
+            </div>
+
+            <!-- Antenatal & Maternal Care -->
+            <div class="sub-section-title" data-toggle-id="sub-antenatal" onclick="toggleSection(this)">
+                <span>🤱 Antenatal & Maternal Care</span>
+                <i class="fa-solid fa-chevron-down toggle-icon"></i>
+            </div>
+            <div class="sub-menu hidden">
+                <a href="#" class="menu-item" data-item-id="SH.STA.ANV4.ZS"><i class="fa-regular fa-circle"></i> Prenatal ≥4 visits (SH.STA.ANV4.ZS)</a>
+                <a href="#" class="menu-item" data-item-id="SH.STA.ANVC.ZS"><i class="fa-regular fa-circle"></i> Prenatal care % (SH.STA.ANVC.ZS)</a>
+                <a href="#" class="menu-item" data-item-id="SH.STA.BRTC.ZS"><i class="fa-regular fa-circle"></i> Skilled birth attendance (SH.STA.BRTC.ZS)</a>
+            </div>
+
+            <!-- Child Health & Immunization -->
+            <div class="sub-section-title" data-toggle-id="sub-immun" onclick="toggleSection(this)">
+                <span>💉 Child Health & Immunization</span>
+                <i class="fa-solid fa-chevron-down toggle-icon"></i>
+            </div>
+            <div class="sub-menu hidden">
+                <a href="#" class="menu-item" data-item-id="SH.IMM.HEPB"><i class="fa-regular fa-circle"></i> HepB3 immunization (SH.IMM.HEPB)</a>
+                <a href="#" class="menu-item" data-item-id="SH.IMM.HIB3"><i class="fa-regular fa-circle"></i> Hib3 immunization (SH.IMM.HIB3)</a>
+                <a href="#" class="menu-item" data-item-id="SH.IMM.IBCG"><i class="fa-regular fa-circle"></i> BCG immunization (SH.IMM.IBCG)</a>
+                <a href="#" class="menu-item" data-item-id="SH.IMM.IDPT"><i class="fa-regular fa-circle"></i> DPT immunization (SH.IMM.IDPT)</a>
+                <a href="#" class="menu-item" data-item-id="SH.IMM.MEAS"><i class="fa-regular fa-circle"></i> Measles immunization (SH.IMM.MEAS)</a>
+                <a href="#" class="menu-item" data-item-id="SH.STA.ARIF.ZS"><i class="fa-regular fa-circle"></i> ARI prevalence (SH.STA.ARIF.ZS)</a>
+                <a href="#" class="menu-item" data-item-id="SH.STA.ORTH"><i class="fa-regular fa-circle"></i> Diarrhea treatment ORS (SH.STA.ORTH)</a>
+            </div>
+
+        </div> <!-- end sub-menu child -->
+
+        <!-- ============================================================ -->
+        <!-- WATER, SANITATION & HYGIENE (WASH)                          -->
+        <!-- ============================================================ -->
+        <div class="sub-section-title" data-toggle-id="section-wash" onclick="toggleSection(this)">
+            <span><i class="fa-regular fa-droplet" style="margin-right: 8px;"></i>WASH</span>
             <i class="fa-solid fa-chevron-down toggle-icon"></i>
         </div>
         <div class="sub-menu hidden">
-            <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-10"><i class="fa-regular fa-circle"></i> School Enrollment</a>
-            <a href="{% url 'mortality_map' %}" class="menu-item" data-item-id="item-11"><i class="fa-regular fa-circle"></i> Primary Attendance</a>
-            <a href="{% url 'mortality_map' %}" class="menu-item" data-item-id="item-12"><i class="fa-regular fa-circle"></i> Secondary Attendance</a>
-            <a href="{% url 'mortality_map' %}" class="menu-item" data-item-id="item-13"><i class="fa-regular fa-circle"></i> Out-of-School Children</a>
-            <a href="{% url 'mortality_table' %}" class="menu-item" data-item-id="item-14"><i class="fa-regular fa-circle"></i> Completion Rate</a>
-            <a href="{% url 'mortality_map' %}" class="menu-item" data-item-id="item-15"><i class="fa-regular fa-circle"></i> Literacy Rate</a>
-            <a href="{% url 'mortality_map' %}" class="menu-item" data-item-id="item-16"><i class="fa-regular fa-circle"></i> Numeracy Rate</a>
-            <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-17"><i class="fa-regular fa-circle"></i> Gender Parity Index</a>
+            <a href="#" class="menu-item" data-item-id="SH.H2O.BASW.ZS"><i class="fa-regular fa-circle"></i> Basic drinking water (SH.H2O.BASW.ZS)</a>
+            <a href="#" class="menu-item" data-item-id="SH.STA.ACSN"><i class="fa-regular fa-circle"></i> Improved sanitation (SH.STA.ACSN)</a>
+            <a href="#" class="menu-item" data-item-id="SH.STA.ODFC.ZS"><i class="fa-regular fa-circle"></i> Open defecation (SH.STA.ODFC.ZS)</a>
+            <a href="#" class="menu-item" data-item-id="SH.STA.SMSS.ZS"><i class="fa-regular fa-circle"></i> Safely managed sanitation (SH.STA.SMSS.ZS)</a>
         </div>
 
-        <!-- WASH -->
-        <div class="sub-section-title" data-toggle-id="subsection-wash" onclick="toggleSection(this)">
-            🚰 WASH
+        <!-- ============================================================ -->
+        <!-- CHILD PROTECTION (Child Labor & Harmful Practices)          -->
+        <!-- ============================================================ -->
+        <div class="sub-section-title" data-toggle-id="section-protection" onclick="toggleSection(this)">
+            <span><i class="fa-regular fa-shield" style="margin-right: 8px;"></i>Child Protection</span>
             <i class="fa-solid fa-chevron-down toggle-icon"></i>
         </div>
         <div class="sub-menu hidden">
-            <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-18"><i class="fa-regular fa-circle"></i> Basic Drinking Water</a>
-            <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-19"><i class="fa-regular fa-circle"></i> Safely Managed Water</a>
-            <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-20"><i class="fa-regular fa-circle"></i> Basic Sanitation</a>
-            <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-21"><i class="fa-regular fa-circle"></i> Safely Managed Sanitation</a>
-            <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-22"><i class="fa-regular fa-circle"></i> Open Defecation Rate</a>
-            <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-23"><i class="fa-regular fa-circle"></i> Handwashing Facilities</a>
+
+            <div class="sub-section-title" data-toggle-id="sub-labor" onclick="toggleSection(this)">
+                <span>⚒️ Child Labor</span>
+                <i class="fa-solid fa-chevron-down toggle-icon"></i>
+            </div>
+            <div class="sub-menu hidden">
+                <a href="#" class="menu-item" data-item-id="SL.TLF.0714.ZS"><i class="fa-regular fa-circle"></i> Children in employment (SL.TLF.0714.ZS)</a>
+                <a href="#" class="menu-item" data-item-id="SL.TLF.0714.SW.TM"><i class="fa-regular fa-circle"></i> Work hrs (study+work) (SL.TLF.0714.SW.TM)</a>
+                <a href="#" class="menu-item" data-item-id="SL.TLF.0714.SW.ZS"><i class="fa-regular fa-circle"></i> Employment & study (SL.TLF.0714.SW.ZS)</a>
+                <a href="#" class="menu-item" data-item-id="SL.AGR.0714.ZS"><i class="fa-regular fa-circle"></i> Child labor in agriculture (SL.AGR.0714.ZS)</a>
+                <a href="#" class="menu-item" data-item-id="SL.FAM.0714.FE.ZS"><i class="fa-regular fa-circle"></i> Unpaid family workers (SL.FAM.0714.FE.ZS)</a>
+                <a href="#" class="menu-item" data-item-id="SL.MNF.0714.ZS"><i class="fa-regular fa-circle"></i> Child labor in manufacturing (SL.MNF.0714.ZS)</a>
+            </div>
+
+            <div class="sub-section-title" data-toggle-id="sub-harmful" onclick="toggleSection(this)">
+                <span>⚠️ Harmful Practices</span>
+                <i class="fa-solid fa-chevron-down toggle-icon"></i>
+            </div>
+            <div class="sub-menu hidden">
+                <a href="#" class="menu-item" data-item-id="SH.STA.FGMS.ZS"><i class="fa-regular fa-circle"></i> FGM prevalence (SH.STA.FGMS.ZS)</a>
+                <a href="#" class="menu-item" data-item-id="SP.M15.2024.FE.ZS"><i class="fa-regular fa-circle"></i> Married by 15 (SP.M15.2024.FE.ZS)</a>
+                <a href="#" class="menu-item" data-item-id="SP.M18.2024.FE.ZS"><i class="fa-regular fa-circle"></i> Married by 18 (SP.M18.2024.FE.ZS)</a>
+            </div>
         </div>
 
-        <!-- Child Protection -->
-        <div class="sub-section-title" data-toggle-id="subsection-protection" onclick="toggleSection(this)">
-            🛡 Child Protection
+        <!-- ============================================================ -->
+        <!-- EDUCATION & ADOLESCENT DEVELOPMENT                          -->
+        <!-- ============================================================ -->
+        <div class="sub-section-title" data-toggle-id="section-education" onclick="toggleSection(this)">
+            <span><i class="fa-regular fa-graduation-cap" style="margin-right: 8px;"></i>Education & Adolescent Dev.</span>
             <i class="fa-solid fa-chevron-down toggle-icon"></i>
         </div>
         <div class="sub-menu hidden">
-            <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-24"><i class="fa-regular fa-circle"></i> Child Labour</a>
-            <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-25"><i class="fa-regular fa-circle"></i> Hazardous Child Labour</a>
-            <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-26"><i class="fa-regular fa-circle"></i> Child Marriage</a>
-            <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-27"><i class="fa-regular fa-circle"></i> Birth Registration</a>
-            <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-28"><i class="fa-regular fa-circle"></i> Violent Discipline</a>
-            <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-29"><i class="fa-regular fa-circle"></i> Refugee Children</a>
-            <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-30"><i class="fa-regular fa-circle"></i> Internally Displaced Children</a>
+            <a href="#" class="menu-item" data-item-id="SE.ENR.ORPH"><i class="fa-regular fa-circle"></i> Orphan school attendance ratio (SE.ENR.ORPH)</a>
         </div>
 
-        <!-- Gender Equality -->
-        <div class="sub-section-title" data-toggle-id="subsection-gender" onclick="toggleSection(this)">
-            ♀ Gender Equality
+        <!-- ============================================================ -->
+        <!-- SOCIAL INCLUSION & BIRTH REGISTRATION                       -->
+        <!-- ============================================================ -->
+        <div class="sub-section-title" data-toggle-id="section-social" onclick="toggleSection(this)">
+            <span><i class="fa-regular fa-id-card" style="margin-right: 8px;"></i>Social Inclusion & Birth Reg.</span>
             <i class="fa-solid fa-chevron-down toggle-icon"></i>
         </div>
         <div class="sub-menu hidden">
-            <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-31"><i class="fa-regular fa-circle"></i> Adolescent Birth Rate</a>
-            <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-32"><i class="fa-regular fa-circle"></i> Girls School Attendance</a>
-            <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-33"><i class="fa-regular fa-circle"></i> Gender-Based Violence Risk</a>
-            <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-34"><i class="fa-regular fa-circle"></i> Gender Equality Index</a>
+            <a href="#" class="menu-item" data-item-id="birth_reg"><i class="fa-regular fa-circle"></i> Birth registration, total (%)</a>
+            <a href="#" class="menu-item" data-item-id="ID.OWN.BRTH.ZS"><i class="fa-regular fa-circle"></i> Birth certification (ID.OWN.BRTH.ZS)</a>
+            <a href="#" class="menu-item" data-item-id="birth_reg_1"><i class="fa-regular fa-circle"></i> Birth registration, female</a>
+            <a href="#" class="menu-item" data-item-id="birth_reg_2"><i class="fa-regular fa-circle"></i> Birth registration, male</a>
+            <a href="#" class="menu-item" data-item-id="SP.REG.BRTH.RU.ZS"><i class="fa-regular fa-circle"></i> Completeness, rural (SP.REG.BRTH.RU.ZS)</a>
+            <a href="#" class="menu-item" data-item-id="SP.REG.BRTH.UR.ZS"><i class="fa-regular fa-circle"></i> Completeness, urban (SP.REG.BRTH.UR.ZS)</a>
         </div>
 
-        <!-- Nutrition & Food Security -->
-        <div class="sub-section-title" data-toggle-id="subsection-nutrition" onclick="toggleSection(this)">
-            🍽 Nutrition & Food Security
+        <!-- ============================================================ -->
+        <!-- EARLY CHILDHOOD DEVELOPMENT (ECD)                          -->
+        <!-- ============================================================ -->
+        <div class="sub-section-title" data-toggle-id="section-ecd" onclick="toggleSection(this)">
+            <span><i class="fa-regular fa-baby" style="margin-right: 8px;"></i>Early Childhood Development</span>
             <i class="fa-solid fa-chevron-down toggle-icon"></i>
         </div>
         <div class="sub-menu hidden">
-            <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-35"><i class="fa-regular fa-circle"></i> Stunting</a>
-            <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-36"><i class="fa-regular fa-circle"></i> Wasting</a>
-            <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-37"><i class="fa-regular fa-circle"></i> Underweight</a>
-            <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-38"><i class="fa-regular fa-circle"></i> Overweight</a>
-            <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-39"><i class="fa-regular fa-circle"></i> Exclusive Breastfeeding</a>
-            <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-40"><i class="fa-regular fa-circle"></i> Dietary Diversity</a>
-            <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-41"><i class="fa-regular fa-circle"></i> Food Insecurity Index</a>
+            <a href="#" class="menu-item" data-item-id="SH.STA.BFED.ZS"><i class="fa-regular fa-circle"></i> Exclusive breastfeeding (SH.STA.BFED.ZS)</a>
+            <a href="#" class="menu-item" data-item-id="SH.STA.BRTW.ZS"><i class="fa-regular fa-circle"></i> Low birthweight (SH.STA.BRTW.ZS)</a>
+            <a href="#" class="menu-item" data-item-id="SH.STA.OWGH.MA.ZS"><i class="fa-regular fa-circle"></i> Overweight, male (SH.STA.OWGH.MA.ZS)</a>
+            <a href="#" class="menu-item" data-item-id="SH.STA.STNT.ZS"><i class="fa-regular fa-circle"></i> Stunting (SH.STA.STNT.ZS)</a>
+            <a href="#" class="menu-item" data-item-id="SH.STA.WAST.ZS"><i class="fa-regular fa-circle"></i> Wasting (SH.STA.WAST.ZS)</a>
+            <a href="#" class="menu-item" data-item-id="HD.HCI.STNT"><i class="fa-regular fa-circle"></i> Fraction not stunted (HD.HCI.STNT)</a>
+            <a href="#" class="menu-item" data-item-id="newborns_tetanus"><i class="fa-regular fa-circle"></i> Newborns protected against tetanus (%)</a>
         </div>
 
-        <!-- Climate & Environment (UNICEF Exposure) -->
-        <div class="sub-section-title" data-toggle-id="subsection-climate" onclick="toggleSection(this)">
-            🌍 Climate & Environment (UNICEF Exposure)
-            <i class="fa-solid fa-chevron-down toggle-icon"></i>
-        </div>
-        <div class="sub-menu hidden">
-            <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-42"><i class="fa-regular fa-circle"></i> Children Exposed to Flood Risk</a>
-            <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-43"><i class="fa-regular fa-circle"></i> Children Exposed to Drought Risk</a>
-            <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-44"><i class="fa-regular fa-circle"></i> Children Exposed to Heat Stress</a>
-            <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-45"><i class="fa-regular fa-circle"></i> Children Exposed to Air Pollution</a>
-            <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-46"><i class="fa-regular fa-circle"></i> Children Exposed to Water Scarcity</a>
-            <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-47"><i class="fa-regular fa-circle"></i> Children Exposed to Multi-Hazard Risk</a>
-        </div>
-
-        <!-- Social Protection & Poverty -->
-        <div class="sub-section-title" data-toggle-id="subsection-social" onclick="toggleSection(this)">
-            ⚖ Social Protection & Poverty
-            <i class="fa-solid fa-chevron-down toggle-icon"></i>
-        </div>
-        <div class="sub-menu hidden">
-            <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-48"><i class="fa-regular fa-circle"></i> Child Poverty Rate</a>
-            <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-49"><i class="fa-regular fa-circle"></i> Multidimensional Poverty Index</a>
-            <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-50"><i class="fa-regular fa-circle"></i> Social Protection Coverage</a>
-            <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-51"><i class="fa-regular fa-circle"></i> Cash Transfer Coverage</a>
-            <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-52"><i class="fa-regular fa-circle"></i> Household Vulnerability Index</a>
-        </div>
-
-    </div> <!-- end sub-menu -->
+    </div> <!-- end sub-menu unicef -->
 </div> <!-- end UNICEF section -->
