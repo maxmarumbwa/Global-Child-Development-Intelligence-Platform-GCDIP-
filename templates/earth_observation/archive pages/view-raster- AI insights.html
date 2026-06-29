@@ -1,0 +1,283 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Raster Viewer{% endblock %}
+
+{% block extra_css %}
+<!-- Leaflet + Font Awesome already loaded in base, but we keep them here too -->
+<style>
+    #map { height: 500px; width: 100%; background: #e0e7ef; }
+    /* override content padding if needed */
+    .content { padding: 0 !important; }
+
+    /* Legend (floating) */
+    #legend {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        z-index: 1000;
+        background: rgba(255,255,255,0.95);
+        padding: 8px 12px;
+        border-radius: 6px;
+        box-shadow: 0 0 12px rgba(0,0,0,0.2);
+        font-size: 11px;
+        display: none;
+        max-width: 180px;
+    }
+    #legend h6 { margin:0 0 3px 0; color:#003366; border-bottom:1px solid #ddd; padding-bottom:2px; }
+    .legend-item { display:flex; align-items:center; gap:6px; margin:1px 0; }
+    .color-box { width:14px; height:12px; border:1px solid #aaa; flex-shrink:0; }
+
+    /* Month control */
+    #month-control {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1000;
+        background: rgba(255,255,255,0.95);
+        padding: 10px 14px;
+        border-radius: 6px;
+        box-shadow: 0 0 12px rgba(0,0,0,0.2);
+        display: none;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px;
+    }
+    #month-control input[type="range"] { width: 120px; cursor: pointer; }
+    #month-control span { min-width: 28px; text-align: center; font-weight: bold; }
+
+    /* Vector control – we keep it inside the map container */
+    .vector-control { ... } /* already in base, but we can add styles here if needed */
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="position:relative; height:100%;">
+    <div id="map"></div>
+
+    <!-- Legend -->
+    <div id="legend">
+        <h6>Legend</h6>
+        <div id="legend-content"></div>
+    </div>
+
+    <!-- Month slider -->
+    <div id="month-control">
+        <label>Month:</label>
+        <input type="range" id="monthSlider" min="1" max="12" value="1" />
+        <span id="monthDisplay">1</span>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    // ================================================================
+    // 1. DATASET REGISTRY (same as before)
+    // ================================================================
+    const LEGEND_RAINFALL = [ ... ]; // keep all legends from your original
+
+    const DATASETS = {
+        rainfall:          { type: 'month', legend: LEGEND_RAINFALL },
+        temperature_avg:   { type: 'month', legend: LEGEND_TEMPERATURE },
+        // ... all other products
+    };
+
+    // ================================================================
+    // 2. MAP SETUP
+    // ================================================================
+    const map = L.map('map', {
+        center: [0, 20],
+        zoom: 3,
+        maxBounds: [[-90, -180], [90, 180]],
+        maxBoundsViscosity: 1.0
+    });
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+
+    map.createPane('rasterPane');
+    map.getPane('rasterPane').style.zIndex = 300;
+
+    const WORLD_BOUNDS = [[-90, -180], [90, 180]];
+    let currentOverlay = null;
+    let currentSlug = null;
+
+    // ================================================================
+    // 3. VECTOR LAYERS (same as before, with GeoJSON URLs)
+    // ================================================================
+    const VECTOR_LAYERS = [
+        { id: 'chk-countries', label: 'Countries', url: '/static/data/geojson/ne_10m_admin_0_countries_sm.geojson', style: { color: '#3388ff', weight: 1, fill: false }, defaultChecked: true },
+        { id: 'chk-provinces', label: 'Provinces (adm1)', url: '/static/data/geojson/ne_10m_admin_1_countries_sm.geojson', style: { color: '#ff7f0e', weight: 0.8, fill: false, opacity: 0.6 }, defaultChecked: true },
+        { id: 'chk-rivers', label: 'Rivers', url: '/static/data/geojson/world_rivers.geojson', style: { color: '#1f77b4', weight: 1.5, fill: false, opacity: 0.7 }, defaultChecked: false },
+    ];
+
+    const vectorLayers = {};
+
+    // ================================================================
+    // 4. CUSTOM VECTOR CONTROL (unchanged)
+    // ================================================================
+    const VectorControl = L.Control.extend({
+        options: { position: 'topright' },
+        onAdd: function() {
+            const container = L.DomUtil.create('div', 'vector-control');
+            const header = L.DomUtil.create('div', 'vector-header', container);
+            header.innerHTML = '<h6>🗺️ Vector Layers</h6><i class="fa-solid fa-chevron-down toggle-btn"></i>';
+            const rowsContainer = L.DomUtil.create('div', 'vector-rows', container);
+
+            VECTOR_LAYERS.forEach(layer => {
+                const row = document.createElement('div');
+                row.className = 'vector-row';
+                const label = document.createElement('label');
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = layer.id;
+                checkbox.checked = layer.defaultChecked;
+                label.appendChild(checkbox);
+                label.appendChild(document.createTextNode(' ' + layer.label));
+                row.appendChild(label);
+                rowsContainer.appendChild(row);
+
+                fetch(layer.url)
+                    .then(res => res.ok ? res.json() : Promise.reject())
+                    .then(data => {
+                        const geojsonLayer = L.geoJSON(data, {
+                            style: layer.style,
+                            pane: 'overlayPane'
+                        });
+                        vectorLayers[layer.id] = geojsonLayer;
+                        if (layer.defaultChecked) geojsonLayer.addTo(map);
+                        checkbox.addEventListener('change', function() {
+                            const ref = vectorLayers[layer.id];
+                            if (!ref) return;
+                            if (this.checked) {
+                                if (!map.hasLayer(ref)) ref.addTo(map);
+                            } else {
+                                if (map.hasLayer(ref)) map.removeLayer(ref);
+                            }
+                        });
+                    })
+                    .catch(() => console.warn('Failed to load ' + layer.id));
+            });
+
+            // Toggle collapse
+            const toggleBtn = header.querySelector('.toggle-btn');
+            let isCollapsed = false;
+            function toggleCollapse() {
+                isCollapsed = !isCollapsed;
+                rowsContainer.classList.toggle('hidden', isCollapsed);
+                toggleBtn.classList.toggle('fa-chevron-down', !isCollapsed);
+                toggleBtn.classList.toggle('fa-chevron-right', isCollapsed);
+            }
+            header.addEventListener('click', function(e) {
+                e.stopPropagation();
+                toggleCollapse();
+            });
+            return container;
+        }
+    });
+
+    map.addControl(new VectorControl());
+
+    // ================================================================
+    // 5. LEGEND UPDATE
+    // ================================================================
+    const legendBox = document.getElementById('legend');
+    const legendContent = document.getElementById('legend-content');
+
+    function updateLegend(slug) {
+        const config = DATASETS[slug];
+        if (!config || !config.legend) {
+            legendBox.style.display = 'none';
+            return;
+        }
+        let html = '';
+        config.legend.forEach(item => {
+            html += `<div class="legend-item">
+                        <span class="color-box" style="background:${item.color};"></span>
+                        <span>${item.label}</span>
+                    </div>`;
+        });
+        legendContent.innerHTML = html;
+        legendBox.style.display = 'block';
+    }
+
+    // ================================================================
+    // 6. MONTH CONTROLS
+    // ================================================================
+    const monthControl = document.getElementById('month-control');
+    const monthSlider = document.getElementById('monthSlider');
+    const monthDisplay = document.getElementById('monthDisplay');
+
+    // ================================================================
+    // 7. LOAD RASTER
+    // ================================================================
+    function loadRaster(slug, month) {
+        const config = DATASETS[slug];
+        if (!config) return;
+
+        let url = `/earth_observation/raster/${slug}/`;
+        if (config.type === 'month') {
+            monthControl.style.display = 'flex';
+            if (!month) month = parseInt(monthSlider.value, 10) || 1;
+            month = Math.min(Math.max(month, 1), 12);
+            monthSlider.value = month;
+            monthDisplay.textContent = month;
+            url += `${month}/`;
+        } else {
+            monthControl.style.display = 'none';
+        }
+
+        if (currentOverlay) {
+            map.removeLayer(currentOverlay);
+            currentOverlay = null;
+        }
+
+        currentOverlay = L.imageOverlay(url, WORLD_BOUNDS, {
+            opacity: 0.7,
+            pane: 'rasterPane'
+        }).addTo(map);
+
+        updateLegend(slug);
+
+        // Highlight active menu item
+        document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll(`.menu-item[data-slug="${slug}"]`).forEach(el => el.classList.add('active'));
+
+        currentSlug = slug;
+    }
+
+    // ================================================================
+    // 8. EVENT LISTENERS
+    // ================================================================
+    // Click on sidebar items (delegated)
+    document.addEventListener('click', function(e) {
+        const item = e.target.closest('.menu-item');
+        if (!item) return;
+        const slug = item.dataset.slug;
+        if (slug) {
+            e.preventDefault();
+            loadRaster(slug);
+        }
+    });
+
+    monthSlider.addEventListener('input', function() {
+        monthDisplay.textContent = this.value;
+        if (currentSlug) loadRaster(currentSlug, parseInt(this.value, 10));
+    });
+
+    // ================================================================
+    // 9. INITIAL LOAD
+    // ================================================================
+    // Get the first product from the sidebar or from a default
+    const firstItem = document.querySelector('.menu-item[data-slug]');
+    if (firstItem) {
+        loadRaster(firstItem.dataset.slug);
+    } else {
+        // Fallback to rainfall
+        loadRaster('rainfall');
+    }
+</script>
+{% endblock %}

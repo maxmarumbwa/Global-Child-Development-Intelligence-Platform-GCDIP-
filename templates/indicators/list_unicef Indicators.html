@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UNICEF Indicators (World Bank API)</title>
+
+<style>
+body{
+    font-family:Arial,Helvetica,sans-serif;
+    background:#f4f6f9;
+    margin:30px;
+}
+
+.container{
+    max-width:1200px;
+    margin:auto;
+}
+
+h2{
+    margin-bottom:5px;
+}
+
+#status{
+    margin-bottom:15px;
+    color:#555;
+}
+
+input{
+    width:100%;
+    padding:10px;
+    font-size:15px;
+    margin-bottom:15px;
+    border:1px solid #ccc;
+    border-radius:5px;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    background:white;
+}
+
+th{
+    background:#1976d2;
+    color:white;
+    padding:12px;
+    text-align:left;
+    position:sticky;
+    top:0;
+}
+
+td{
+    padding:10px;
+    border-bottom:1px solid #ddd;
+}
+
+tr:nth-child(even){
+    background:#f8f8f8;
+}
+
+tr:hover{
+    background:#eef6ff;
+}
+
+.table-container{
+    max-height:700px;
+    overflow-y:auto;
+    border:1px solid #ddd;
+}
+
+.code{
+    font-family:Consolas;
+    font-weight:bold;
+}
+</style>
+
+</head>
+<body>
+
+<div class="container">
+
+<h2>UNICEF Indicators</h2>
+
+<div id="status">Loading indicators...</div>
+
+<input
+type="text"
+id="search"
+placeholder="Search by code or indicator name...">
+
+<div class="table-container">
+
+<table>
+
+<thead>
+<tr>
+<th style="width:220px;">Indicator Code</th>
+<th>Indicator Name</th>
+</tr>
+</thead>
+
+<tbody id="tbody">
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<script>
+
+let allIndicators=[];
+
+async function loadIndicators(){
+
+const status=document.getElementById("status");
+
+try{
+
+const response=await fetch(
+"https://api.worldbank.org/v2/indicator?format=json&per_page=32000"
+);
+
+const json=await response.json();
+
+const indicators=json[1];
+
+allIndicators=indicators.filter(ind=>
+ind.sourceOrganization &&
+ind.sourceOrganization.toUpperCase().includes("UNICEF")
+);
+
+status.innerHTML=
+`Found <b>${allIndicators.length}</b> UNICEF indicators`;
+
+renderTable(allIndicators);
+
+}
+catch(err){
+
+status.innerHTML="Failed to load data.";
+
+console.error(err);
+
+}
+
+}
+
+function renderTable(data){
+
+const tbody=document.getElementById("tbody");
+
+tbody.innerHTML="";
+
+data.forEach(ind=>{
+
+tbody.innerHTML+=`
+<tr>
+<td class="code">${ind.id}</td>
+<td>${ind.name}</td>
+</tr>
+`;
+
+});
+
+}
+
+document.getElementById("search").addEventListener("keyup",function(){
+
+const q=this.value.toLowerCase();
+
+const filtered=allIndicators.filter(ind=>
+
+ind.id.toLowerCase().includes(q) ||
+
+ind.name.toLowerCase().includes(q)
+
+);
+
+renderTable(filtered);
+
+});
+
+loadIndicators();
+
+</script>
+
+</body>
+</html>

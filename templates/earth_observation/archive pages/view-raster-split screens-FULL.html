@@ -570,155 +570,375 @@
       height: 100%;
       z-index: 500;
       display: none;
-      background: #003366;
+      background: #e0e7ef;
     }
-    .split-half {
-      position: absolute;
-      top: 0;
-      width: 50%;
+    .split-grid {
+      display: grid;
+      width: 100%;
       height: 100%;
+      gap: 2px;
+      background: #003366;
+      padding: 2px;
     }
-    .split-half-left {
-      left: 0;
-      border-right: 3px solid #003366;
+    .split-grid-4 {
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
     }
-    .split-half-right {
-      right: 0;
-      border-left: 3px solid #003366;
+    .split-grid-2 {
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr;
     }
-    .split-half .map-container {
+    .split-grid-3 {
+      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+    }
+    .split-grid-3 .split-cell:nth-child(3) {
+      grid-column: 2 / 3;
+    }
+    .split-grid-1 {
+      grid-template-columns: 1fr;
+      grid-template-rows: 1fr;
+    }
+    
+    .split-cell {
+      position: relative;
+      background: #e0e7ef;
+      overflow: hidden;
+      min-height: 100px;
+    }
+    .split-cell .map-container {
       width: 100%;
       height: 100%;
       background: #e0e7ef;
-      position: relative;
     }
-    .split-half .map-container .leaflet-control-zoom {
+    .split-cell .map-container .leaflet-control-zoom {
       display: none;
     }
     .split-label {
       position: absolute;
-      top: 10px;
+      top: 4px;
       left: 50%;
       transform: translateX(-50%);
       z-index: 1000;
-      background: rgba(0, 51, 102, 0.85);
+      background: rgba(0, 51, 102, 0.8);
       color: #fff;
-      padding: 4px 14px;
-      border-radius: 4px;
-      font-size: 13px;
+      padding: 1px 8px;
+      border-radius: 3px;
+      font-size: 9px;
       font-weight: 600;
       pointer-events: none;
       white-space: nowrap;
     }
     .split-label-right {
-      background: rgba(220, 50, 50, 0.85);
+      background: rgba(220, 50, 50, 0.8);
     }
-    .split-controls {
+    .split-label-green {
+      background: rgba(46, 125, 50, 0.8);
+    }
+    .split-label-purple {
+      background: rgba(123, 31, 162, 0.8);
+    }
+    
+    /* Smaller elongated legend - moved up 40px */
+    .split-legend {
       position: absolute;
-      bottom: 20px;
+      bottom: 100px;
+      right: 4px;
+      z-index: 1000;
+      background: rgba(255,255,255,0.92);
+      padding: 2px 5px;
+      border-radius: 3px;
+      box-shadow: 0 0 6px rgba(0,0,0,0.1);
+      font-size: 7px;
+      max-width: 90px;
+      border: 1px solid #ddd;
+      cursor: grab;
+      user-select: none;
+      max-height: 50%;
+      overflow-y: auto;
+    }
+    .split-legend:active {
+      cursor: grabbing;
+    }
+    .split-legend h6 {
+      margin: 0 0 1px 0;
+      color: #003366;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 1px;
+      font-size: 7px;
+      text-align: center;
+    }
+    .split-legend .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      margin: 1px 0;
+    }
+    .split-legend .color-box {
+      width: 7px;
+      height: 5px;
+      border: 1px solid #aaa;
+      flex-shrink: 0;
+    }
+    .split-legend .label {
+      font-size: 6px;
+      color: #333;
+      line-height: 1;
+      word-break: break-word;
+    }
+    .split-legend .legend-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 1px;
+      margin-bottom: 1px;
+    }
+    .split-legend .legend-header h6 {
+      border-bottom: none;
+      padding-bottom: 0;
+      margin: 0;
+    }
+    .split-legend .legend-drag-handle {
+      color: #999;
+      font-size: 7px;
+      cursor: grab;
+      padding: 0 2px;
+    }
+    .split-legend .legend-drag-handle:active {
+      cursor: grabbing;
+    }
+
+    /* Movable controls bar - fixed width, maintains dimensions */
+    #split-controls-wrapper {
+      position: absolute;
+      bottom: 10px;
       left: 50%;
       transform: translateX(-50%);
       z-index: 1001;
       background: rgba(255,255,255,0.95);
-      padding: 10px 16px;
-      border-radius: 8px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.2);
-      display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
-      justify-content: center;
-      min-width: 300px;
+      border-radius: 6px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
       border: 1px solid #ccc;
+      cursor: move;
+      user-select: none;
+      touch-action: none;
+      width: auto;
+      max-width: calc(100% - 80px);
+      min-width: 200px;
+      display: inline-block;
     }
-    .split-controls .control-group {
+    #split-controls-wrapper:active {
+      cursor: grabbing;
+    }
+    #split-controls-wrapper .controls-header {
+      background: #003366;
+      color: #fff;
+      padding: 1px 8px;
+      font-size: 8px;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-radius: 5px 5px 0 0;
+      cursor: move;
+      user-select: none;
+    }
+    #split-controls-wrapper .controls-header .drag-icon {
+      font-size: 8px;
+      color: rgba(255,255,255,0.6);
+      cursor: move;
+    }
+    #split-controls-wrapper .controls-header .close-btn-mini {
+      background: none;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      font-size: 9px;
+      padding: 0 4px;
+    }
+    #split-controls-wrapper .controls-header .close-btn-mini:hover {
+      color: #ffdddd;
+    }
+    #split-controls {
+      display: flex;
+      gap: 3px;
+      flex-wrap: nowrap;
+      justify-content: center;
+      align-items: center;
+      padding: 3px 8px;
+      font-size: 8px;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+    #split-controls .ctrl-group {
       display: flex;
       align-items: center;
-      gap: 6px;
-      font-size: 12px;
+      gap: 1px;
+      white-space: nowrap;
     }
-    .split-controls .control-group label {
+    #split-controls .ctrl-group label {
       font-weight: 500;
       color: #333;
+      font-size: 7px;
     }
-    .split-controls select,
-    .split-controls input[type="number"] {
-      padding: 2px 6px;
-      border-radius: 3px;
+    #split-controls select {
+      padding: 1px 2px;
+      border-radius: 2px;
       border: 1px solid #ccc;
-      font-size: 12px;
-      max-width: 120px;
+      font-size: 7px;
+      max-width: 60px;
     }
-    .split-controls .control-group .color-dot {
-      width: 12px;
-      height: 12px;
+    #split-controls input[type="number"] {
+      padding: 1px 2px;
+      border-radius: 2px;
+      border: 1px solid #ccc;
+      font-size: 7px;
+      width: 20px;
+    }
+    #split-controls .color-dot {
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
       display: inline-block;
       border: 1px solid #999;
       flex-shrink: 0;
     }
-    .split-close-btn {
-      background: #e0e0e0;
+    #split-controls .split-btn {
+      padding: 1px 4px;
       border: none;
-      border-radius: 4px;
-      padding: 2px 10px;
+      border-radius: 2px;
       cursor: pointer;
-      font-size: 13px;
-      color: #333;
+      font-size: 7px;
       transition: 0.2s;
+      white-space: nowrap;
     }
-    .split-close-btn:hover {
-      background: #ccc;
-    }
-    .split-apply-btn {
+    #split-controls .split-btn-apply {
       background: #003366;
-      border: none;
-      border-radius: 4px;
-      padding: 2px 14px;
-      cursor: pointer;
-      font-size: 13px;
       color: #fff;
-      transition: 0.2s;
     }
-    .split-apply-btn:hover {
+    #split-controls .split-btn-apply:hover {
       background: #002244;
     }
-
-    /* Split Map Legends */
-    .split-legend {
-      position: absolute;
-      bottom: 20px;
-      left: 20px;
-      z-index: 1000;
-      background: rgba(255,255,255,0.95);
-      padding: 6px 10px;
-      border-radius: 6px;
-      box-shadow: 0 0 12px rgba(0,0,0,0.2);
-      font-size: 10px;
-      max-width: 160px;
-      pointer-events: none;
+    #split-controls .split-btn-close {
+      background: #e0e0e0;
+      color: #333;
     }
-    .split-legend h6 {
-      margin: 0 0 2px 0;
-      color: #003366;
-      border-bottom: 1px solid #ddd;
-      padding-bottom: 2px;
-      font-size: 11px;
+    #split-controls .split-btn-close:hover {
+      background: #ccc;
     }
-    .split-legend .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      margin: 1px 0;
+    #split-controls .split-btn-screen {
+      background: #f0f0f0;
+      color: #333;
+      border: 1px solid #ccc;
+      padding: 1px 3px;
+      font-size: 7px;
     }
-    .split-legend .color-box {
-      width: 12px;
-      height: 10px;
-      border: 1px solid #aaa;
+    #split-controls .month-label {
+      font-size: 6px;
+      color: #888;
+      margin-left: 1px;
+    }
+    .ctrl-separator {
+      width: 1px;
+      height: 14px;
+      background: #ddd;
+      margin: 0 2px;
       flex-shrink: 0;
     }
-    .split-legend .label {
-      font-size: 10px;
+
+    /* Screen selector modal */
+    #screen-selector {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 2000;
+      background: rgba(255,255,255,0.98);
+      padding: 24px 32px;
+      border-radius: 12px;
+      box-shadow: 0 4px 30px rgba(0,0,0,0.3);
+      display: none;
+      text-align: center;
+      min-width: 300px;
+      border: 2px solid #003366;
+    }
+    #screen-selector h3 {
+      color: #003366;
+      margin-bottom: 16px;
+      font-size: 18px;
+    }
+    #screen-selector .screen-options {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    #screen-selector .screen-options button {
+      padding: 12px 20px;
+      border: 2px solid #003366;
+      border-radius: 8px;
+      background: #f0f6fc;
+      color: #003366;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      transition: 0.2s;
+      min-width: 60px;
+    }
+    #screen-selector .screen-options button:hover {
+      background: #d4e6f1;
+      transform: scale(1.05);
+    }
+    #screen-selector .screen-options button.active {
+      background: #003366;
+      color: #fff;
+    }
+    #screen-selector .close-selector {
+      margin-top: 16px;
+      background: none;
+      border: none;
+      color: #999;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    #screen-selector .close-selector:hover {
       color: #333;
+    }
+
+    @media (max-width: 768px) {
+      .split-grid-4 {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+      }
+      .split-grid-3 {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+      }
+      .split-grid-3 .split-cell:nth-child(3) {
+        grid-column: 1 / 3;
+      }
+      .split-grid-2 {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr;
+      }
+      #split-controls {
+        flex-wrap: wrap;
+        padding: 2px 4px;
+      }
+      #split-controls select {
+        max-width: 45px;
+      }
+      .split-legend {
+        max-width: 70px;
+        bottom: 80px;
+        right: 2px;
+        padding: 2px 3px;
+      }
+      #split-controls-wrapper {
+        max-width: calc(100% - 20px);
+        min-width: 150px;
+      }
     }
   </style>
 </head>
@@ -827,33 +1047,61 @@
         <button id="geocode-btn">Go</button>
       </div>
 
+      <!-- Screen Selector -->
+      <div id="screen-selector">
+        <h3>📊 Select Number of Screens</h3>
+        <div class="screen-options">
+          <button data-screens="1">1</button>
+          <button data-screens="2" class="active">2</button>
+          <button data-screens="3">3</button>
+          <button data-screens="4">4</button>
+        </div>
+        <button class="close-selector" id="screen-selector-close">Cancel</button>
+      </div>
+
       <!-- Split Map Container -->
       <div id="split-container">
-        <div class="split-half split-half-left">
-          <div class="split-label">Map 1</div>
-          <div class="map-container" id="split-map-left"></div>
-          <div id="split-legend-left" class="split-legend" style="display:none;"></div>
-        </div>
-        <div class="split-half split-half-right">
-          <div class="split-label split-label-right">Map 2</div>
-          <div class="map-container" id="split-map-right"></div>
-          <div id="split-legend-right" class="split-legend" style="display:none;"></div>
-        </div>
-        <div class="split-controls">
-          <div class="control-group">
-            <span class="color-dot" style="background:#003366;"></span>
-            <label>Map 1:</label>
-            <select id="split-dataset-left"></select>
-            <input type="number" id="split-month-left" min="1" max="12" value="1" style="width:40px;" />
+        <div class="split-grid split-grid-2" id="split-grid"></div>
+        
+        <!-- Movable Controls Bar - fixed width -->
+        <div id="split-controls-wrapper">
+          <div class="controls-header">
+            <span>🔧 Tool Bar <span class="drag-icon">⠿</span></span>
+            <button class="close-btn-mini" id="split-close-mini">✕</button>
           </div>
-          <div class="control-group">
-            <span class="color-dot" style="background:#dc3232;"></span>
-            <label>Map 2:</label>
-            <select id="split-dataset-right"></select>
-            <input type="number" id="split-month-right" min="1" max="12" value="1" style="width:40px;" />
+          <div id="split-controls">
+            <div class="ctrl-group">
+              <span class="color-dot" style="background:#003366;"></span>
+              <select id="split-dataset-0"></select>
+              <label class="month-label">M</label>
+              <input type="number" id="split-month-0" min="1" max="12" value="1" />
+            </div>
+            <div class="ctrl-separator"></div>
+            <div class="ctrl-group">
+              <span class="color-dot" style="background:#dc3232;"></span>
+              <select id="split-dataset-1"></select>
+              <label class="month-label">M</label>
+              <input type="number" id="split-month-1" min="1" max="12" value="1" />
+            </div>
+            <div class="ctrl-separator" id="sep-2" style="display:none;"></div>
+            <div class="ctrl-group" id="ctrl-group-2" style="display:none;">
+              <span class="color-dot" style="background:#2e7d32;"></span>
+              <select id="split-dataset-2"></select>
+              <label class="month-label">M</label>
+              <input type="number" id="split-month-2" min="1" max="12" value="1" />
+            </div>
+            <div class="ctrl-separator" id="sep-3" style="display:none;"></div>
+            <div class="ctrl-group" id="ctrl-group-3" style="display:none;">
+              <span class="color-dot" style="background:#7b1fa2;"></span>
+              <select id="split-dataset-3"></select>
+              <label class="month-label">M</label>
+              <input type="number" id="split-month-3" min="1" max="12" value="1" />
+            </div>
+            <div class="ctrl-separator"></div>
+            <button class="split-btn split-btn-apply" id="split-apply">Apply</button>
+            <button class="split-btn split-btn-close" id="split-close">✕</button>
+            <button class="split-btn split-btn-screen" id="split-change-screens">📐</button>
           </div>
-          <button class="split-apply-btn" id="split-apply">Apply</button>
-          <button class="split-close-btn" id="split-close">✕</button>
         </div>
       </div>
 
@@ -1352,29 +1600,78 @@
     });
 
     // =============================================================
-    // 11. SPLIT MAP TOOL (with legends and vector layers)
+    // 11. SPLIT MAP TOOL (fixed width toolbar)
     // =============================================================
-    let splitMode = false;
-    let splitMapLeft = null;
-    let splitMapRight = null;
-    let splitOverlayLeft = null;
-    let splitOverlayRight = null;
+    let splitMaps = [];
+    let splitOverlays = [];
     let splitSync = false;
-    let splitVectorLayersLeft = {};
-    let splitVectorLayersRight = {};
+    let splitVectorLayers = [];
+    let numScreens = 2;
+    let splitActive = false;
 
     const splitContainer = document.getElementById('split-container');
-    const splitDatasetLeft = document.getElementById('split-dataset-left');
-    const splitDatasetRight = document.getElementById('split-dataset-right');
-    const splitMonthLeft = document.getElementById('split-month-left');
-    const splitMonthRight = document.getElementById('split-month-right');
-    const splitLegendLeft = document.getElementById('split-legend-left');
-    const splitLegendRight = document.getElementById('split-legend-right');
+    const splitGrid = document.getElementById('split-grid');
+    const screenSelector = document.getElementById('screen-selector');
+    const controlsWrapper = document.getElementById('split-controls-wrapper');
+
+    const splitColors = ['#003366', '#dc3232', '#2e7d32', '#7b1fa2'];
+    const labelClasses = ['', 'split-label-right', 'split-label-green', 'split-label-purple'];
+
+    // Make controls draggable - maintain dimensions
+    let isDraggingControls = false;
+    let dragStartX, dragStartY, startLeft, startTop;
+    let wrapperWidth, wrapperHeight;
+
+    controlsWrapper.addEventListener('mousedown', function(e) {
+      if (e.target.closest('.controls-header') || e.target.closest('.drag-icon')) {
+        isDraggingControls = true;
+        const rect = controlsWrapper.getBoundingClientRect();
+        const parentRect = controlsWrapper.parentElement.getBoundingClientRect();
+        dragStartX = e.clientX;
+        dragStartY = e.clientY;
+        // Store current position
+        startLeft = controlsWrapper.offsetLeft || (rect.left - parentRect.left);
+        startTop = controlsWrapper.offsetTop || (rect.top - parentRect.top);
+        // Store current dimensions to maintain them
+        wrapperWidth = controlsWrapper.offsetWidth;
+        wrapperHeight = controlsWrapper.offsetHeight;
+        controlsWrapper.style.width = wrapperWidth + 'px';
+        controlsWrapper.style.height = wrapperHeight + 'px';
+        controlsWrapper.style.cursor = 'grabbing';
+        e.preventDefault();
+      }
+    });
+
+    document.addEventListener('mousemove', function(e) {
+      if (!isDraggingControls) return;
+      const dx = e.clientX - dragStartX;
+      const dy = e.clientY - dragStartY;
+      const parentRect = controlsWrapper.parentElement.getBoundingClientRect();
+      let newX = startLeft + dx;
+      let newY = startTop + dy;
+      // Maintain margins: keep 40px on each side
+      newX = Math.max(40, Math.min(parentRect.width - wrapperWidth - 40, newX));
+      newY = Math.max(0, Math.min(parentRect.height - wrapperHeight - 10, newY));
+      controlsWrapper.style.left = newX + 'px';
+      controlsWrapper.style.top = newY + 'px';
+      controlsWrapper.style.transform = 'none';
+      controlsWrapper.style.width = wrapperWidth + 'px';
+      controlsWrapper.style.height = wrapperHeight + 'px';
+    });
+
+    document.addEventListener('mouseup', function() {
+      if (isDraggingControls) {
+        isDraggingControls = false;
+        controlsWrapper.style.cursor = 'grab';
+      }
+    });
 
     // Populate split dropdowns
-    function populateSplitSelects() {
+    function populateSplitSelects(count) {
       const slugs = Object.keys(PRODUCT_NAMES).sort();
-      [splitDatasetLeft, splitDatasetRight].forEach(sel => {
+      for (let i = 0; i < count; i++) {
+        const sel = document.getElementById(`split-dataset-${i}`);
+        if (!sel) continue;
         sel.innerHTML = '';
         slugs.forEach(slug => {
           const opt = document.createElement('option');
@@ -1382,39 +1679,142 @@
           opt.textContent = PRODUCT_NAMES[slug] || slug;
           sel.appendChild(opt);
         });
-        if (slugs.length > 0) sel.value = slugs[0];
-        if (slugs.length > 1 && sel === splitDatasetRight) sel.value = slugs[1] || slugs[0];
-      });
+        if (slugs.length > i) {
+          sel.value = slugs[i % slugs.length];
+        }
+        updateSplitMonthVisibility(i);
+      }
     }
-    populateSplitSelects();
 
-    // Load vector layers for split maps
-    function loadSplitVectorLayers(mapObj, layerObj, side) {
-      VECTOR_LAYERS.forEach(layer => {
-        fetch(layer.url)
-          .then(res => res.ok ? res.json() : Promise.reject())
-          .then(data => {
-            const geojsonLayer = L.geoJSON(data, {
-              style: layer.style,
-              pane: 'overlayPane'
-            });
-            layerObj[layer.id] = geojsonLayer;
-            if (layer.defaultChecked) {
-              geojsonLayer.addTo(mapObj);
+    function updateSplitMonthVisibility(index) {
+      const sel = document.getElementById(`split-dataset-${index}`);
+      const monthInput = document.getElementById(`split-month-${index}`);
+      if (!sel || !monthInput) return;
+      const slug = sel.value;
+      const config = DATASETS[slug];
+      const isMonthly = config && config.type === 'month';
+      monthInput.style.display = isMonthly ? 'inline-block' : 'none';
+      const label = monthInput.previousElementSibling;
+      if (label && label.tagName === 'LABEL') {
+        label.style.display = isMonthly ? 'inline-block' : 'none';
+      }
+    }
+
+    function buildSplitGrid(count) {
+      splitGrid.innerHTML = '';
+      
+      let gridClass = 'split-grid-1';
+      if (count === 2) gridClass = 'split-grid-2';
+      else if (count === 3) gridClass = 'split-grid-3';
+      else if (count === 4) gridClass = 'split-grid-4';
+      splitGrid.className = `split-grid ${gridClass}`;
+      
+      for (let i = 0; i < count; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'split-cell';
+        cell.id = `split-cell-${i}`;
+        
+        const label = document.createElement('div');
+        label.className = `split-label ${labelClasses[i] || ''}`;
+        label.textContent = `Map ${i+1}`;
+        cell.appendChild(label);
+        
+        const mapContainer = document.createElement('div');
+        mapContainer.className = 'map-container';
+        mapContainer.id = `split-map-${i}`;
+        cell.appendChild(mapContainer);
+        
+        const legendContainer = document.createElement('div');
+        legendContainer.className = 'split-legend';
+        legendContainer.id = `split-legend-${i}`;
+        legendContainer.style.display = 'none';
+        cell.appendChild(legendContainer);
+        
+        splitGrid.appendChild(cell);
+      }
+
+      for (let i = 0; i < 4; i++) {
+        const group = document.getElementById(`ctrl-group-${i}`);
+        if (group) {
+          group.style.display = i < count ? 'flex' : 'none';
+        }
+        const sep = document.getElementById(`sep-${i}`);
+        if (sep) {
+          sep.style.display = (i > 0 && i < count) ? 'block' : 'none';
+        }
+      }
+    }
+
+    function createSplitMaps(count) {
+      splitMaps.forEach(m => { if (m) m.remove(); });
+      splitMaps = [];
+      splitOverlays = [];
+      splitVectorLayers = [];
+
+      for (let i = 0; i < count; i++) {
+        const container = document.getElementById(`split-map-${i}`);
+        if (!container) continue;
+
+        const mapObj = L.map(container, {
+          center: [0, 20],
+          zoom: 3,
+          maxBounds: [[-90, -180], [90, 180]],
+          maxBoundsViscosity: 1.0,
+          zoomControl: false
+        });
+        splitMaps.push(mapObj);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; OpenStreetMap'
+        }).addTo(mapObj);
+
+        mapObj.createPane('rasterPane');
+        mapObj.getPane('rasterPane').style.zIndex = 300;
+
+        splitVectorLayers[i] = {};
+        VECTOR_LAYERS.forEach(layer => {
+          fetch(layer.url)
+            .then(res => res.ok ? res.json() : Promise.reject())
+            .then(data => {
+              const geojsonLayer = L.geoJSON(data, {
+                style: layer.style,
+                pane: 'overlayPane'
+              });
+              splitVectorLayers[i][layer.id] = geojsonLayer;
+              if (layer.defaultChecked) {
+                geojsonLayer.addTo(mapObj);
+              }
+            })
+            .catch(() => console.warn('Failed to load ' + layer.id + ' for split map ' + i));
+        });
+
+        splitOverlays.push(null);
+
+        if (i === 0) {
+          mapObj.on('move', function(e) {
+            if (splitSync) {
+              splitMaps.forEach((m, idx) => {
+                if (idx !== 0 && m) {
+                  m.setView(e.target.getCenter(), e.target.getZoom(), { animate: false });
+                }
+              });
             }
-          })
-          .catch(() => console.warn('Failed to load ' + layer.id + ' for split map ' + side));
-      });
+          });
+        }
+      }
+
+      splitSync = true;
     }
 
-    // Update split legend
-    function updateSplitLegend(slug, legendContainer) {
+    function updateSplitLegend(slug, index) {
+      const legendContainer = document.getElementById(`split-legend-${index}`);
+      if (!legendContainer) return;
       const config = DATASETS[slug];
       if (!config || !config.legend) {
         legendContainer.style.display = 'none';
         return;
       }
-      let html = '<h6>Legend</h6>';
+      let html = '<div class="legend-header"><h6>Legend</h6><span class="legend-drag-handle">⠿</span></div>';
       config.legend.forEach(item => {
         html += `<div class="legend-item">
                   <span class="color-box" style="background:${item.color};"></span>
@@ -1423,173 +1823,195 @@
       });
       legendContainer.innerHTML = html;
       legendContainer.style.display = 'block';
+      
+      makeLegendDraggable(legendContainer);
     }
 
-    // Create split maps
-    function createSplitMaps() {
-      if (splitMapLeft) {
-        splitMapLeft.remove();
-        splitMapLeft = null;
-      }
-      if (splitMapRight) {
-        splitMapRight.remove();
-        splitMapRight = null;
-      }
-
-      const leftContainer = document.getElementById('split-map-left');
-      const rightContainer = document.getElementById('split-map-right');
-
-      splitMapLeft = L.map(leftContainer, {
-        center: [0, 20],
-        zoom: 3,
-        maxBounds: [[-90, -180], [90, 180]],
-        maxBoundsViscosity: 1.0,
-        zoomControl: false
-      });
-      splitMapRight = L.map(rightContainer, {
-        center: [0, 20],
-        zoom: 3,
-        maxBounds: [[-90, -180], [90, 180]],
-        maxBoundsViscosity: 1.0,
-        zoomControl: false
-      });
-
-      // Add tiles
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap'
-      }).addTo(splitMapLeft);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap'
-      }).addTo(splitMapRight);
-
-      // Create raster panes
-      splitMapLeft.createPane('rasterPane');
-      splitMapLeft.getPane('rasterPane').style.zIndex = 300;
-      splitMapRight.createPane('rasterPane');
-      splitMapRight.getPane('rasterPane').style.zIndex = 300;
-
-      // Load vector layers
-      loadSplitVectorLayers(splitMapLeft, splitVectorLayersLeft, 'left');
-      loadSplitVectorLayers(splitMapRight, splitVectorLayersRight, 'right');
-
-      // Sync navigation
-      splitMapLeft.on('move', function(e) {
-        if (splitSync) {
-          splitMapRight.setView(e.target.getCenter(), e.target.getZoom(), { animate: false });
+    function makeLegendDraggable(legend) {
+      let isDragging = false;
+      let startX, startY, origX, origY;
+      
+      legend.addEventListener('mousedown', function(e) {
+        if (e.target.closest('.legend-drag-handle') || e.target === legend || e.target.closest('.split-legend')) {
+          isDragging = true;
+          const rect = legend.getBoundingClientRect();
+          const parentRect = legend.parentElement.getBoundingClientRect();
+          startX = e.clientX;
+          startY = e.clientY;
+          origX = legend.offsetLeft || (rect.left - parentRect.left);
+          origY = legend.offsetTop || (rect.top - parentRect.top);
+          legend.style.cursor = 'grabbing';
+          e.preventDefault();
         }
       });
-      splitMapRight.on('move', function(e) {
-        if (splitSync) {
-          splitMapLeft.setView(e.target.getCenter(), e.target.getZoom(), { animate: false });
+      
+      document.addEventListener('mousemove', function(e) {
+        if (!isDragging) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        const parentRect = legend.parentElement.getBoundingClientRect();
+        let newX = origX + dx;
+        let newY = origY + dy;
+        const legendWidth = legend.offsetWidth || 90;
+        const legendHeight = legend.offsetHeight || 70;
+        newX = Math.max(0, Math.min(parentRect.width - legendWidth, newX));
+        newY = Math.max(0, Math.min(parentRect.height - legendHeight, newY));
+        legend.style.left = newX + 'px';
+        legend.style.top = newY + 'px';
+        legend.style.right = 'auto';
+        legend.style.bottom = 'auto';
+        legend.style.position = 'absolute';
+      });
+      
+      document.addEventListener('mouseup', function() {
+        if (isDragging) {
+          isDragging = false;
+          legend.style.cursor = 'grab';
         }
       });
-
-      splitSync = true;
     }
 
-    // Apply split map layers
-    function applySplitLayers() {
-      const slugLeft = splitDatasetLeft.value;
-      const slugRight = splitDatasetRight.value;
-      const monthLeft = parseInt(splitMonthLeft.value) || 1;
-      const monthRight = parseInt(splitMonthRight.value) || 1;
+    function applySplitLayers(count) {
+      for (let i = 0; i < count; i++) {
+        const sel = document.getElementById(`split-dataset-${i}`);
+        const monthInput = document.getElementById(`split-month-${i}`);
+        if (!sel) continue;
+        const slug = sel.value;
+        let month = 1;
+        const config = DATASETS[slug];
+        if (config && config.type === 'month' && monthInput) {
+          month = parseInt(monthInput.value) || 1;
+        }
 
-      // Remove existing overlays
-      if (splitOverlayLeft) {
-        splitMapLeft.removeLayer(splitOverlayLeft);
-        splitOverlayLeft = null;
+        if (splitOverlays[i]) {
+          splitMaps[i].removeLayer(splitOverlays[i]);
+          splitOverlays[i] = null;
+        }
+
+        let url = `/earth_observation/raster/${slug}/`;
+        if (config && config.type === 'month') {
+          url += `${month}/`;
+        }
+
+        splitOverlays[i] = L.imageOverlay(url, WORLD_BOUNDS, {
+          opacity: 0.7,
+          pane: 'rasterPane'
+        }).addTo(splitMaps[i]);
+
+        updateSplitLegend(slug, i);
       }
-      if (splitOverlayRight) {
-        splitMapRight.removeLayer(splitOverlayRight);
-        splitOverlayRight = null;
-      }
-
-      // Build URLs
-      let urlLeft = `/earth_observation/raster/${slugLeft}/`;
-      let urlRight = `/earth_observation/raster/${slugRight}/`;
-      const configLeft = DATASETS[slugLeft];
-      const configRight = DATASETS[slugRight];
-      if (configLeft && configLeft.type === 'month') urlLeft += `${monthLeft}/`;
-      if (configRight && configRight.type === 'month') urlRight += `${monthRight}/`;
-
-      // Add overlays
-      splitOverlayLeft = L.imageOverlay(urlLeft, WORLD_BOUNDS, {
-        opacity: 0.7,
-        pane: 'rasterPane'
-      }).addTo(splitMapLeft);
-      splitOverlayRight = L.imageOverlay(urlRight, WORLD_BOUNDS, {
-        opacity: 0.7,
-        pane: 'rasterPane'
-      }).addTo(splitMapRight);
-
-      // Update legends
-      updateSplitLegend(slugLeft, splitLegendLeft);
-      updateSplitLegend(slugRight, splitLegendRight);
     }
 
-    // Toggle split map
-    document.getElementById('btnSplit').addEventListener('click', function() {
-      splitMode = !splitMode;
-      this.style.background = splitMode ? '#e8f4fd' : 'none';
-      this.style.color = splitMode ? '#003366' : '#444';
+    function openSplitMap(count) {
+      numScreens = count;
+      splitActive = true;
+      splitContainer.style.display = 'block';
+      
+      buildSplitGrid(count);
+      populateSplitSelects(count);
+      createSplitMaps(count);
+      
+      setTimeout(() => {
+        applySplitLayers(count);
+      }, 200);
+      
+      document.getElementById('map').style.display = 'none';
+      document.getElementById('legend').style.display = 'none';
+      document.getElementById('month-control').style.display = 'none';
+      
+      document.getElementById('zonal-panel').style.display = 'none';
+      document.getElementById('animate-panel').style.display = 'none';
+      document.getElementById('timeseries-panel').style.display = 'none';
+      
+      controlsWrapper.style.display = 'block';
+      controlsWrapper.style.left = '50%';
+      controlsWrapper.style.top = 'auto';
+      controlsWrapper.style.bottom = '10px';
+      controlsWrapper.style.transform = 'translateX(-50%)';
+      controlsWrapper.style.width = 'auto';
+      controlsWrapper.style.height = 'auto';
+    }
 
-      if (splitMode) {
-        splitContainer.style.display = 'block';
-        // Hide main map
-        document.getElementById('map').style.display = 'none';
-        document.getElementById('legend').style.display = 'none';
-        document.getElementById('month-control').style.display = 'none';
-        // Create split maps if not exists
-        if (!splitMapLeft) {
-          createSplitMaps();
-        }
-        // Apply layers
-        applySplitLayers();
-        // Hide other panels
-        document.getElementById('zonal-panel').style.display = 'none';
-        document.getElementById('animate-panel').style.display = 'none';
-        document.getElementById('timeseries-panel').style.display = 'none';
-      } else {
-        splitContainer.style.display = 'none';
-        document.getElementById('map').style.display = 'block';
-        document.getElementById('legend').style.display = 'block';
-        document.getElementById('month-control').style.display = 'block';
-        // Restore main map
-        if (currentSlug) {
-          loadRaster(currentSlug);
-        }
-      }
-    });
-
-    // Apply button
-    document.getElementById('split-apply').addEventListener('click', function() {
-      if (splitMode && splitMapLeft && splitMapRight) {
-        applySplitLayers();
-      }
-    });
-
-    // Close button
-    document.getElementById('split-close').addEventListener('click', function() {
-      splitMode = false;
-      document.getElementById('btnSplit').style.background = 'none';
-      document.getElementById('btnSplit').style.color = '#444';
+    function closeSplitMap() {
+      splitActive = false;
       splitContainer.style.display = 'none';
       document.getElementById('map').style.display = 'block';
       document.getElementById('legend').style.display = 'block';
       document.getElementById('month-control').style.display = 'block';
+      controlsWrapper.style.display = 'none';
+      controlsWrapper.style.width = 'auto';
+      controlsWrapper.style.height = 'auto';
+      
+      splitMaps.forEach(m => { if (m) m.remove(); });
+      splitMaps = [];
+      splitOverlays = [];
+      splitVectorLayers = [];
+      
       if (currentSlug) {
         loadRaster(currentSlug);
       }
-      if (splitMapLeft) {
-        splitMapLeft.remove();
-        splitMapLeft = null;
+    }
+
+    document.getElementById('btnSplit').addEventListener('click', function() {
+      if (splitActive) {
+        closeSplitMap();
+        this.style.background = 'none';
+        this.style.color = '#444';
+        return;
       }
-      if (splitMapRight) {
-        splitMapRight.remove();
-        splitMapRight = null;
+      screenSelector.style.display = 'block';
+      this.style.background = '#e8f4fd';
+      this.style.color = '#003366';
+    });
+
+    document.querySelectorAll('#screen-selector .screen-options button').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('#screen-selector .screen-options button').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        const screens = parseInt(this.dataset.screens);
+        screenSelector.style.display = 'none';
+        openSplitMap(screens);
+        document.getElementById('btnSplit').style.background = '#e8f4fd';
+        document.getElementById('btnSplit').style.color = '#003366';
+      });
+    });
+
+    document.getElementById('screen-selector-close').addEventListener('click', function() {
+      screenSelector.style.display = 'none';
+      document.getElementById('btnSplit').style.background = 'none';
+      document.getElementById('btnSplit').style.color = '#444';
+    });
+
+    document.getElementById('split-change-screens').addEventListener('click', function() {
+      screenSelector.style.display = 'block';
+      document.querySelectorAll('#screen-selector .screen-options button').forEach(b => {
+        b.classList.toggle('active', parseInt(b.dataset.screens) === numScreens);
+      });
+    });
+
+    document.getElementById('split-apply').addEventListener('click', function() {
+      if (splitActive && splitMaps.length > 0) {
+        applySplitLayers(splitMaps.length);
       }
-      splitLegendLeft.style.display = 'none';
-      splitLegendRight.style.display = 'none';
+    });
+
+    document.getElementById('split-close').addEventListener('click', function() {
+      closeSplitMap();
+      document.getElementById('btnSplit').style.background = 'none';
+      document.getElementById('btnSplit').style.color = '#444';
+    });
+
+    document.getElementById('split-close-mini').addEventListener('click', function() {
+      closeSplitMap();
+      document.getElementById('btnSplit').style.background = 'none';
+      document.getElementById('btnSplit').style.color = '#444';
+    });
+
+    document.addEventListener('change', function(e) {
+      if (e.target && e.target.id && e.target.id.startsWith('split-dataset-')) {
+        const idx = parseInt(e.target.id.split('-')[2]);
+        updateSplitMonthVisibility(idx);
+      }
     });
 
     // =============================================================

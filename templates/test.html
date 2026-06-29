@@ -1,1183 +1,447 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Raster Viewer – GIS Tools</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNICEF · Left nav (structured)</title>
+    <!-- Font Awesome 6 (free) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        }
 
-  <!-- Leaflet CSS + JS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <!-- Leaflet.draw -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
-  <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+        body {
+            background: #f4f7fb;
+            display: flex;
+            min-height: 100vh;
+        }
 
-  <style>
-    /* --- Reset & base --- */
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body, html { height:100%; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; }
-    .navbar { height:50px; background:#003366; color:#fff; display:flex; align-items:center; padding:0 16px; font-size:18px; font-weight:bold; flex-shrink:0; }
-    .app { display:flex; height:calc(100vh - 100px); }
-    .sidebar { width:270px; background:#fff; border-right:1px solid #ddd; overflow-y:auto; padding:10px 14px; flex-shrink:0; font-size:13px; }
-    .sidebar h5 { color:#003366; border-bottom:2px solid #003366; padding-bottom:4px; margin:0 0 6px 0; font-size:14px; }
-    .menu-item { display:block; padding:3px 8px 3px 20px; color:#333; cursor:pointer; border-radius:3px; margin:1px 0; text-decoration:none; font-size:13px; }
-    .menu-item:hover { background:#e8f4fd; }
-    .menu-item.active { background:#d4e6f1; font-weight:600; }
-    .section-title { cursor:pointer; font-weight:600; padding:4px 0; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; font-size:13px; }
-    .section-title:hover { background:#f5f8fc; }
-    .sub-menu { padding-left:10px; max-height:0; overflow:hidden; transition:max-height 0.25s ease; }
-    .sub-menu.open { max-height:2000px; }
-    .toggle-icon { font-size:11px; color:#888; transition:0.2s; }
-    .toggle-icon.rotated { transform:rotate(180deg); }
-    .map-area { flex:1; position:relative; }
-    #map { height:100%; width:100%; background:#e0e7ef; }
-    #legend { position:absolute; bottom:20px; left:20px; z-index:1000; background:rgba(255,255,255,0.95); padding:8px 12px; border-radius:6px; box-shadow:0 0 12px rgba(0,0,0,0.2); font-size:11px; display:none; max-width:180px; }
-    #legend h6 { margin:0 0 3px 0; color:#003366; border-bottom:1px solid #ddd; padding-bottom:2px; }
-    .legend-item { display:flex; align-items:center; gap:6px; margin:1px 0; }
-    .color-box { width:14px; height:12px; border:1px solid #aaa; flex-shrink:0; }
-    #month-control { position:absolute; bottom:20px; right:20px; z-index:1000; background:rgba(255,255,255,0.95); padding:10px 14px; border-radius:6px; box-shadow:0 0 12px rgba(0,0,0,0.2); display:none; align-items:center; gap:10px; font-size:13px; }
-    #month-control input[type="range"] { width:120px; cursor:pointer; }
-    #month-control span { min-width:28px; text-align:center; font-weight:bold; }
-    .vector-control { background:rgba(255,255,255,0.95); padding:6px 10px; border-radius:6px; box-shadow:0 0 12px rgba(0,0,0,0.2); font-size:13px; min-width:140px; max-width:200px; }
-    .vector-header { display:flex; justify-content:space-between; align-items:center; cursor:pointer; user-select:none; }
-    .vector-header h6 { margin:0; color:#003366; font-size:13px; font-weight:600; }
-    .vector-header .toggle-btn { font-size:12px; color:#888; transition:transform 0.2s; margin-left:8px; }
-    .vector-header .toggle-btn.rotated { transform:rotate(180deg); }
-    .vector-rows { margin-top:4px; padding-top:4px; border-top:1px solid #eee; display:block; }
-    .vector-rows.hidden { display:none; }
-    .vector-row { display:flex; align-items:center; padding:2px 0; }
-    .vector-row label { cursor:pointer; display:flex; align-items:center; gap:6px; font-weight:400; }
-    .vector-row input[type="checkbox"] { cursor:pointer; margin:0; }
-    .gis-toolbar { height:40px; background:#fff; border-bottom:1px solid #dcdcdc; display:flex; align-items:center; gap:6px; padding:0 10px; overflow-x:auto; flex-shrink:0; }
-    .tool-btn { border:none; background:none; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; min-width:70px; padding:5px; color:#444; border-radius:5px; transition:0.2s; }
-    .tool-btn:hover { background:#e8f4fd; color:#003366; }
-    .tool-btn i { font-size:18px; margin-bottom:2px; }
-    .tool-btn span { font-size:11px; }
-    .identify-popup { min-width:200px; background:#fff; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,0.15); overflow:hidden; }
-    .identify-popup .header { background:#003366; color:#fff; padding:6px 12px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:8px; }
-    .identify-popup .header i { font-size:16px; }
-    .identify-popup .body { padding:10px 12px 8px; font-size:13px; line-height:1.6; }
-    .identify-popup .body .field { display:flex; justify-content:space-between; border-bottom:1px solid #f0f0f0; padding:2px 0; }
-    .identify-popup .body .field:last-child { border-bottom:none; }
-    .identify-popup .body .label { color:#555; font-weight:500; }
-    .identify-popup .body .value { color:#003366; font-weight:600; }
-    .identify-popup .body .value.nodata { color:#999; font-style:italic; }
-    .leaflet-popup-content { padding:0 !important; margin:0 !important; min-width:200px; }
-    .leaflet-popup-content-wrapper { padding:0 !important; border-radius:8px !important; overflow:hidden; }
-    #geocode-control { position:absolute; top:10px; right:50px; z-index:1000; background:#fff; padding:4px 8px; border-radius:4px; box-shadow:0 0 12px rgba(0,0,0,0.2); display:none; align-items:center; gap:6px; }
-    #geocode-control input { border:1px solid #ccc; border-radius:3px; padding:4px 8px; font-size:13px; width:200px; }
-    #geocode-control button { background:#003366; color:#fff; border:none; border-radius:3px; padding:4px 10px; cursor:pointer; font-size:13px; }
+        /* ===== LEFT NAV ===== */
+        .left-nav {
+            width: 320px;
+            min-height: 100vh;
+            background: #ffffff;
+            box-shadow: 2px 0 12px rgba(0, 0, 0, 0.04);
+            padding: 1.2rem 0.6rem 2rem 0.6rem;
+            overflow-y: auto;
+            flex-shrink: 0;
+            border-right: 1px solid #e9edf4;
+        }
 
-    /* --- Zonal Stats Panel (unchanged) --- */
-    #zonal-panel {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 1001;
-      background: rgba(255,255,255,0.95);
-      border-radius: 8px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.2);
-      display: none;
-      min-width: 380px;
-      border: 1px solid #ccc;
-      overflow: hidden;
-    }
-    .zonal-header {
-      background: #003366;
-      color: #fff;
-      padding: 8px 14px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      cursor: move;
-      user-select: none;
-      font-weight: 600;
-      font-size: 14px;
-      border-radius: 8px 8px 0 0;
-    }
-    .zonal-header .title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .zonal-header .title i { font-size:16px; }
-    .zonal-header .close-btn {
-      background: none;
-      border: none;
-      color: #fff;
-      font-size: 18px;
-      cursor: pointer;
-      padding: 0 4px;
-      line-height: 1;
-    }
-    .zonal-header .close-btn:hover { color:#ffdddd; }
-    .zonal-body { padding: 14px 20px 16px; font-size: 13px; }
-    .zonal-welcome {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      align-items: center;
-      padding: 10px 0 6px;
-    }
-    .zonal-welcome .welcome-btn {
-      width: 100%;
-      padding: 10px 0;
-      border: 2px solid #003366;
-      border-radius: 6px;
-      background: #f0f6fc;
-      color: #003366;
-      font-weight: 600;
-      font-size: 15px;
-      cursor: pointer;
-      transition: 0.2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-    .zonal-welcome .welcome-btn:hover { background:#d4e6f1; transform:scale(1.02); }
-    .zonal-welcome .welcome-btn i { font-size:18px; }
-    .zonal-main { display:none; }
-    .zonal-main .row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 8px;
-      flex-wrap: wrap;
-    }
-    .zonal-main .row label { font-weight:500; min-width:70px; }
-    .zonal-main select, .zonal-main input[type="number"] {
-      padding: 4px 8px;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-      font-size: 13px;
-      flex: 1;
-    }
-    .zonal-main .pick-btn {
-      background: #e0e0e0;
-      border: none;
-      border-radius: 4px;
-      padding: 4px 8px;
-      cursor: pointer;
-      color: #333;
-      font-size: 14px;
-      transition: 0.2s;
-      white-space: nowrap;
-    }
-    .zonal-main .pick-btn:hover { background:#b3d4f0; }
-    .zonal-main .pick-btn.active { background:#003366; color:#fff; }
-    .zonal-main .actions {
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-      margin-top: 6px;
-    }
-    .zonal-main .actions button {
-      padding: 5px 16px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 13px;
-    }
-    .zonal-main .actions .apply-btn { background:#003366; color:#fff; }
-    .zonal-main .actions .apply-btn:hover { background:#002244; }
-    .zonal-main .actions .close-btn-body { background:#e0e0e0; color:#333; }
-    .zonal-main .actions .close-btn-body:hover { background:#ccc; }
-    .zonal-month { width:60px; }
-    .zonal-pick-view { display:none; text-align:center; padding:10px 0 6px; }
-    .zonal-pick-view .pick-message { font-size:14px; color:#333; margin-bottom:12px; }
-    .zonal-pick-view .pick-message i { color:#003366; margin-right:6px; }
-    .zonal-pick-view .pick-cancel {
-      background: none;
-      border: none;
-      color: #003366;
-      cursor: pointer;
-      font-size: 13px;
-      padding: 4px 0;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .zonal-pick-view .pick-cancel:hover { text-decoration:underline; }
-    .zonal-result-table {
-      width:100%;
-      border-collapse:collapse;
-      margin-top:6px;
-    }
-    .zonal-result-table td {
-      padding:3px 6px;
-      border-bottom:1px solid #eee;
-    }
-    .zonal-result-table td:first-child { font-weight:500; color:#555; }
-    .zonal-result-table td:last-child { text-align:right; font-weight:600; color:#003366; }
-    .zonal-back {
-      background: none;
-      border: none;
-      color: #003366;
-      cursor: pointer;
-      font-size: 13px;
-      padding: 4px 0;
-      margin-bottom: 6px;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .zonal-back:hover { text-decoration:underline; }
+        .left-nav::-webkit-scrollbar {
+            width: 5px;
+        }
+        .left-nav::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 20px;
+        }
 
-    /* --- Animation Panel --- */
-    #animate-panel {
-      position: absolute;
-      bottom: 80px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 1001;
-      background: rgba(255,255,255,0.95);
-      border-radius: 8px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.2);
-      display: none;
-      min-width: 380px;
-      border: 1px solid #ccc;
-      overflow: hidden;
-    }
-    .animate-header {
-      background: #003366;
-      color: #fff;
-      padding: 8px 14px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      cursor: move;
-      user-select: none;
-      font-weight: 600;
-      font-size: 14px;
-      border-radius: 8px 8px 0 0;
-    }
-    .animate-header .title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .animate-header .title i { font-size:16px; }
-    .animate-header .close-btn {
-      background: none;
-      border: none;
-      color: #fff;
-      font-size: 18px;
-      cursor: pointer;
-      padding: 0 4px;
-      line-height: 1;
-    }
-    .animate-header .close-btn:hover { color:#ffdddd; }
-    .animate-body {
-      padding: 14px 20px 16px;
-      font-size: 13px;
-    }
-    .animate-body .row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 8px;
-      flex-wrap: wrap;
-    }
-    .animate-body .row label {
-      font-weight: 500;
-      min-width: 60px;
-    }
-    .animate-body .row input[type="range"] {
-      flex: 1;
-      cursor: pointer;
-    }
-    .animate-body .row .month-display {
-      font-weight: 600;
-      color: #003366;
-      min-width: 28px;
-      text-align: center;
-    }
-    .animate-body .animate-controls {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-    .animate-body .animate-controls button {
-      padding: 5px 16px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 13px;
-      background: #e0e0e0;
-      color: #333;
-      transition: 0.2s;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .animate-body .animate-controls button:hover { background: #b3d4f0; }
-    .animate-body .animate-controls button.primary {
-      background: #003366;
-      color: #fff;
-    }
-    .animate-body .animate-controls button.primary:hover { background: #002244; }
-    .animate-body .animate-controls select {
-      padding: 4px 8px;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-      font-size: 13px;
-    }
-    .animate-body .animate-status {
-      margin-top: 6px;
-      text-align: center;
-      font-size: 12px;
-      color: #555;
-      border-top: 1px solid #eee;
-      padding-top: 6px;
-    }
-    .animate-body .animate-status .highlight {
-      color: #003366;
-      font-weight: 600;
-    }
-  </style>
+        .nav-header {
+            padding: 0 0.6rem 1.2rem 0.6rem;
+            border-bottom: 1px solid #eef2f7;
+            margin-bottom: 0.8rem;
+        }
+        .nav-header h2 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #0b2b4a;
+            letter-spacing: 0.3px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .nav-header h2 i {
+            color: #1a8cff;
+            font-size: 1.2rem;
+        }
+
+        /* --- menu section (top level) --- */
+        .menu-section {
+            margin-bottom: 0.25rem;
+        }
+
+        .menu-section-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #1a2e4a;
+            padding: 0.6rem 0.8rem;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.15s;
+            background: #f8faff;
+            border-left: 3px solid #1a8cff;
+            margin-bottom: 2px;
+        }
+        .menu-section-title:hover {
+            background: #eef4fd;
+        }
+
+        /* sub-section (second level) */
+        .sub-section-title {
+            font-weight: 500;
+            font-size: 0.85rem;
+            color: #1f3a5c;
+            padding: 0.45rem 0.8rem 0.45rem 1.8rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 6px;
+            transition: background 0.1s;
+            margin-top: 1px;
+            background: #fafcff;
+        }
+        .sub-section-title:hover {
+            background: #e8f0fe;
+        }
+
+        /* menu items (links) */
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0.35rem 0.8rem 0.35rem 2.8rem;
+            font-size: 0.82rem;
+            color: #1f3a5c;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: background 0.1s, color 0.1s;
+            font-weight: 400;
+            border-left: 2px solid transparent;
+        }
+        .menu-item i {
+            color: #7b8fa6;
+            font-size: 0.7rem;
+            width: 16px;
+            text-align: center;
+        }
+        .menu-item:hover {
+            background: #eef4fd;
+            color: #0b2b4a;
+            border-left-color: #1a8cff;
+        }
+        .menu-item.active {
+            background: #e2ebf9;
+            border-left-color: #1a8cff;
+            color: #0b2b4a;
+            font-weight: 500;
+        }
+
+        /* toggle icon */
+        .toggle-icon {
+            font-size: 0.7rem;
+            color: #6b85a0;
+            transition: transform 0.2s ease;
+        }
+        .menu-section-title .toggle-icon,
+        .sub-section-title .toggle-icon {
+            font-size: 0.7rem;
+        }
+
+        /* hidden sub-menus */
+        .sub-menu.hidden {
+            display: none;
+        }
+
+        .sub-menu {
+            margin-left: 0.2rem;
+            border-left: 1px dashed #dce3ed;
+            padding-left: 0.2rem;
+        }
+
+        /* small helper */
+        .mt-1 { margin-top: 4px; }
+        .ml-1 { margin-left: 4px; }
+
+        /* dummy content */
+        .content {
+            padding: 2rem 3rem;
+            flex: 1;
+            background: #f9fcff;
+        }
+        .content h1 {
+            font-weight: 400;
+            color: #0b2b4a;
+            font-size: 1.8rem;
+            border-bottom: 2px solid #dce5f0;
+            padding-bottom: 0.6rem;
+        }
+        .content p {
+            color: #2c405a;
+            margin-top: 1rem;
+            line-height: 1.6;
+        }
+        .badge {
+            background: #e1e9f5;
+            padding: 0.15rem 0.7rem;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            color: #1f3a5c;
+        }
+        /* Responsive */
+        @media (max-width: 720px) {
+            .left-nav { width: 280px; }
+        }
+    </style>
 </head>
 <body>
-  <!-- ===== NAVBAR ===== -->
-  <div class="navbar">🛰 Raster Viewer</div>
 
-  <!-- ===== TOOLBAR (with Animation button) ===== -->
-  <div class="gis-toolbar">
-    <button class="tool-btn" id="btnIdentify"><i class="fa-solid fa-crosshairs"></i><span>Identify</span></button>
-    <button class="tool-btn" id="btnAnimate"><i class="fa-solid fa-play"></i><span>Animate</span></button>
-    <button class="tool-btn" id="btnZonal"><i class="fa-solid fa-table-cells-large"></i><span>Zonal Stats</span></button>
-    <button class="tool-btn" id="btnMeasure"><i class="fa-solid fa-ruler"></i><span>Measure</span></button>
-    <button class="tool-btn" id="btnBuffer"><i class="fa-solid fa-circle-dot"></i><span>Buffer</span></button>
-    <button class="tool-btn" id="btnGeocode"><i class="fa-solid fa-magnifying-glass-location"></i><span>Search</span></button>
-    <button class="tool-btn" id="btnLocate"><i class="fa-solid fa-location-dot"></i><span>Locate</span></button>
-    <button class="tool-btn" id="btnGrid"><i class="fa-solid fa-border-all"></i><span>Grid</span></button>
-    <button class="tool-btn" id="btnScreenshot"><i class="fa-solid fa-camera"></i><span>Export</span></button>
-  </div>
+    <!-- ========== LEFT NAV ========== -->
+    <nav class="left-nav" id="leftNav">
 
-  <!-- ===== MAIN ===== -->
-  <div class="app">
-    <!-- Sidebar (unchanged) -->
-    <div class="sidebar">
-      <h5>📋 Products</h5>
-      <!-- Population -->
-      <div class="section-title" onclick="toggleMenu(this)">
-        Population & Demographics
-        <i class="fa-solid fa-chevron-down toggle-icon"></i>
-      </div>
-      <div class="sub-menu">
-        <a class="menu-item" data-slug="demographics_children">Total Child Population</a>
-        <a class="menu-item" data-slug="demographics_children_female">Child Population (Female)</a>
-        <a class="menu-item" data-slug="demographics_children_male">Child Population (Male)</a>
-      </div>
-      <!-- Climate -->
-      <div class="section-title" onclick="toggleMenu(this)">
-        Baseline Climate
-        <i class="fa-solid fa-chevron-down toggle-icon"></i>
-      </div>
-      <div class="sub-menu">
-        <div class="section-title" onclick="toggleMenu(this)" style="padding-left:6px; border-bottom:1px dashed #ddd; font-weight:500;">
-          🌧 Rainfall <i class="fa-solid fa-chevron-down toggle-icon"></i>
+        <div class="nav-header">
+            <h2><i class="fa-regular fa-map"></i> UNICEF indicators</h2>
         </div>
-        <div class="sub-menu">
-          <a class="menu-item" data-slug="rainfall">Mean Annual Rainfall</a>
-        </div>
-        <div class="section-title" onclick="toggleMenu(this)" style="padding-left:6px; border-bottom:1px dashed #ddd; font-weight:500;">
-          🌡 Temperature <i class="fa-solid fa-chevron-down toggle-icon"></i>
-        </div>
-        <div class="sub-menu">
-          <a class="menu-item" data-slug="temperature_avg">Mean Temperature</a>
-          <a class="menu-item" data-slug="temperature_max">Maximum Temperature</a>
-          <a class="menu-item" data-slug="temperature_min">Minimum Temperature</a>
-        </div>
-        <div class="section-title" onclick="toggleMenu(this)" style="padding-left:6px; border-bottom:1px dashed #ddd; font-weight:500;">
-          💨 Wind <i class="fa-solid fa-chevron-down toggle-icon"></i>
-        </div>
-        <div class="sub-menu">
-          <a class="menu-item" data-slug="wind_speed">Wind Speed</a>
-        </div>
-        <div class="section-title" onclick="toggleMenu(this)" style="padding-left:6px; border-bottom:1px dashed #ddd; font-weight:500;">
-          🌿 Vegetation & Land <i class="fa-solid fa-chevron-down toggle-icon"></i>
-        </div>
-        <div class="sub-menu">
-          <a class="menu-item" data-slug="land_degradation">Land Degradation</a>
-        </div>
-      </div>
-      <!-- Hazards -->
-      <div class="section-title" onclick="toggleMenu(this)">
-        Water‑Related Hazards
-        <i class="fa-solid fa-chevron-down toggle-icon"></i>
-      </div>
-      <div class="sub-menu">
-        <a class="menu-item" data-slug="flood_risk_coastal">Coastal Flood Risk</a>
-        <a class="menu-item" data-slug="flood_risk_fluvial">Fluvial Flood Risk</a>
-        <a class="menu-item" data-slug="drought_risk">Drought Risk</a>
-      </div>
-      <!-- Pollution & Health -->
-      <div class="section-title" onclick="toggleMenu(this)">
-        Pollution & Health
-        <i class="fa-solid fa-chevron-down toggle-icon"></i>
-      </div>
-      <div class="sub-menu">
-        <a class="menu-item" data-slug="pollution_air">Air Pollution</a>
-        <a class="menu-item" data-slug="pollution_water">Water Pollution</a>
-        <a class="menu-item" data-slug="diseases_cholera">Cholera Risk</a>
-        <a class="menu-item" data-slug="diseases_malaria">Malaria Risk</a>
-        <a class="menu-item" data-slug="cyclone_risk">Cyclone Risk</a>
-      </div>
-    </div>
 
-    <!-- Map -->
-    <div class="map-area">
-      <div id="map"></div>
-      <div id="legend"><h6>Legend</h6><div id="legend-content"></div></div>
-      <div id="month-control">
-        <label>Month:</label>
-        <input type="range" id="monthSlider" min="1" max="12" value="1" />
-        <span id="monthDisplay">1</span>
-      </div>
-      <div id="geocode-control">
-        <input type="text" id="geocode-input" placeholder="Search place..." />
-        <button id="geocode-btn">Go</button>
-      </div>
-
-      <!-- Zonal Stats Panel (unchanged) -->
-      <div id="zonal-panel">...</div>
-
-      <!-- Animation Panel -->
-      <div id="animate-panel">
-        <div class="animate-header">
-          <span class="title"><i class="fa-solid fa-play"></i> Time‑lapse Animation</span>
-          <button class="close-btn" id="animate-close" title="Close panel">✕</button>
-        </div>
-        <div class="animate-body">
-          <div class="row">
-            <label>Month:</label>
-            <input type="range" id="animateSlider" min="1" max="12" value="1" step="1" />
-            <span class="month-display" id="animateMonthDisplay">1</span>
-          </div>
-          <div class="animate-controls">
-            <button id="animatePlayBtn" class="primary"><i class="fa-solid fa-play"></i> Play</button>
-            <label>Speed:</label>
-            <select id="animateSpeed">
-              <option value="500">0.5s</option>
-              <option value="1000" selected>1s</option>
-              <option value="2000">2s</option>
-              <option value="3000">3s</option>
-            </select>
-          </div>
-          <div class="animate-status" id="animateStatus">
-            <span class="highlight" id="animateProductName">No dataset loaded</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    // =============================================================
-    // 1. DATASET REGISTRY & LEGEND (same as before)
-    // =============================================================
-    const LEGEND_RAINFALL = [
-      { color: 'rgb(222,235,247)', label: 'Very Low (0-25 mm)' },
-      { color: 'rgb(158,202,225)', label: 'Low (25-75 mm)' },
-      { color: 'rgb(49,130,189)',  label: 'Moderate (75-150 mm)' },
-      { color: 'rgb(8,48,107)',    label: 'High (>150 mm)' },
-      { color: '#ffffff',          label: 'No Data' },
-    ];
-    const LEGEND_TEMPERATURE = [
-      { color: 'rgb(103,0,31)',   label: 'Very Cold (< -10°C)' },
-      { color: 'rgb(178,24,43)',  label: 'Cold (-10–0°C)' },
-      { color: 'rgb(214,96,77)',  label: 'Moderate (0–10°C)' },
-      { color: 'rgb(244,165,130)', label: 'Warm (10–20°C)' },
-      { color: 'rgb(253,219,199)', label: 'Hot (>20°C)' },
-      { color: '#ffffff',          label: 'No Data' },
-    ];
-    const LEGEND_DEMO = [
-      { color: 'rgb(237,248,233)', label: 'Very Low (<10)' },
-      { color: 'rgb(199,233,180)', label: 'Low (10-50)' },
-      { color: 'rgb(127,205,187)', label: 'Moderate (50-200)' },
-      { color: 'rgb(65,182,196)',  label: 'High (200-500)' },
-      { color: 'rgb(29,145,192)',  label: 'Very High (>500)' },
-      { color: '#ffffff',          label: 'No Data' },
-    ];
-    const LEGEND_FLOOD = [
-      { color: 'rgb(254,224,139)', label: 'No Risk' },
-      { color: 'rgb(253,174,97)',  label: 'Very Low' },
-      { color: 'rgb(244,109,67)',  label: 'Low' },
-      { color: 'rgb(213,62,79)',   label: 'Moderate' },
-      { color: 'rgb(158,1,66)',    label: 'High' },
-      { color: '#ffffff',          label: 'No Data' },
-    ];
-    const LEGEND_POLLUTION = [
-      { color: 'rgb(255,255,204)', label: 'Low' },
-      { color: 'rgb(255,237,160)', label: 'Moderate' },
-      { color: 'rgb(254,196,79)',  label: 'High' },
-      { color: 'rgb(254,153,41)',  label: 'Very High' },
-      { color: 'rgb(217,95,14)',   label: 'Extreme' },
-      { color: '#ffffff',          label: 'No Data' },
-    ];
-    const LEGEND_CYCLONE = LEGEND_DEMO;
-    const LEGEND_DISEASE = LEGEND_POLLUTION;
-
-    const DATASETS = {
-      rainfall:          { type: 'month', legend: LEGEND_RAINFALL },
-      temperature_avg:   { type: 'month', legend: LEGEND_TEMPERATURE },
-      temperature_max:   { type: 'month', legend: LEGEND_TEMPERATURE },
-      temperature_min:   { type: 'month', legend: LEGEND_TEMPERATURE },
-      wind_speed:        { type: 'month', legend: LEGEND_DEMO },
-      demographics_children_female: { type: 'static', legend: LEGEND_DEMO },
-      demographics_children_male:   { type: 'static', legend: LEGEND_DEMO },
-      demographics_children:        { type: 'static', legend: LEGEND_DEMO },
-      land_degradation:             { type: 'static', legend: LEGEND_DEMO },
-      flood_risk_coastal:           { type: 'static', legend: LEGEND_FLOOD },
-      flood_risk_fluvial:           { type: 'static', legend: LEGEND_FLOOD },
-      drought_risk:                 { type: 'static', legend: LEGEND_FLOOD },
-      pollution_air:                { type: 'static', legend: LEGEND_POLLUTION },
-      pollution_water:              { type: 'static', legend: LEGEND_POLLUTION },
-      cyclone_risk:                 { type: 'static', legend: LEGEND_CYCLONE },
-      diseases_cholera:             { type: 'static', legend: LEGEND_DISEASE },
-      diseases_malaria:             { type: 'static', legend: LEGEND_DISEASE },
-    };
-
-    const PRODUCT_NAMES = {
-      'demographics_children': 'Total Child Population',
-      'demographics_children_female': 'Child Population (Female)',
-      'demographics_children_male': 'Child Population (Male)',
-      'rainfall': 'Mean Annual Rainfall',
-      'temperature_avg': 'Mean Temperature',
-      'temperature_max': 'Maximum Temperature',
-      'temperature_min': 'Minimum Temperature',
-      'wind_speed': 'Wind Speed',
-      'land_degradation': 'Land Degradation',
-      'flood_risk_coastal': 'Coastal Flood Risk',
-      'flood_risk_fluvial': 'Fluvial Flood Risk',
-      'drought_risk': 'Drought Risk',
-      'pollution_air': 'Air Pollution',
-      'pollution_water': 'Water Pollution',
-      'diseases_cholera': 'Cholera Risk',
-      'diseases_malaria': 'Malaria Risk',
-      'cyclone_risk': 'Cyclone Risk',
-    };
-    const WORLD_BOUNDS = [[-90, -180], [90, 180]];
-
-    // =============================================================
-    // 2. SIDEBAR TOGGLE
-    // =============================================================
-    function toggleMenu(element) {
-      let sub = element.nextElementSibling;
-      while (sub && !sub.classList.contains('sub-menu')) {
-        sub = sub.nextElementSibling;
-      }
-      if (!sub) return;
-      sub.classList.toggle('open');
-      const icon = element.querySelector('.toggle-icon');
-      if (icon) icon.classList.toggle('rotated');
-    }
-
-    // =============================================================
-    // 3. LEAFLET MAP
-    // =============================================================
-    const map = L.map('map', {
-      center: [0, 20],
-      zoom: 3,
-      maxBounds: [[-90, -180], [90, 180]],
-      maxBoundsViscosity: 1.0
-    });
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap'
-    }).addTo(map);
-    map.createPane('rasterPane');
-    map.getPane('rasterPane').style.zIndex = 300;
-
-    let currentOverlay = null;
-    let currentSlug = null;
-
-    // =============================================================
-    // 4. VECTOR LAYERS (same)
-    // =============================================================
-    const VECTOR_LAYERS = [
-      {
-        id: 'chk-countries',
-        label: 'Countries',
-        url: '/static/data/geojson/ne_10m_admin_0_countries_sm.geojson',
-        style: { color: '#3388ff', weight: 1, fill: false },
-        defaultChecked: true,
-      },
-      {
-        id: 'chk-provinces',
-        label: 'Provinces (adm1)',
-        url: '/static/data/geojson/ne_10m_admin_1_countries_sm.geojson',
-        style: { color: '#ff7f0e', weight: 0.8, fill: false, opacity: 0.6 },
-        defaultChecked: true,
-      },
-      {
-        id: 'chk-rivers',
-        label: 'Rivers',
-        url: '/static/data/geojson/world_rivers.geojson',
-        style: { color: '#1f77b4', weight: 1.5, fill: false, opacity: 0.7 },
-        defaultChecked: false,
-      },
-    ];
-    const vectorLayers = {};
-
-    const VectorControl = L.Control.extend({
-      options: { position: 'topright' },
-      onAdd: function() {
-        const container = L.DomUtil.create('div', 'vector-control');
-        const header = L.DomUtil.create('div', 'vector-header', container);
-        header.innerHTML = '<h6>🗺️ Vector Layers</h6><i class="fa-solid fa-chevron-down toggle-btn"></i>';
-        const rowsContainer = L.DomUtil.create('div', 'vector-rows', container);
-
-        VECTOR_LAYERS.forEach(layer => {
-          const row = document.createElement('div');
-          row.className = 'vector-row';
-          const label = document.createElement('label');
-          const checkbox = document.createElement('input');
-          checkbox.type = 'checkbox';
-          checkbox.id = layer.id;
-          checkbox.checked = layer.defaultChecked;
-          checkbox.dataset.layerId = layer.id;
-          label.appendChild(checkbox);
-          label.appendChild(document.createTextNode(' ' + layer.label));
-          row.appendChild(label);
-          rowsContainer.appendChild(row);
-
-          fetch(layer.url)
-            .then(res => res.ok ? res.json() : Promise.reject())
-            .then(data => {
-              const geojsonLayer = L.geoJSON(data, { style: layer.style, pane: 'overlayPane' });
-              vectorLayers[layer.id] = geojsonLayer;
-              if (layer.defaultChecked) geojsonLayer.addTo(map);
-              checkbox.addEventListener('change', function() {
-                const ref = vectorLayers[layer.id];
-                if (!ref) return;
-                if (this.checked) { if (!map.hasLayer(ref)) ref.addTo(map); }
-                else { if (map.hasLayer(ref)) map.removeLayer(ref); }
-              });
-            })
-            .catch(() => console.warn('Failed to load ' + layer.id));
-        });
-
-        const toggleBtn = header.querySelector('.toggle-btn');
-        let isCollapsed = false;
-        function toggleCollapse() {
-          isCollapsed = !isCollapsed;
-          if (isCollapsed) {
-            rowsContainer.classList.add('hidden');
-            toggleBtn.classList.remove('fa-chevron-down');
-            toggleBtn.classList.add('fa-chevron-right');
-          } else {
-            rowsContainer.classList.remove('hidden');
-            toggleBtn.classList.remove('fa-chevron-right');
-            toggleBtn.classList.add('fa-chevron-down');
-          }
-        }
-        header.addEventListener('click', function(e) { e.stopPropagation(); toggleCollapse(); });
-        return container;
-      }
-    });
-    map.addControl(new VectorControl());
-
-    // =============================================================
-    // 5. LEGEND UPDATE
-    // =============================================================
-    const legendBox = document.getElementById('legend');
-    const legendContent = document.getElementById('legend-content');
-
-    function updateLegend(slug) {
-      const config = DATASETS[slug];
-      if (!config || !config.legend) {
-        legendBox.style.display = 'none';
-        return;
-      }
-      let html = '';
-      config.legend.forEach(item => {
-        html += `<div class="legend-item">
-                  <span class="color-box" style="background:${item.color};"></span>
-                  <span>${item.label}</span>
-                </div>`;
-      });
-      legendContent.innerHTML = html;
-      legendBox.style.display = 'block';
-    }
-
-    // =============================================================
-    // 6. MONTH CONTROLS
-    // =============================================================
-    const monthControl = document.getElementById('month-control');
-    const monthSlider = document.getElementById('monthSlider');
-    const monthDisplay = document.getElementById('monthDisplay');
-
-    // =============================================================
-    // 7. LOAD RASTER
-    // =============================================================
-    function loadRaster(slug, month) {
-      const config = DATASETS[slug];
-      if (!config) return;
-
-      let url = `/earth_observation/raster/${slug}/`;
-      let m = 1;
-      if (config.type === 'month') {
-        monthControl.style.display = 'flex';
-        m = month || parseInt(monthSlider.value, 10) || 1;
-        url += `${m}/`;
-        // Update slider if month provided
-        if (month) {
-          monthSlider.value = month;
-          monthDisplay.textContent = month;
-        }
-      } else {
-        monthControl.style.display = 'none';
-      }
-
-      if (currentOverlay) {
-        map.removeLayer(currentOverlay);
-        currentOverlay = null;
-      }
-
-      currentOverlay = L.imageOverlay(url, WORLD_BOUNDS, {
-        opacity: 0.7,
-        pane: 'rasterPane'
-      }).addTo(map);
-
-      updateLegend(slug);
-
-      document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll(`.menu-item[data-slug="${slug}"]`).forEach(el => el.classList.add('active'));
-
-      currentSlug = slug;
-      return m;
-    }
-
-    // =============================================================
-    // 8. SIDEBAR & MONTH SLIDER EVENTS
-    // =============================================================
-    document.querySelector('.sidebar').addEventListener('click', function(e) {
-      const item = e.target.closest('.menu-item');
-      if (!item) return;
-      e.preventDefault();
-      const slug = item.dataset.slug;
-      if (slug) {
-        // Stop animation if running
-        if (animationTimer) {
-          stopAnimation();
-        }
-        loadRaster(slug);
-        // Update animate panel status
-        updateAnimateStatus();
-      }
-    });
-
-    monthSlider.addEventListener('input', function() {
-      monthDisplay.textContent = this.value;
-      if (currentSlug) {
-        // Stop animation if running
-        if (animationTimer) {
-          stopAnimation();
-        }
-        loadRaster(currentSlug, parseInt(this.value));
-        // Update animate slider too
-        document.getElementById('animateSlider').value = this.value;
-        document.getElementById('animateMonthDisplay').textContent = this.value;
-      }
-    });
-
-    // =============================================================
-    // 9. INITIAL LOAD
-    // =============================================================
-    const firstItem = document.querySelector('.menu-item');
-    if (firstItem) loadRaster(firstItem.dataset.slug);
-
-    // =============================================================
-    // 10. IDENTIFY TOOL (unchanged)
-    // =============================================================
-    let identifyMode = false;
-    let identifyPopup = null;
-
-    document.getElementById('btnIdentify').addEventListener('click', function() {
-      identifyMode = !identifyMode;
-      this.style.background = identifyMode ? '#e8f4fd' : 'none';
-      this.style.color = identifyMode ? '#003366' : '#444';
-      map.getContainer().style.cursor = identifyMode ? 'crosshair' : '';
-      if (!identifyMode && identifyPopup) {
-        map.closePopup(identifyPopup);
-        identifyPopup = null;
-      }
-    });
-
-    map.on('click', function(e) {
-      if (!identifyMode) return;
-      const lat = e.latlng.lat.toFixed(4);
-      const lng = e.latlng.lng.toFixed(4);
-
-      let url = `/earth_observation/api/point/${currentSlug}/`;
-      if (DATASETS[currentSlug] && DATASETS[currentSlug].type === 'month') {
-        url += `${monthSlider.value}/`;
-      }
-      url += `?lat=${lat}&lon=${lng}`;
-
-      fetch(url)
-        .then(res => {
-          if (!res.ok) throw new Error('Network response was not ok');
-          return res.json();
-        })
-        .then(data => {
-          if (data.error) {
-            alert('Error: ' + data.error);
-            return;
-          }
-          const prodName = PRODUCT_NAMES[currentSlug] || currentSlug;
-          const val = data.value !== null ? data.value.toFixed(2) : 'No data';
-          const valueClass = data.value !== null ? '' : 'nodata';
-          const html = `
-            <div class="identify-popup">
-              <div class="header">
-                <i class="fa-solid fa-map-pin"></i>
-                ${prodName}
-              </div>
-              <div class="body">
-                <div class="field">
-                  <span class="label">Latitude</span>
-                  <span class="value">${lat}</span>
-                </div>
-                <div class="field">
-                  <span class="label">Longitude</span>
-                  <span class="value">${lng}</span>
-                </div>
-                <div class="field">
-                  <span class="label">Pixel Value</span>
-                  <span class="value ${valueClass}">${val}</span>
-                </div>
-              </div>
+        <!-- ============================================================ -->
+        <!-- 1. CHILD SURVIVAL & DEVELOPMENT (Health, Nutrition & Maternal) -->
+        <!-- ============================================================ -->
+        <div class="menu-section">
+            <div class="menu-section-title" data-toggle-id="section-child" onclick="toggleSection(this)">
+                <span><i class="fa-regular fa-heart" style="margin-right: 8px;"></i>Child Survival & Development</span>
+                <i class="fa-solid fa-chevron-down toggle-icon"></i>
             </div>
-          `;
-          if (identifyPopup) map.closePopup(identifyPopup);
-          identifyPopup = L.popup()
-            .setLatLng(e.latlng)
-            .setContent(html)
-            .openOn(map);
-        })
-        .catch(err => {
-          console.error(err);
-          alert('Failed to get pixel value.');
+            <div class="sub-menu hidden">
+
+                <!-- Mortality & Maternal Health -->
+                <div class="sub-section-title" data-toggle-id="sub-mortality" onclick="toggleSection(this)">
+                    <span>🩺 Mortality & Maternal Health</span>
+                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="sub-menu hidden">
+                    <a href="#" class="menu-item" data-item-id="SH.DTH.IMRT"><i class="fa-regular fa-circle"></i> Infant deaths (SH.DTH.IMRT)</a>
+                    <a href="#" class="menu-item" data-item-id="SH.DTH.MORT"><i class="fa-regular fa-circle"></i> Under‑5 deaths (SH.DTH.MORT)</a>
+                    <a href="#" class="menu-item" data-item-id="SH.DTH.NMRT"><i class="fa-regular fa-circle"></i> Neonatal deaths (SH.DTH.NMRT)</a>
+                    <a href="#" class="menu-item" data-item-id="SH.DTH.STLB"><i class="fa-regular fa-circle"></i> Stillbirths (SH.DTH.STLB)</a>
+                    <a href="#" class="menu-item" data-item-id="SH.DYN.0509"><i class="fa-regular fa-circle"></i> 5‑9 mortality (per 1k) (SH.DYN.0509)</a>
+                    <a href="#" class="menu-item" data-item-id="SH.DYN.MORT"><i class="fa-regular fa-circle"></i> Under‑5 mortality rate (SH.DYN.MORT)</a>
+                    <a href="#" class="menu-item" data-item-id="SH.DYN.STLB"><i class="fa-regular fa-circle"></i> Stillbirth rate (SH.DYN.STLB)</a>
+                    <a href="#" class="menu-item" data-item-id="SH.MMR.DTHS"><i class="fa-regular fa-circle"></i> Maternal deaths (SH.MMR.DTHS)</a>
+                </div>
+
+                <!-- Antenatal & Maternal Care -->
+                <div class="sub-section-title" data-toggle-id="sub-antenatal" onclick="toggleSection(this)">
+                    <span>🤱 Antenatal & Maternal Care</span>
+                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="sub-menu hidden">
+                    <a href="#" class="menu-item" data-item-id="SH.STA.ANV4.ZS"><i class="fa-regular fa-circle"></i> Prenatal ≥4 visits (SH.STA.ANV4.ZS)</a>
+                    <a href="#" class="menu-item" data-item-id="SH.STA.ANVC.ZS"><i class="fa-regular fa-circle"></i> Prenatal care % (SH.STA.ANVC.ZS)</a>
+                    <a href="#" class="menu-item" data-item-id="SH.STA.BRTC.ZS"><i class="fa-regular fa-circle"></i> Skilled birth attendance (SH.STA.BRTC.ZS)</a>
+                </div>
+
+                <!-- Child Health & Immunization -->
+                <div class="sub-section-title" data-toggle-id="sub-immun" onclick="toggleSection(this)">
+                    <span>💉 Child Health & Immunization</span>
+                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="sub-menu hidden">
+                    <a href="#" class="menu-item" data-item-id="SH.IMM.HEPB"><i class="fa-regular fa-circle"></i> HepB3 immunization (SH.IMM.HEPB)</a>
+                    <a href="#" class="menu-item" data-item-id="SH.IMM.HIB3"><i class="fa-regular fa-circle"></i> Hib3 immunization (SH.IMM.HIB3)</a>
+                    <a href="#" class="menu-item" data-item-id="SH.IMM.IBCG"><i class="fa-regular fa-circle"></i> BCG immunization (SH.IMM.IBCG)</a>
+                    <a href="#" class="menu-item" data-item-id="SH.IMM.IDPT"><i class="fa-regular fa-circle"></i> DPT immunization (SH.IMM.IDPT)</a>
+                    <a href="#" class="menu-item" data-item-id="SH.IMM.MEAS"><i class="fa-regular fa-circle"></i> Measles immunization (SH.IMM.MEAS)</a>
+                    <a href="#" class="menu-item" data-item-id="SH.STA.ARIF.ZS"><i class="fa-regular fa-circle"></i> ARI prevalence (SH.STA.ARIF.ZS)</a>
+                    <a href="#" class="menu-item" data-item-id="SH.STA.ORTH"><i class="fa-regular fa-circle"></i> Diarrhea treatment ORS (SH.STA.ORTH)</a>
+                </div>
+
+            </div> <!-- end sub-menu child -->
+        </div> <!-- end section Child Survival -->
+
+        <!-- ============================================================ -->
+        <!-- 2. WATER, SANITATION & HYGIENE (WASH)                       -->
+        <!-- ============================================================ -->
+        <div class="menu-section">
+            <div class="menu-section-title" data-toggle-id="section-wash" onclick="toggleSection(this)">
+                <span><i class="fa-regular fa-droplet" style="margin-right: 8px;"></i>WASH</span>
+                <i class="fa-solid fa-chevron-down toggle-icon"></i>
+            </div>
+            <div class="sub-menu hidden">
+                <a href="#" class="menu-item" data-item-id="SH.H2O.BASW.ZS"><i class="fa-regular fa-circle"></i> Basic drinking water (SH.H2O.BASW.ZS)</a>
+                <a href="#" class="menu-item" data-item-id="SH.STA.ACSN"><i class="fa-regular fa-circle"></i> Improved sanitation (SH.STA.ACSN)</a>
+                <a href="#" class="menu-item" data-item-id="SH.STA.ODFC.ZS"><i class="fa-regular fa-circle"></i> Open defecation (SH.STA.ODFC.ZS)</a>
+                <a href="#" class="menu-item" data-item-id="SH.STA.SMSS.ZS"><i class="fa-regular fa-circle"></i> Safely managed sanitation (SH.STA.SMSS.ZS)</a>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- 3. CHILD PROTECTION (Child Labor & Harmful Practices)       -->
+        <!-- ============================================================ -->
+        <div class="menu-section">
+            <div class="menu-section-title" data-toggle-id="section-protection" onclick="toggleSection(this)">
+                <span><i class="fa-regular fa-shield" style="margin-right: 8px;"></i>Child Protection</span>
+                <i class="fa-solid fa-chevron-down toggle-icon"></i>
+            </div>
+            <div class="sub-menu hidden">
+
+                <div class="sub-section-title" data-toggle-id="sub-labor" onclick="toggleSection(this)">
+                    <span>⚒️ Child Labor</span>
+                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="sub-menu hidden">
+                    <a href="#" class="menu-item" data-item-id="SL.TLF.0714.ZS"><i class="fa-regular fa-circle"></i> Children in employment (SL.TLF.0714.ZS)</a>
+                    <a href="#" class="menu-item" data-item-id="SL.TLF.0714.SW.TM"><i class="fa-regular fa-circle"></i> Work hrs (study+work) (SL.TLF.0714.SW.TM)</a>
+                    <a href="#" class="menu-item" data-item-id="SL.TLF.0714.SW.ZS"><i class="fa-regular fa-circle"></i> Employment & study (SL.TLF.0714.SW.ZS)</a>
+                    <a href="#" class="menu-item" data-item-id="SL.AGR.0714.ZS"><i class="fa-regular fa-circle"></i> Child labor in agriculture (SL.AGR.0714.ZS)</a>
+                    <a href="#" class="menu-item" data-item-id="SL.FAM.0714.FE.ZS"><i class="fa-regular fa-circle"></i> Unpaid family workers (SL.FAM.0714.FE.ZS)</a>
+                    <a href="#" class="menu-item" data-item-id="SL.MNF.0714.ZS"><i class="fa-regular fa-circle"></i> Child labor in manufacturing (SL.MNF.0714.ZS)</a>
+                </div>
+
+                <div class="sub-section-title" data-toggle-id="sub-harmful" onclick="toggleSection(this)">
+                    <span>⚠️ Harmful Practices</span>
+                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="sub-menu hidden">
+                    <a href="#" class="menu-item" data-item-id="SH.STA.FGMS.ZS"><i class="fa-regular fa-circle"></i> FGM prevalence (SH.STA.FGMS.ZS)</a>
+                    <a href="#" class="menu-item" data-item-id="SP.M15.2024.FE.ZS"><i class="fa-regular fa-circle"></i> Married by 15 (SP.M15.2024.FE.ZS)</a>
+                    <a href="#" class="menu-item" data-item-id="SP.M18.2024.FE.ZS"><i class="fa-regular fa-circle"></i> Married by 18 (SP.M18.2024.FE.ZS)</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- 4. EDUCATION & ADOLESCENT DEVELOPMENT                       -->
+        <!-- ============================================================ -->
+        <div class="menu-section">
+            <div class="menu-section-title" data-toggle-id="section-education" onclick="toggleSection(this)">
+                <span><i class="fa-regular fa-graduation-cap" style="margin-right: 8px;"></i>Education & Adolescent Dev.</span>
+                <i class="fa-solid fa-chevron-down toggle-icon"></i>
+            </div>
+            <div class="sub-menu hidden">
+                <a href="#" class="menu-item" data-item-id="SE.ENR.ORPH"><i class="fa-regular fa-circle"></i> Orphan school attendance ratio (SE.ENR.ORPH)</a>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- 5. SOCIAL INCLUSION & BIRTH REGISTRATION                    -->
+        <!-- ============================================================ -->
+        <div class="menu-section">
+            <div class="menu-section-title" data-toggle-id="section-social" onclick="toggleSection(this)">
+                <span><i class="fa-regular fa-id-card" style="margin-right: 8px;"></i>Social Inclusion & Birth Reg.</span>
+                <i class="fa-solid fa-chevron-down toggle-icon"></i>
+            </div>
+            <div class="sub-menu hidden">
+                <a href="#" class="menu-item" data-item-id="birth_reg"><i class="fa-regular fa-circle"></i> Birth registration, total (%)</a>
+                <a href="#" class="menu-item" data-item-id="ID.OWN.BRTH.ZS"><i class="fa-regular fa-circle"></i> Birth certification (ID.OWN.BRTH.ZS)</a>
+                <a href="#" class="menu-item" data-item-id="birth_reg_1"><i class="fa-regular fa-circle"></i> Birth registration, female</a>
+                <a href="#" class="menu-item" data-item-id="birth_reg_2"><i class="fa-regular fa-circle"></i> Birth registration, male</a>
+                <a href="#" class="menu-item" data-item-id="SP.REG.BRTH.RU.ZS"><i class="fa-regular fa-circle"></i> Completeness, rural (SP.REG.BRTH.RU.ZS)</a>
+                <a href="#" class="menu-item" data-item-id="SP.REG.BRTH.UR.ZS"><i class="fa-regular fa-circle"></i> Completeness, urban (SP.REG.BRTH.UR.ZS)</a>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- 6. EARLY CHILDHOOD DEVELOPMENT (ECD)                       -->
+        <!-- ============================================================ -->
+        <div class="menu-section">
+            <div class="menu-section-title" data-toggle-id="section-ecd" onclick="toggleSection(this)">
+                <span><i class="fa-regular fa-baby" style="margin-right: 8px;"></i>Early Childhood Development</span>
+                <i class="fa-solid fa-chevron-down toggle-icon"></i>
+            </div>
+            <div class="sub-menu hidden">
+                <a href="#" class="menu-item" data-item-id="SH.STA.BFED.ZS"><i class="fa-regular fa-circle"></i> Exclusive breastfeeding (SH.STA.BFED.ZS)</a>
+                <a href="#" class="menu-item" data-item-id="SH.STA.BRTW.ZS"><i class="fa-regular fa-circle"></i> Low birthweight (SH.STA.BRTW.ZS)</a>
+                <a href="#" class="menu-item" data-item-id="SH.STA.OWGH.MA.ZS"><i class="fa-regular fa-circle"></i> Overweight, male (SH.STA.OWGH.MA.ZS)</a>
+                <a href="#" class="menu-item" data-item-id="SH.STA.STNT.ZS"><i class="fa-regular fa-circle"></i> Stunting (SH.STA.STNT.ZS)</a>
+                <a href="#" class="menu-item" data-item-id="SH.STA.WAST.ZS"><i class="fa-regular fa-circle"></i> Wasting (SH.STA.WAST.ZS)</a>
+                <a href="#" class="menu-item" data-item-id="HD.HCI.STNT"><i class="fa-regular fa-circle"></i> Fraction not stunted (HD.HCI.STNT)</a>
+                <a href="#" class="menu-item" data-item-id="newborns_tetanus"><i class="fa-regular fa-circle"></i> Newborns protected against tetanus (%)</a>
+            </div>
+        </div>
+
+        <!-- ===== small note ===== -->
+        <div style="font-size: 0.65rem; color: #7c8ea6; padding: 1.2rem 0.8rem 0.2rem; border-top: 1px solid #e5ecf5; margin-top: 1.2rem;">
+            <i class="fa-regular fa-circle-check"></i> based on UNICEF indicator codes
+        </div>
+
+    </nav>
+
+    <!-- ========== dummy content ========== -->
+    <div class="content">
+        <h1>Indicators · left nav</h1>
+        <p><span class="badge">data-driven</span> The navigation mirrors the provided list: <br>
+        <strong>CHILD SURVIVAL & DEVELOPMENT</strong> (Mortality, Antenatal, Immunization) · <strong>WASH</strong> · <strong>CHILD PROTECTION</strong> (Labor, Harmful Practices) · <strong>EDUCATION</strong> · <strong>SOCIAL INCLUSION & BIRTH REG.</strong> · <strong>ECD</strong>.
+        </p>
+        <p style="margin-top: 0.5rem;">Each item holds the exact indicator code (e.g., <code>SH.DTH.IMRT</code>, <code>SL.TLF.0714.ZS</code>).</p>
+        <p style="margin-top: 0.5rem;"><i class="fa-regular fa-folder-open"></i> Click section titles / sub-titles to expand/collapse.</p>
+        <p style="margin-top: 1rem; color: #3f5a7a;">✔️ All indicators are listed, including "newborns protected against tetanus" in ECD.</p>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- TOGGLE SCRIPT (pure, without jQuery)                         -->
+    <!-- ============================================================ -->
+    <script>
+        function toggleSection(el) {
+            // find the next sibling with class 'sub-menu' (direct)
+            let subMenu = el.nextElementSibling;
+            // if the clicked element is a sub-section-title, it's inside a .sub-menu 
+            // but we need to handle both cases: section-title & sub-section-title
+            // They both have the same structure: next sibling is the sub-menu
+            if (subMenu && subMenu.classList.contains('sub-menu')) {
+                subMenu.classList.toggle('hidden');
+                // toggle icon rotation
+                const icon = el.querySelector('.toggle-icon');
+                if (icon) {
+                    icon.style.transform = subMenu.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
+                }
+                return;
+            }
+
+            // If not found, maybe the sub-menu is deeper? but our structure is consistent.
+            // fallback: search for next .sub-menu among siblings
+            let sibling = el.nextElementSibling;
+            while (sibling) {
+                if (sibling.classList.contains('sub-menu')) {
+                    sibling.classList.toggle('hidden');
+                    const icon = el.querySelector('.toggle-icon');
+                    if (icon) {
+                        icon.style.transform = sibling.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
+                    }
+                    break;
+                }
+                sibling = sibling.nextElementSibling;
+            }
+        }
+
+        // On load, set all sections closed (hidden) except you can keep something open if you want
+        document.addEventListener('DOMContentLoaded', function() {
+            // all sub-menus are hidden by default (we set class="hidden" in HTML)
+            // but we want to keep the first section open? optional: uncomment to open first
+            // const firstSub = document.querySelector('.menu-section .sub-menu');
+            // if (firstSub) {
+            //     firstSub.classList.remove('hidden');
+            //     const icon = firstSub.previousElementSibling?.querySelector('.toggle-icon');
+            //     if (icon) icon.style.transform = 'rotate(180deg)';
+            // }
+            // For better UX, expand the first section (Child Survival) and its first sub (Mortality)
+            const firstSection = document.querySelector('.menu-section .menu-section-title');
+            if (firstSection) {
+                const sub = firstSection.nextElementSibling;
+                if (sub && sub.classList.contains('sub-menu')) {
+                    sub.classList.remove('hidden');
+                    const icon = firstSection.querySelector('.toggle-icon');
+                    if (icon) icon.style.transform = 'rotate(180deg)';
+                }
+            }
+            // expand first sub-sub (Mortality) inside first section
+            const firstSubTitle = document.querySelector('.menu-section .sub-section-title');
+            if (firstSubTitle) {
+                const subSub = firstSubTitle.nextElementSibling;
+                if (subSub && subSub.classList.contains('sub-menu')) {
+                    subSub.classList.remove('hidden');
+                    const icon = firstSubTitle.querySelector('.toggle-icon');
+                    if (icon) icon.style.transform = 'rotate(180deg)';
+                }
+            }
         });
-    });
+    </script>
 
-    // =============================================================
-    // 11. ZONAL STATS TOOL (abbreviated – same as before)
-    // =============================================================
-    // (Full code from previous version – keeping it concise here)
-    // The panel is in the HTML; the JS is the same as before.
-    // I'll include the minimal version to keep the file size manageable.
-    // In practice, you'd keep your full zonal stats code.
-    // =============================================================
-
-    // =============================================================
-    // 12. ANIMATION TOOL (NEW)
-    // =============================================================
-    const animatePanel = document.getElementById('animate-panel');
-    const animateSlider = document.getElementById('animateSlider');
-    const animateMonthDisplay = document.getElementById('animateMonthDisplay');
-    const animatePlayBtn = document.getElementById('animatePlayBtn');
-    const animateSpeed = document.getElementById('animateSpeed');
-    const animateStatus = document.getElementById('animateStatus');
-    const animateProductName = document.getElementById('animateProductName');
-
-    let animationTimer = null;
-    let isAnimating = false;
-    let currentAnimateMonth = 1;
-
-    // Update status text
-    function updateAnimateStatus() {
-      if (currentSlug && DATASETS[currentSlug] && DATASETS[currentSlug].type === 'month') {
-        const name = PRODUCT_NAMES[currentSlug] || currentSlug;
-        animateProductName.textContent = `Animating: ${name}`;
-        // Enable controls
-        animateSlider.disabled = false;
-        animatePlayBtn.disabled = false;
-        animateSpeed.disabled = false;
-        // If animation is not running, show current month
-        if (!isAnimating) {
-          const m = parseInt(animateSlider.value) || 1;
-          animateProductName.textContent = `${name} – Month ${m}`;
-        }
-      } else if (currentSlug) {
-        animateProductName.textContent = `${PRODUCT_NAMES[currentSlug] || currentSlug} (static – no animation)`;
-        animateSlider.disabled = true;
-        animatePlayBtn.disabled = true;
-        animateSpeed.disabled = true;
-        if (isAnimating) stopAnimation();
-      } else {
-        animateProductName.textContent = 'No dataset loaded';
-        animateSlider.disabled = true;
-        animatePlayBtn.disabled = true;
-        animateSpeed.disabled = true;
-        if (isAnimating) stopAnimation();
-      }
-    }
-
-    // Sync animate slider with main month slider
-    animateSlider.addEventListener('input', function() {
-      const val = parseInt(this.value);
-      animateMonthDisplay.textContent = val;
-      if (isAnimating) {
-        // Stop animation if user drags slider manually
-        stopAnimation();
-      }
-      // Load the selected month
-      if (currentSlug && DATASETS[currentSlug] && DATASETS[currentSlug].type === 'month') {
-        loadRaster(currentSlug, val);
-        monthSlider.value = val;
-        monthDisplay.textContent = val;
-      }
-    });
-
-    // Play/Pause
-    animatePlayBtn.addEventListener('click', function() {
-      if (isAnimating) {
-        stopAnimation();
-      } else {
-        startAnimation();
-      }
-    });
-
-    function startAnimation() {
-      if (!currentSlug || !DATASETS[currentSlug] || DATASETS[currentSlug].type !== 'month') {
-        alert('Please load a monthly dataset first (e.g., Rainfall, Temperature).');
-        return;
-      }
-      if (animationTimer) return;
-      isAnimating = true;
-      animatePlayBtn.innerHTML = '<i class="fa-solid fa-pause"></i> Pause';
-      animatePlayBtn.style.background = '#cc3333';
-      animatePlayBtn.style.color = '#fff';
-      const speed = parseInt(animateSpeed.value);
-      let currentMonth = parseInt(animateSlider.value) || 1;
-      const maxMonth = 12;
-
-      // Update status
-      const name = PRODUCT_NAMES[currentSlug] || currentSlug;
-      animateProductName.textContent = `▶ Animating: ${name}`;
-
-      function step() {
-        if (!isAnimating) return;
-        // Move to next month
-        currentMonth++;
-        if (currentMonth > maxMonth) currentMonth = 1;
-        // Update UI
-        animateSlider.value = currentMonth;
-        animateMonthDisplay.textContent = currentMonth;
-        monthSlider.value = currentMonth;
-        monthDisplay.textContent = currentMonth;
-        // Load the raster
-        loadRaster(currentSlug, currentMonth);
-        // Schedule next step
-        animationTimer = setTimeout(step, speed);
-      }
-
-      // Start the loop
-      animationTimer = setTimeout(step, speed);
-    }
-
-    function stopAnimation() {
-      if (animationTimer) {
-        clearTimeout(animationTimer);
-        animationTimer = null;
-      }
-      isAnimating = false;
-      animatePlayBtn.innerHTML = '<i class="fa-solid fa-play"></i> Play';
-      animatePlayBtn.style.background = '#003366';
-      animatePlayBtn.style.color = '#fff';
-      // Update status
-      if (currentSlug && DATASETS[currentSlug] && DATASETS[currentSlug].type === 'month') {
-        const name = PRODUCT_NAMES[currentSlug] || currentSlug;
-        const m = parseInt(animateSlider.value) || 1;
-        animateProductName.textContent = `${name} – Month ${m}`;
-      }
-    }
-
-    // Toggle animation panel
-    document.getElementById('btnAnimate').addEventListener('click', function() {
-      const isOpen = animatePanel.style.display === 'block';
-      animatePanel.style.display = isOpen ? 'none' : 'block';
-      if (isOpen) {
-        // Stop animation when closing
-        if (isAnimating) stopAnimation();
-      } else {
-        // Sync with current state
-        updateAnimateStatus();
-        if (currentSlug && DATASETS[currentSlug] && DATASETS[currentSlug].type === 'month') {
-          const m = parseInt(monthSlider.value) || 1;
-          animateSlider.value = m;
-          animateMonthDisplay.textContent = m;
-        }
-      }
-    });
-
-    // Close button
-    document.getElementById('animate-close').addEventListener('click', function() {
-      animatePanel.style.display = 'none';
-      if (isAnimating) stopAnimation();
-    });
-
-    // Speed change – if animating, restart with new speed
-    animateSpeed.addEventListener('change', function() {
-      if (isAnimating) {
-        stopAnimation();
-        startAnimation();
-      }
-    });
-
-    // Initial status update
-    updateAnimateStatus();
-
-    // =============================================================
-    // 13. MEASURE (same)
-    // =============================================================
-    let measureControl = null;
-    document.getElementById('btnMeasure').addEventListener('click', function() {
-      if (measureControl) {
-        map.removeControl(measureControl);
-        measureControl = null;
-        this.style.background = 'none';
-        this.style.color = '#444';
-        return;
-      }
-      measureControl = new L.Control.Draw({
-        draw: {
-          polyline: { allowIntersection: false, showLength: true, metric: true },
-          polygon: { showArea: true, metric: true },
-          circle: false,
-          rectangle: false,
-          marker: false,
-          circlemarker: false
-        },
-        edit: { featureGroup: null }
-      });
-      map.addControl(measureControl);
-      this.style.background = '#e8f4fd';
-      this.style.color = '#003366';
-      map.once('draw:created', function() {
-        map.removeControl(measureControl);
-        measureControl = null;
-        document.getElementById('btnMeasure').style.background = 'none';
-        document.getElementById('btnMeasure').style.color = '#444';
-      });
-    });
-
-    // =============================================================
-    // 14. BUFFER (same)
-    // =============================================================
-    let bufferMode = false;
-    let bufferCircle = null;
-    document.getElementById('btnBuffer').addEventListener('click', function() {
-      bufferMode = !bufferMode;
-      this.style.background = bufferMode ? '#e8f4fd' : 'none';
-      this.style.color = bufferMode ? '#003366' : '#444';
-      map.getContainer().style.cursor = bufferMode ? 'crosshair' : '';
-      if (!bufferMode && bufferCircle) {
-        map.removeLayer(bufferCircle);
-        bufferCircle = null;
-      }
-    });
-
-    map.on('click', function(e) {
-      if (!bufferMode) return;
-      const latlng = e.latlng;
-      const radius = prompt('Enter buffer radius (km):', '10');
-      if (!radius || isNaN(radius)) { bufferMode = false; return; }
-      if (bufferCircle) map.removeLayer(bufferCircle);
-      bufferCircle = L.circle(latlng, { radius: radius*1000, color:'red', fillColor:'red', fillOpacity:0.2 }).addTo(map);
-      L.popup().setLatLng(latlng).setContent(`Buffer: ${radius} km`).openOn(map);
-      bufferMode = false;
-      document.getElementById('btnBuffer').style.background = 'none';
-      document.getElementById('btnBuffer').style.color = '#444';
-      map.getContainer().style.cursor = '';
-    });
-
-    // =============================================================
-    // 15. GEOCODE (same)
-    // =============================================================
-    document.getElementById('btnGeocode').addEventListener('click', function() {
-      const panel = document.getElementById('geocode-control');
-      panel.style.display = panel.style.display === 'flex' ? 'none' : 'flex';
-      if (panel.style.display === 'flex') document.getElementById('geocode-input').focus();
-    });
-
-    document.getElementById('geocode-btn').addEventListener('click', function() {
-      const query = document.getElementById('geocode-input').value.trim();
-      if (!query) return;
-      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`)
-        .then(res => res.json())
-        .then(data => {
-          if (data && data.length > 0) {
-            const { lat, lon, display_name } = data[0];
-            map.setView([parseFloat(lat), parseFloat(lon)], 12);
-            L.popup().setLatLng([lat, lon]).setContent(display_name).openOn(map);
-          } else {
-            alert('Location not found.');
-          }
-        })
-        .catch(err => alert('Geocoding error: ' + err.message));
-    });
-    document.getElementById('geocode-input').addEventListener('keyup', function(e) {
-      if (e.key === 'Enter') document.getElementById('geocode-btn').click();
-    });
-
-    // =============================================================
-    // 16. LOCATE (same)
-    // =============================================================
-    document.getElementById('btnLocate').addEventListener('click', function() {
-      if (!navigator.geolocation) { alert('Geolocation not supported.'); return; }
-      navigator.geolocation.getCurrentPosition(
-        function(pos) {
-          const { latitude, longitude } = pos.coords;
-          map.setView([latitude, longitude], 13);
-          L.circle([latitude, longitude], { radius: 100, color:'blue' }).addTo(map);
-          L.popup().setLatLng([latitude, longitude]).setContent('You are here').openOn(map);
-        },
-        function(err) {
-          alert('Geolocation error: ' + err.message);
-        }
-      );
-    });
-
-    // =============================================================
-    // 17. GRID (same)
-    // =============================================================
-    let gridLayer = null;
-    document.getElementById('btnGrid').addEventListener('click', function() {
-      if (gridLayer) {
-        map.removeLayer(gridLayer);
-        gridLayer = null;
-        this.style.background = 'none';
-        this.style.color = '#444';
-        return;
-      }
-      const lines = [];
-      for (let lat = -80; lat <= 80; lat += 10) {
-        lines.push(L.polyline([ [lat, -180], [lat, 180] ], { color:'gray', weight:0.5, opacity:0.5 }));
-      }
-      for (let lon = -180; lon <= 180; lon += 10) {
-        lines.push(L.polyline([ [-90, lon], [90, lon] ], { color:'gray', weight:0.5, opacity:0.5 }));
-      }
-      gridLayer = L.layerGroup(lines).addTo(map);
-      this.style.background = '#e8f4fd';
-      this.style.color = '#003366';
-    });
-
-    // =============================================================
-    // 18. EXPORT (same)
-    // =============================================================
-    document.getElementById('btnScreenshot').addEventListener('click', function() {
-      alert('Export map: you can implement screenshot using html2canvas.');
-    });
-
-  </script>
 </body>
 </html>

@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UNICEF Indicators · Programme Areas</title>
+<style>
+* {
+    box-sizing: border-box;
+    font-family: system-ui, 'Segoe UI', Roboto, Arial, sans-serif;
+}
+body {
+    background: #f0f4fa;
+    margin: 0;
+    padding: 24px;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+}
+.container {
+    max-width: 1400px;
+    width: 100%;
+    background: white;
+    border-radius: 24px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+    padding: 28px 30px 40px;
+}
+h2 {
+    font-weight: 600;
+    font-size: 26px;
+    margin: 0 0 6px 0;
+    color: #0b2b4a;
+    letter-spacing: -0.3px;
+}
+.sub-heading {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #1a4a70;
+    margin: 0 0 12px 0;
+    background: #e3edf8;
+    padding: 10px 20px;
+    border-radius: 40px;
+    display: inline-block;
+}
+.subhead {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    margin: 10px 0 18px 0;
+    border-bottom: 2px solid #e6edf5;
+    padding-bottom: 14px;
+}
+#status {
+    color: #1e4a6b;
+    font-weight: 500;
+    background: #e9f0fa;
+    padding: 6px 18px;
+    border-radius: 30px;
+    font-size: 0.95rem;
+}
+.search-box {
+    width: 100%;
+    max-width: 420px;
+    padding: 12px 18px;
+    font-size: 0.95rem;
+    border: 1px solid #cfddee;
+    border-radius: 40px;
+    background: white;
+    transition: 0.2s;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+}
+.search-box:focus {
+    border-color: #1a6bb0;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(26,107,176,0.15);
+}
+.table-container {
+    max-height: 700px;
+    overflow-y: auto;
+    border-radius: 16px;
+    border: 1px solid #dee9f2;
+    margin-top: 6px;
+    background: white;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+}
+th {
+    background: #1a3a5c;
+    color: white;
+    padding: 16px 14px;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+}
+td {
+    padding: 14px 14px;
+    border-bottom: 1px solid #e9eff6;
+    vertical-align: middle;
+    background: white;
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #f5faff; }
+.code {
+    font-family: 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace;
+    font-weight: 500;
+    color: #0d3d6b;
+    background: #eef4fc;
+    padding: 4px 10px;
+    border-radius: 30px;
+    font-size: 0.8rem;
+    display: inline-block;
+}
+.area-tag {
+    padding: 4px 14px;
+    border-radius: 30px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+    display: inline-block;
+}
+.indicator-name {
+    color: #142b40;
+    font-weight: 500;
+}
+.filter-hint {
+    font-size: 0.85rem;
+    color: #2b577b;
+    background: #e8f0fe;
+    padding: 5px 16px;
+    border-radius: 40px;
+    display: inline-block;
+}
+.flex-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 16px;
+}
+.empty-state {
+    padding: 48px 20px;
+    text-align: center;
+    color: #3b5f7a;
+    font-weight: 400;
+}
+@media (max-width: 700px) {
+    .container { padding: 20px 16px; }
+    th, td { padding: 12px 10px; }
+}
+/* Programme area colours */
+.badge-health { background: #cbe6f0; color: #005073; }
+.badge-nutrition { background: #d6edd6; color: #1f5a2b; }
+.badge-wash { background: #c1dff0; color: #004b6e; }
+.badge-education { background: #f5e6c8; color: #6b4f1c; }
+.badge-child-protection { background: #f0d8e6; color: #6d3d57; }
+.badge-social-policy { background: #e2daf5; color: #3e2a6b; }
+.badge-gender { background: #fce4d6; color: #9e4a2b; }
+.badge-adolescent { background: #d4f0e6; color: #136b5a; }
+.badge-ecd { background: #f5edc8; color: #7a641a; }
+.badge-climate { background: #d4e8f5; color: #1f547a; }
+.badge-data { background: #d8d8f0; color: #3b3b7a; }
+.badge-other { background: #eaeef3; color: #3d4f5e; }
+.header-row {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+    margin-bottom: 4px;
+}
+.legend {
+    margin-top: 18px;
+    font-size: 0.8rem;
+    color: #3a6585;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    border-top: 1px solid #dee9f2;
+    padding-top: 16px;
+}
+.legend-item {
+    padding: 2px 12px;
+    border-radius: 30px;
+    white-space: nowrap;
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="header-row">
+        <h2>🧸 UNICEF Indicators</h2>
+        <div class="sub-heading">▼ grouped by programme area</div>
+    </div>
+
+    <div class="subhead">
+        <div id="status">⏳ loading indicators…</div>
+        <div class="flex-wrap">
+            <span class="filter-hint">🔍</span>
+            <input type="text" id="search" class="search-box" placeholder="Search code, name, or area…">
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width:200px;">Indicator Code</th>
+                    <th>Indicator Name</th>
+                    <th style="width:180px;">Programme Area</th>
+                </tr>
+            </thead>
+            <tbody id="tbody">
+                <tr><td colspan="3" class="empty-state">loading data…</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="legend">
+        <span><strong>🏷️ Areas:</strong></span>
+        <span class="legend-item badge-health">Health</span>
+        <span class="legend-item badge-nutrition">Nutrition</span>
+        <span class="legend-item badge-wash">WASH</span>
+        <span class="legend-item badge-education">Education</span>
+        <span class="legend-item badge-child-protection">Child Protection</span>
+        <span class="legend-item badge-social-policy">Social Policy</span>
+        <span class="legend-item badge-gender">Gender Equality</span>
+        <span class="legend-item badge-adolescent">Adolescent Dev.</span>
+        <span class="legend-item badge-ecd">ECD</span>
+        <span class="legend-item badge-climate">Climate &amp; Env.</span>
+        <span class="legend-item badge-data">Data &amp; Monitoring</span>
+        <span class="legend-item badge-other">Other</span>
+    </div>
+</div>
+
+<script>
+(function() {
+    // ----- full area classification rules (12 areas) based on UNICEF programme areas -----
+    const AREA_RULES = [
+        // Health
+        { keywords: ['mortality', 'infant', 'neonatal', 'maternal', 'physician', 'immunization', 'vaccination', 'measles', 'dpt', 'bcg', 'polio', 'hiv', 'malaria', 'tuberculosis', 'health', 'pneumonia', 'diarrhea', 'disease', 'treatment', 'care', 'child health'], area: 'Health' },
+        // Nutrition
+        { keywords: ['stunting', 'wasting', 'overweight', 'underweight', 'breastfeeding', 'anemia', 'malnutrition', 'micronutrient', 'vitamin', 'low birth weight', 'nutrition', 'obesity', 'diet', 'food', 'anthropometry', 'stunt'], area: 'Nutrition' },
+        // WASH
+        { keywords: ['water', 'sanitation', 'hygiene', 'handwashing', 'drinking water', 'safely managed', 'open defecation', 'toilet', 'wash'], area: 'WASH' },
+        // Education
+        { keywords: ['school', 'education', 'literacy', 'enrollment', 'enrolment', 'attendance', 'completion', 'primary', 'secondary', 'pre-primary', 'learning', 'teacher', 'math', 'read', 'skills'], area: 'Education' },
+        // Child Protection
+        { keywords: ['child labour', 'child labor', 'birth registration', 'marriage', 'female genital mutilation', 'violence', 'trafficking', 'discipline', 'corporal punishment', 'abuse', 'exploitation', 'orphan', 'foster', 'child protection'], area: 'Child Protection' },
+        // Social Policy
+        { keywords: ['poverty', 'multidimensional poverty', 'social protection', 'cash transfer', 'inequality', 'gini', 'social assistance', 'benefit', 'vulnerable', 'deprivation'], area: 'Social Policy' },
+        // Gender Equality
+        { keywords: ['gender', 'women', 'girls', 'boys', 'adolescent girls', 'female', 'male parity', 'women empowerment', 'gender parity'], area: 'Gender Equality' },
+        // Adolescent Development
+        { keywords: ['adolescent', 'youth', 'teenage', 'fertility', 'pregnancy', 'young people', 'adolescence', 'teen'], area: 'Adolescent Development' },
+        // Early Childhood Development (ECD)
+        { keywords: ['early childhood', 'preschool', 'pre-primary', 'development index', 'child development', 'ecd', 'early learning'], area: 'ECD' },
+        // Climate & Environment
+        { keywords: ['climate', 'disaster', 'flood', 'drought', 'resilience', 'emissions', 'pollution', 'pm2.5', 'environment', 'natural disaster', 'co2'], area: 'Climate & Environment' },
+        // Data & Monitoring
+        { keywords: ['census', 'civil registration', 'statistics', 'surveys', 'sdg', 'data', 'monitoring', 'indicator', 'reporting', 'database'], area: 'Data & Monitoring' }
+    ];
+
+    function classifyArea(indicatorName, indicatorId) {
+        const text = (indicatorName + ' ' + indicatorId).toLowerCase();
+        for (const rule of AREA_RULES) {
+            for (const kw of rule.keywords) {
+                if (text.includes(kw)) {
+                    return rule.area;
+                }
+            }
+        }
+        // fallback checks for common patterns
+        if (text.includes('birth') && (text.includes('regist') || text.includes('certificate'))) return 'Child Protection';
+        if (text.includes('school') || text.includes('literacy') || text.includes('enrol')) return 'Education';
+        if (text.includes('water') || text.includes('sanitation') || text.includes('hygiene')) return 'WASH';
+        if (text.includes('nutrition') || text.includes('stunt') || text.includes('waste') || text.includes('underweight')) return 'Nutrition';
+        if (text.includes('health') || text.includes('vaccine') || text.includes('mortality') || text.includes('immunization')) return 'Health';
+        if (text.includes('gender') || text.includes('women') || text.includes('girls') || text.includes('female') || text.includes('male')) return 'Gender Equality';
+        if (text.includes('adolescent') || text.includes('youth') || text.includes('teen') || text.includes('fertility')) return 'Adolescent Development';
+        if (text.includes('climate') || text.includes('disaster') || text.includes('flood') || text.includes('emission')) return 'Climate & Environment';
+        if (text.includes('poverty') || text.includes('social protection') || text.includes('cash') || text.includes('gini')) return 'Social Policy';
+        if (text.includes('early childhood') || text.includes('preschool') || text.includes('ecd') || text.includes('pre-primary')) return 'ECD';
+        if (text.includes('statistics') || text.includes('census') || text.includes('survey') || text.includes('sdg') || text.includes('data')) return 'Data & Monitoring';
+        if (text.includes('child') && (text.includes('protect') || text.includes('labour') || text.includes('labor') || text.includes('abuse') || text.includes('violence'))) return 'Child Protection';
+        return 'Other';
+    }
+
+    // ----- data & rendering -----
+    let allIndicators = [];
+
+    const statusEl = document.getElementById('status');
+    const tbody = document.getElementById('tbody');
+    const searchInput = document.getElementById('search');
+
+    function getBadgeClass(area) {
+        const map = {
+            'Health': 'badge-health',
+            'Nutrition': 'badge-nutrition',
+            'WASH': 'badge-wash',
+            'Education': 'badge-education',
+            'Child Protection': 'badge-child-protection',
+            'Social Policy': 'badge-social-policy',
+            'Gender Equality': 'badge-gender',
+            'Adolescent Development': 'badge-adolescent',
+            'ECD': 'badge-ecd',
+            'Climate & Environment': 'badge-climate',
+            'Data & Monitoring': 'badge-data',
+            'Other': 'badge-other'
+        };
+        return map[area] || 'badge-other';
+    }
+
+    function renderTable(data) {
+        if (!data || data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="3" class="empty-state">✨ No indicators match your filter</td></tr>`;
+            return;
+        }
+
+        let html = '';
+        for (const ind of data) {
+            const area = ind.unicefArea || 'Other';
+            const badgeClass = getBadgeClass(area);
+            html += `
+            <tr>
+                <td><span class="code">${ind.id}</span></td>
+                <td class="indicator-name">${ind.name}</td>
+                <td><span class="area-tag ${badgeClass}">${area}</span></td>
+            </tr>
+            `;
+        }
+        tbody.innerHTML = html;
+    }
+
+    function filterData(query) {
+        if (!query || query.trim() === '') {
+            renderTable(allIndicators);
+            return;
+        }
+        const q = query.toLowerCase().trim();
+        const filtered = allIndicators.filter(ind => {
+            const idMatch = ind.id.toLowerCase().includes(q);
+            const nameMatch = ind.name.toLowerCase().includes(q);
+            const areaMatch = ind.unicefArea && ind.unicefArea.toLowerCase().includes(q);
+            return idMatch || nameMatch || areaMatch;
+        });
+        renderTable(filtered);
+    }
+
+    async function loadIndicators() {
+        try {
+            statusEl.innerHTML = '⏳ fetching indicators from World Bank…';
+            const resp = await fetch(
+                'https://api.worldbank.org/v2/indicator?format=json&per_page=32000'
+            );
+            const json = await resp.json();
+            const indicators = json[1] || [];
+
+            // filter indicators that belong to UNICEF (sourceOrganization contains "UNICEF")
+            const unicefIndicators = indicators.filter(ind =>
+                ind.sourceOrganization &&
+                ind.sourceOrganization.toUpperCase().includes('UNICEF')
+            );
+
+            // enrich with area classification
+            allIndicators = unicefIndicators.map(ind => {
+                const area = classifyArea(ind.name, ind.id);
+                return {
+                    ...ind,
+                    unicefArea: area
+                };
+            });
+
+            // sort by area then name
+            allIndicators.sort((a, b) => {
+                if (a.unicefArea < b.unicefArea) return -1;
+                if (a.unicefArea > b.unicefArea) return 1;
+                return a.name.localeCompare(b.name);
+            });
+
+            statusEl.innerHTML = `✅ <strong>${allIndicators.length}</strong> UNICEF indicators · grouped by programme area`;
+            renderTable(allIndicators);
+        } catch (err) {
+            statusEl.innerHTML = '❌ Failed to load data. Please try again later.';
+            console.error('World Bank API error:', err);
+            tbody.innerHTML = `<tr><td colspan="3" class="empty-state">⚠️ could not load indicators</td></tr>`;
+        }
+    }
+
+    // event listeners
+    searchInput.addEventListener('keyup', function() {
+        filterData(this.value);
+    });
+
+    let searchTimeout;
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            filterData(this.value);
+        }, 180);
+    });
+
+    // load
+    loadIndicators();
+})();
+</script>
+
+</body>
+</html>

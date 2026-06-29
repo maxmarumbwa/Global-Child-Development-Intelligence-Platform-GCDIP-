@@ -2,9 +2,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-
     <meta charset="utf-8">
-
     <title>
         {% block title %}
             GCDIP
@@ -13,10 +11,8 @@
 
     <link rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-
     <link rel="stylesheet"
           href="https://unpkg.com/leaflet/dist/leaflet.css">
-
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
@@ -63,640 +59,249 @@
 
     {% block extra_css %}
     {% endblock %}
-
 </head>
 
 <body>
+    <div class="navbar-custom">
+        <div class="logo">GCDIP</div>
+        <div class="d-flex align-items-center flex-wrap">
+            <a href="{% url 'mortality_chart' %}">Dashboard</a>
 
-<div class="navbar-custom">
+            <!-- 🌍 EXPLORE MAP -->
+            <div class="dropdown d-inline-block ms-3">
+                <a class="text-white dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                    🌍 Explore Map
+                </a>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#">Administrative Boundaries</a></li>
+                    <li><a class="dropdown-item" href="#">Hazard Layers</a></li>
+                    <li><a class="dropdown-item" href="#">Child Vulnerability Index</a></li>
+                    <li><a class="dropdown-item" href="#">Climate Layers</a></li>
+                </ul>
+            </div>
 
-    <div class="logo">
-        GCDIP
+            <!-- 📊 ANALYZE -->
+            <div class="dropdown d-inline-block ms-3">
+                <a class="text-white dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                    📊 Analyze
+                </a>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#">Time Series Viewer</a></li>
+                    <li><a class="dropdown-item" href="#">Bar/Line Charts</a></li>
+                    <li><a class="dropdown-item" href="#">Correlation Analysis</a></li>
+                </ul>
+            </div>
+
+            <a href="#">Country Profiles</a>
+            <a href="#">Analytics</a>
+            <a href="#">Downloads</a>
+        </div>
     </div>
 
-    <div class="d-flex align-items-center flex-wrap">
-        <a href="{% url 'mortality_chart' %}">Dashboard</a>
+    <div class="layout">
+        <div class="sidebar">
+            <!-- Include the toggle all partial -->
+            {% include 'partials/sidebar_toggle_all.html' %}
 
-        <!-- 🌍 EXPLORE MAP -->
-        <div class="dropdown d-inline-block ms-3">
-            <a class="text-white dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                🌍 Explore Map
-            </a>
-            <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="#">Administrative Boundaries</a></li>
-                <li><a class="dropdown-item" href="#">Hazard Layers</a></li>
-                <li><a class="dropdown-item" href="#">Child Vulnerability Index</a></li>
-                <li><a class="dropdown-item" href="#">Climate Layers</a></li>
-            </ul>
+            <!-- Include the three main sections -->
+            {% include 'partials/unicef_programme_indicators.html' %}
+            {% include 'partials/child_exposure_analytics.html' %}
+             {% include 'partials/remote_sensing_geospatial.html' %}
+
+            <hr>
+
+            <!-- Sidebar content block for child templates -->
+            {% block sidebar %}
+            {% endblock %}
         </div>
 
-        <!-- 📊 ANALYZE -->
-        <div class="dropdown d-inline-block ms-3">
-            <a class="text-white dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                📊 Analyze
-            </a>
-            <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="#">Time Series Viewer</a></li>
-                <li><a class="dropdown-item" href="#">Bar/Line Charts</a></li>
-                <li><a class="dropdown-item" href="#">Correlation Analysis</a></li>
-            </ul>
+        <div class="content">
+            {% block content %}
+            {% endblock %}
         </div>
-
-        <a href="#">Country Profiles</a>
-        <a href="#">Analytics</a>
-        <a href="#">Downloads</a>
     </div>
 
-</div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-<div class="layout">
+    <script>
+        // ==============================
+        // TOGGLE SINGLE SECTION (with localStorage persistence)
+        // ==============================
+        function toggleSection(element) {
+            const subMenu = element.nextElementSibling;
 
-    <div class="sidebar">
-        <!-- Expand/Collapse All -->
-        <div class="sidebar-toggle-all">
-            <a onclick="expandAll()">Expand All</a>
-            <a onclick="collapseAll()">Collapse All</a>
-        </div>
+            if (subMenu && subMenu.classList.contains('sub-menu')) {
+                subMenu.classList.toggle('hidden');
 
-        <!-- ============================================================ -->
-        <!-- 1. UNICEF PROGRAMME INDICATORS                                -->
-        <!-- ============================================================ -->
-        <div class="menu-section">
-            <div class="menu-section-title" data-toggle-id="section-children" onclick="toggleSection(this)">
-                Children Indicators
-                <i class="fa-solid fa-chevron-down toggle-icon"></i>
-            </div>
-            <div class="sub-menu hidden">
-
-                <!-- Child Survival & Health -->
-                <div class="sub-section-title" data-toggle-id="subsection-survival" onclick="toggleSection(this)">
-                    👶 Child Survival & Health
-                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
-                </div>
-                <div class="sub-menu hidden">
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-1"><i class="fa-regular fa-circle"></i> Under-5 Mortality</a>
-                    <a href="{% url 'mortality_table' %}" class="menu-item" data-item-id="item-2"><i class="fa-regular fa-circle"></i> Infant Mortality</a>
-                    <a href="{% url 'mortality_map' %}" class="menu-item" data-item-id="item-3"><i class="fa-regular fa-circle"></i> Neonatal Mortality</a>
-                    <a href="{% url 'mortality_map' %}" class="menu-item" data-item-id="item-4"><i class="fa-regular fa-circle"></i> Immunization Coverage</a>
-                    <a href="{% url 'mortality_map' %}" class="menu-item" data-item-id="item-5"><i class="fa-regular fa-circle"></i> DPT3 Coverage</a>
-                    <a href="{% url 'mortality_table' %}" class="menu-item" data-item-id="item-6"><i class="fa-regular fa-circle"></i> Measles Coverage</a>
-                    <a href="{% url 'mortality_map' %}" class="menu-item" data-item-id="item-7"><i class="fa-regular fa-circle"></i> Skilled Birth Attendance</a>
-                    <a href="{% url 'mortality_map' %}" class="menu-item" data-item-id="item-8"><i class="fa-regular fa-circle"></i> Anaemia Prevalence</a>
-                    <a href="{% url 'mortality_map' %}" class="menu-item" data-item-id="item-9"><i class="fa-regular fa-circle"></i> Disease Burden (ARI, Diarrhea)</a>
-                </div>
-
-                <!-- Education -->
-                <div class="sub-section-title" data-toggle-id="subsection-education" onclick="toggleSection(this)">
-                    🎓 Education
-                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
-                </div>
-                <div class="sub-menu hidden">
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-10"><i class="fa-regular fa-circle"></i> School Enrollment</a>
-                    <a href="{% url 'mortality_map' %}" class="menu-item" data-item-id="item-11"><i class="fa-regular fa-circle"></i> Primary Attendance</a>
-                    <a href="{% url 'mortality_map' %}" class="menu-item" data-item-id="item-12"><i class="fa-regular fa-circle"></i> Secondary Attendance</a>
-                    <a href="{% url 'mortality_map' %}" class="menu-item" data-item-id="item-13"><i class="fa-regular fa-circle"></i> Out-of-School Children</a>
-                    <a href="{% url 'mortality_table' %}" class="menu-item" data-item-id="item-14"><i class="fa-regular fa-circle"></i> Completion Rate</a>
-                    <a href="{% url 'mortality_map' %}" class="menu-item" data-item-id="item-15"><i class="fa-regular fa-circle"></i> Literacy Rate</a>
-                    <a href="{% url 'mortality_map' %}" class="menu-item" data-item-id="item-16"><i class="fa-regular fa-circle"></i> Numeracy Rate</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-17"><i class="fa-regular fa-circle"></i> Gender Parity Index</a>
-                </div>
-
-                <!-- WASH -->
-                <div class="sub-section-title" data-toggle-id="subsection-wash" onclick="toggleSection(this)">
-                    🚰 WASH
-                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
-                </div>
-                <div class="sub-menu hidden">
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-18"><i class="fa-regular fa-circle"></i> Basic Drinking Water</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-19"><i class="fa-regular fa-circle"></i> Safely Managed Water</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-20"><i class="fa-regular fa-circle"></i> Basic Sanitation</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-21"><i class="fa-regular fa-circle"></i> Safely Managed Sanitation</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-22"><i class="fa-regular fa-circle"></i> Open Defecation Rate</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-23"><i class="fa-regular fa-circle"></i> Handwashing Facilities</a>
-                </div>
-
-                <!-- Child Protection -->
-                <div class="sub-section-title" data-toggle-id="subsection-protection" onclick="toggleSection(this)">
-                    🛡 Child Protection
-                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
-                </div>
-                <div class="sub-menu hidden">
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-24"><i class="fa-regular fa-circle"></i> Child Labour</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-25"><i class="fa-regular fa-circle"></i> Hazardous Child Labour</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-26"><i class="fa-regular fa-circle"></i> Child Marriage</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-27"><i class="fa-regular fa-circle"></i> Birth Registration</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-28"><i class="fa-regular fa-circle"></i> Violent Discipline</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-29"><i class="fa-regular fa-circle"></i> Refugee Children</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-30"><i class="fa-regular fa-circle"></i> Internally Displaced Children</a>
-                </div>
-
-                <!-- Gender Equality -->
-                <div class="sub-section-title" data-toggle-id="subsection-gender" onclick="toggleSection(this)">
-                    ♀ Gender Equality
-                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
-                </div>
-                <div class="sub-menu hidden">
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-31"><i class="fa-regular fa-circle"></i> Adolescent Birth Rate</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-32"><i class="fa-regular fa-circle"></i> Girls School Attendance</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-33"><i class="fa-regular fa-circle"></i> Gender-Based Violence Risk</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-34"><i class="fa-regular fa-circle"></i> Gender Equality Index</a>
-                </div>
-
-                <!-- Nutrition & Food Security -->
-                <div class="sub-section-title" data-toggle-id="subsection-nutrition" onclick="toggleSection(this)">
-                    🍽 Nutrition & Food Security
-                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
-                </div>
-                <div class="sub-menu hidden">
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-35"><i class="fa-regular fa-circle"></i> Stunting</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-36"><i class="fa-regular fa-circle"></i> Wasting</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-37"><i class="fa-regular fa-circle"></i> Underweight</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-38"><i class="fa-regular fa-circle"></i> Overweight</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-39"><i class="fa-regular fa-circle"></i> Exclusive Breastfeeding</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-40"><i class="fa-regular fa-circle"></i> Dietary Diversity</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-41"><i class="fa-regular fa-circle"></i> Food Insecurity Index</a>
-                </div>
-
-                <!-- Climate & Environment (UNICEF Exposure) -->
-                <div class="sub-section-title" data-toggle-id="subsection-climate" onclick="toggleSection(this)">
-                    🌍 Climate & Environment (UNICEF Exposure)
-                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
-                </div>
-                <div class="sub-menu hidden">
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-42"><i class="fa-regular fa-circle"></i> Children Exposed to Flood Risk</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-43"><i class="fa-regular fa-circle"></i> Children Exposed to Drought Risk</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-44"><i class="fa-regular fa-circle"></i> Children Exposed to Heat Stress</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-45"><i class="fa-regular fa-circle"></i> Children Exposed to Air Pollution</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-46"><i class="fa-regular fa-circle"></i> Children Exposed to Water Scarcity</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-47"><i class="fa-regular fa-circle"></i> Children Exposed to Multi-Hazard Risk</a>
-                </div>
-
-                <!-- Social Protection & Poverty -->
-                <div class="sub-section-title" data-toggle-id="subsection-social" onclick="toggleSection(this)">
-                    ⚖ Social Protection & Poverty
-                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
-                </div>
-                <div class="sub-menu hidden">
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-48"><i class="fa-regular fa-circle"></i> Child Poverty Rate</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-49"><i class="fa-regular fa-circle"></i> Multidimensional Poverty Index</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-50"><i class="fa-regular fa-circle"></i> Social Protection Coverage</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-51"><i class="fa-regular fa-circle"></i> Cash Transfer Coverage</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-52"><i class="fa-regular fa-circle"></i> Household Vulnerability Index</a>
-                </div>
-
-            </div> <!-- end sub-menu -->
-        </div> <!-- end UNICEF section -->
-
-
-        <!-- ============================================================ -->
-        <!-- 2. REMOTE SENSING & GEOSPATIAL INTELLIGENCE                  -->
-        <!-- ============================================================ -->
-        <div class="menu-section">
-            <div class="menu-section-title" data-toggle-id="section-remote" onclick="toggleSection(this)">
-                🛰 Remote Sensing Indicators
-                <i class="fa-solid fa-chevron-down toggle-icon"></i>
-            </div>
-            <div class="sub-menu hidden">
-
-                <!-- Population & Demographics -->
-                <div class="sub-section-title" data-toggle-id="subsection-population" onclick="toggleSection(this)">
-                    👶 Population & Demographics
-                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
-                </div>
-                <div class="sub-menu hidden">
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-53"><i class="fa-regular fa-circle"></i> Total Population Density</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-54"><i class="fa-regular fa-circle"></i> Child Population (0–4)</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-55"><i class="fa-regular fa-circle"></i> Child Population (5–9)</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-56"><i class="fa-regular fa-circle"></i> Child Population (10–14)</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-57"><i class="fa-regular fa-circle"></i> Child Population (15–19)</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-58"><i class="fa-regular fa-circle"></i> Male Population Density</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-59"><i class="fa-regular fa-circle"></i> Female Population Density</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-60"><i class="fa-regular fa-circle"></i> Urban Population Density</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-61"><i class="fa-regular fa-circle"></i> Rural Population Density</a>
-                </div>
-
-                <!-- Baseline Climate & Environmental Conditions -->
-                <div class="sub-section-title" data-toggle-id="subsection-climate-baseline" onclick="toggleSection(this)">
-                    🌦 Baseline Climate & Environmental Conditions
-                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
-                </div>
-                <div class="sub-menu hidden">
-
-                    <!-- Rainfall -->
-                    <div class="sub-section-title" data-toggle-id="subsection-rainfall" onclick="toggleSection(this)">
-                        🌧 Rainfall
-                        <i class="fa-solid fa-chevron-down toggle-icon"></i>
-                    </div>
-                    <div class="sub-menu hidden">
-                        <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-62"><i class="fa-regular fa-circle"></i> Mean Annual Rainfall</a>
-                        <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-63"><i class="fa-regular fa-circle"></i> Rainfall Variability</a>
-                        <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-64"><i class="fa-regular fa-circle"></i> Rainfall Seasonality</a>
-                        <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-65"><i class="fa-regular fa-circle"></i> Consecutive Dry Days</a>
-                    </div>
-
-                    <!-- Temperature -->
-                    <div class="sub-section-title" data-toggle-id="subsection-temperature" onclick="toggleSection(this)">
-                        🌡 Temperature
-                        <i class="fa-solid fa-chevron-down toggle-icon"></i>
-                    </div>
-                    <div class="sub-menu hidden">
-                        <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-66"><i class="fa-regular fa-circle"></i> Mean Temperature</a>
-                        <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-67"><i class="fa-regular fa-circle"></i> Maximum Temperature</a>
-                        <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-68"><i class="fa-regular fa-circle"></i> Minimum Temperature</a>
-                        <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-69"><i class="fa-regular fa-circle"></i> Temperature Variability</a>
-                    </div>
-
-                    <!-- Vegetation & Land -->
-                    <div class="sub-section-title" data-toggle-id="subsection-vegetation" onclick="toggleSection(this)">
-                        🌿 Vegetation & Land
-                        <i class="fa-solid fa-chevron-down toggle-icon"></i>
-                    </div>
-                    <div class="sub-menu hidden">
-                        <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-70"><i class="fa-regular fa-circle"></i> NDVI</a>
-                        <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-71"><i class="fa-regular fa-circle"></i> Vegetation Health Index</a>
-                        <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-72"><i class="fa-regular fa-circle"></i> Land Cover</a>
-                        <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-73"><i class="fa-regular fa-circle"></i> Biomass Productivity</a>
-                    </div>
-
-                    <!-- Water Resources -->
-                    <div class="sub-section-title" data-toggle-id="subsection-water" onclick="toggleSection(this)">
-                        💧 Water Resources
-                        <i class="fa-solid fa-chevron-down toggle-icon"></i>
-                    </div>
-                    <div class="sub-menu hidden">
-                        <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-74"><i class="fa-regular fa-circle"></i> Surface Water Occurrence</a>
-                        <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-75"><i class="fa-regular fa-circle"></i> Water Availability</a>
-                        <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-76"><i class="fa-regular fa-circle"></i> Groundwater Stress</a>
-                        <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-77"><i class="fa-regular fa-circle"></i> Water Storage</a>
-                    </div>
-
-                </div> <!-- end Climate & Environmental -->
-
-                <!-- Water-Related Hazards -->
-                <div class="sub-section-title" data-toggle-id="subsection-water-hazards" onclick="toggleSection(this)">
-                    🌊 Water-Related Hazards
-                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
-                </div>
-                <div class="sub-menu hidden">
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-78"><i class="fa-regular fa-circle"></i> Drought Risk</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-79"><i class="fa-regular fa-circle"></i> Drought Frequency</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-80"><i class="fa-regular fa-circle"></i> Drought Severity</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-81"><i class="fa-regular fa-circle"></i> Climate Aridity</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-82"><i class="fa-regular fa-circle"></i> Flood Risk</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-83"><i class="fa-regular fa-circle"></i> River Flood Hazard</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-84"><i class="fa-regular fa-circle"></i> Flash Flood Hazard</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-85"><i class="fa-regular fa-circle"></i> Coastal Flood Hazard</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-86"><i class="fa-regular fa-circle"></i> Water Stress</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-87"><i class="fa-regular fa-circle"></i> Water Scarcity</a>
-                </div>
-
-                <!-- Atmospheric & Pollution Hazards -->
-                <div class="sub-section-title" data-toggle-id="subsection-atmospheric" onclick="toggleSection(this)">
-                    🌡 Atmospheric & Pollution Hazards
-                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
-                </div>
-                <div class="sub-menu hidden">
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-88"><i class="fa-regular fa-circle"></i> PM2.5 Exposure</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-89"><i class="fa-regular fa-circle"></i> PM10 Exposure</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-90"><i class="fa-regular fa-circle"></i> NO₂ Exposure</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-91"><i class="fa-regular fa-circle"></i> SO₂ Exposure</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-92"><i class="fa-regular fa-circle"></i> Ozone Exposure</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-93"><i class="fa-regular fa-circle"></i> Aerosol Optical Depth</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-94"><i class="fa-regular fa-circle"></i> Water Pollution Index</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-95"><i class="fa-regular fa-circle"></i> Heat Stress</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-96"><i class="fa-regular fa-circle"></i> Heatwave Risk</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-97"><i class="fa-regular fa-circle"></i> Extreme Temperature Exposure</a>
-                </div>
-
-                <!-- Natural Hazards -->
-                <div class="sub-section-title" data-toggle-id="subsection-natural-hazards" onclick="toggleSection(this)">
-                    🔥 Natural Hazards
-                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
-                </div>
-                <div class="sub-menu hidden">
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-98"><i class="fa-regular fa-circle"></i> Wildfire Risk</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-99"><i class="fa-regular fa-circle"></i> Fire Frequency</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-100"><i class="fa-regular fa-circle"></i> Burn Probability</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-101"><i class="fa-regular fa-circle"></i> Earthquake Hazard</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-102"><i class="fa-regular fa-circle"></i> Seismic Risk</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-103"><i class="fa-regular fa-circle"></i> Landslide Susceptibility</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-104"><i class="fa-regular fa-circle"></i> Volcanic Hazard</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-105"><i class="fa-regular fa-circle"></i> Ash Exposure</a>
-                </div>
-
-                <!-- Extreme Weather Hazards -->
-                <div class="sub-section-title" data-toggle-id="subsection-extreme-weather" onclick="toggleSection(this)">
-                    🌀 Extreme Weather Hazards
-                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
-                </div>
-                <div class="sub-menu hidden">
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-106"><i class="fa-regular fa-circle"></i> Cyclone Risk</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-107"><i class="fa-regular fa-circle"></i> Cyclone Frequency</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-108"><i class="fa-regular fa-circle"></i> Storm Frequency</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-109"><i class="fa-regular fa-circle"></i> Wind Hazard</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-110"><i class="fa-regular fa-circle"></i> Storm Surge Risk</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-111"><i class="fa-regular fa-circle"></i> Thunderstorm Risk</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-112"><i class="fa-regular fa-circle"></i> Lightning Exposure</a>
-                </div>
-
-                <!-- Food Security & Agriculture -->
-                <div class="sub-section-title" data-toggle-id="subsection-agriculture" onclick="toggleSection(this)">
-                    🌱 Food Security & Agriculture
-                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
-                </div>
-                <div class="sub-menu hidden">
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-113"><i class="fa-regular fa-circle"></i> Agricultural Stress</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-114"><i class="fa-regular fa-circle"></i> Agricultural Suitability</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-115"><i class="fa-regular fa-circle"></i> Crop Failure Risk</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-116"><i class="fa-regular fa-circle"></i> Growing Season Length</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-117"><i class="fa-regular fa-circle"></i> Pasture Condition</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-118"><i class="fa-regular fa-circle"></i> Biomass Productivity</a>
-                </div>
-
-                <!-- Environmental Health -->
-                <div class="sub-section-title" data-toggle-id="subsection-health" onclick="toggleSection(this)">
-                    🏥 Environmental Health
-                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
-                </div>
-                <div class="sub-menu hidden">
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-119"><i class="fa-regular fa-circle"></i> Land Degradation</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-120"><i class="fa-regular fa-circle"></i> Desertification Risk</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-121"><i class="fa-regular fa-circle"></i> Soil Erosion Risk</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-122"><i class="fa-regular fa-circle"></i> Malaria Risk</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-123"><i class="fa-regular fa-circle"></i> Dengue Suitability</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-124"><i class="fa-regular fa-circle"></i> Cholera Risk</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-125"><i class="fa-regular fa-circle"></i> Environmental Health Risk</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-126"><i class="fa-regular fa-circle"></i> Air Pollution Exposure</a>
-                </div>
-
-            </div> <!-- end sub-menu -->
-        </div> <!-- end Remote Sensing section -->
-
-
-        <!-- ============================================================ -->
-        <!-- 3. CHILD EXPOSURE ANALYTICS                                  -->
-        <!-- ============================================================ -->
-        <div class="menu-section">
-            <div class="menu-section-title" data-toggle-id="section-exposure" onclick="toggleSection(this)">
-                🎯 Child Exposure Analytics
-                <i class="fa-solid fa-chevron-down toggle-icon"></i>
-            </div>
-            <div class="sub-menu hidden">
-
-                <!-- Hazard Exposure -->
-                <div class="sub-section-title" data-toggle-id="subsection-hazard-exposure" onclick="toggleSection(this)">
-                    ⚠️ Hazard Exposure (Children)
-                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
-                </div>
-                <div class="sub-menu hidden">
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-127"><i class="fa-regular fa-circle"></i> Children Exposed to Flood Risk</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-128"><i class="fa-regular fa-circle"></i> Children Exposed to Drought Risk</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-129"><i class="fa-regular fa-circle"></i> Children Exposed to Heat Stress</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-130"><i class="fa-regular fa-circle"></i> Children Exposed to Cyclone Risk</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-131"><i class="fa-regular fa-circle"></i> Children Exposed to Wildfire Risk</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-132"><i class="fa-regular fa-circle"></i> Children Exposed to Air Pollution</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-133"><i class="fa-regular fa-circle"></i> Children Exposed to Water Scarcity</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-134"><i class="fa-regular fa-circle"></i> Children Exposed to Malaria Risk</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-135"><i class="fa-regular fa-circle"></i> Children Exposed to Multi-Hazard Risk</a>
-                </div>
-
-                <!-- Infrastructure Exposure -->
-                <div class="sub-section-title" data-toggle-id="subsection-infrastructure" onclick="toggleSection(this)">
-                    🏗 Infrastructure Exposure
-                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
-                </div>
-                <div class="sub-menu hidden">
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-136"><i class="fa-regular fa-circle"></i> Schools in Hazard Zones</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-137"><i class="fa-regular fa-circle"></i> Health Facilities in Hazard Zones</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-138"><i class="fa-regular fa-circle"></i> Water Points in Hazard Zones</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-139"><i class="fa-regular fa-circle"></i> Roads in Flood Zones</a>
-                </div>
-
-                <!-- Population Exposure -->
-                <div class="sub-section-title" data-toggle-id="subsection-population-exposure" onclick="toggleSection(this)">
-                    👥 Population Exposure
-                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
-                </div>
-                <div class="sub-menu hidden">
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-140"><i class="fa-regular fa-circle"></i> Total Population Exposed to Hazards</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-141"><i class="fa-regular fa-circle"></i> Urban Population Exposure</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-142"><i class="fa-regular fa-circle"></i> Rural Population Exposure</a>
-                </div>
-
-                <!-- Composite Indices -->
-                <div class="sub-section-title" data-toggle-id="subsection-composite" onclick="toggleSection(this)">
-                    📊 Composite Indices
-                    <i class="fa-solid fa-chevron-down toggle-icon"></i>
-                </div>
-                <div class="sub-menu hidden">
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-143"><i class="fa-regular fa-circle"></i> Child Vulnerability Index</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-144"><i class="fa-regular fa-circle"></i> Multi-Hazard Exposure Index</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-145"><i class="fa-regular fa-circle"></i> Climate Risk Index for Children</a>
-                    <a href="{% url 'mortality_chart' %}" class="menu-item" data-item-id="item-146"><i class="fa-regular fa-circle"></i> Disaster Risk Index</a>
-                </div>
-
-            </div> <!-- end sub-menu -->
-        </div> <!-- end Child Exposure section -->
-
-        <hr>
-
-        <!-- Sidebar content block for child templates -->
-        {% block sidebar %}
-        {% endblock %}
-
-    </div>
-
-    <div class="content">
-
-        {% block content %}
-        {% endblock %}
-
-    </div>
-
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-<script>
-    // ==============================
-    // TOGGLE SINGLE SECTION (with localStorage persistence)
-    // ==============================
-    function toggleSection(element) {
-        const subMenu = element.nextElementSibling;
-
-        if (subMenu && subMenu.classList.contains('sub-menu')) {
-            subMenu.classList.toggle('hidden');
-
-            const icon = element.querySelector('.toggle-icon');
-            if (icon) {
-                const isHidden = subMenu.classList.contains('hidden');
-                icon.classList.toggle('fa-chevron-down', !isHidden);
-                icon.classList.toggle('fa-chevron-right', isHidden);
-            }
-
-            const toggleId = element.getAttribute('data-toggle-id');
-            if (toggleId) {
-                const isHiddenNow = subMenu.classList.contains('hidden');
-                localStorage.setItem('toggle_' + toggleId, isHiddenNow ? 'collapsed' : 'expanded');
-            }
-        }
-    }
-
-    // ==============================
-    // EXPAND / COLLAPSE ALL (with localStorage update)
-    // ==============================
-    function expandAll() {
-        document.querySelectorAll('.sub-menu').forEach(el => el.classList.remove('hidden'));
-        document.querySelectorAll('.toggle-icon').forEach(icon => {
-            icon.classList.remove('fa-chevron-right');
-            icon.classList.add('fa-chevron-down');
-        });
-        document.querySelectorAll('[data-toggle-id]').forEach(el => {
-            const id = el.getAttribute('data-toggle-id');
-            if (id) localStorage.setItem('toggle_' + id, 'expanded');
-        });
-    }
-
-    function collapseAll() {
-        document.querySelectorAll('.sub-menu').forEach(el => el.classList.add('hidden'));
-        document.querySelectorAll('.toggle-icon').forEach(icon => {
-            icon.classList.remove('fa-chevron-down');
-            icon.classList.add('fa-chevron-right');
-        });
-        document.querySelectorAll('[data-toggle-id]').forEach(el => {
-            const id = el.getAttribute('data-toggle-id');
-            if (id) localStorage.setItem('toggle_' + id, 'collapsed');
-        });
-    }
-
-    // ==============================
-    // RESTORE STORED STATE ON PAGE LOAD
-    // ==============================
-    document.addEventListener('DOMContentLoaded', function () {
-        // 1. Set default expansion: top-level & second-level open, deeper closed
-        document.querySelectorAll('.menu-section > .sub-menu').forEach(el => el.classList.remove('hidden'));
-        document.querySelectorAll('.sub-section-title + .sub-menu').forEach(el => el.classList.remove('hidden'));
-        document.querySelectorAll('.sub-menu .sub-menu').forEach(el => el.classList.add('hidden'));
-
-        // Set default icons
-        document.querySelectorAll('.toggle-icon').forEach(icon => {
-            icon.classList.remove('fa-chevron-right');
-            icon.classList.add('fa-chevron-down');
-        });
-        // For deeper nested, set to right arrow (collapsed)
-        document.querySelectorAll('.sub-menu .sub-menu').forEach(sub => {
-            const parentTitle = sub.previousElementSibling;
-            if (parentTitle && parentTitle.classList.contains('sub-section-title')) {
-                const icon = parentTitle.querySelector('.toggle-icon');
+                const icon = element.querySelector('.toggle-icon');
                 if (icon) {
-                    icon.classList.remove('fa-chevron-down');
-                    icon.classList.add('fa-chevron-right');
+                    const isHidden = subMenu.classList.contains('hidden');
+                    icon.classList.toggle('fa-chevron-down', !isHidden);
+                    icon.classList.toggle('fa-chevron-right', isHidden);
+                }
+
+                const toggleId = element.getAttribute('data-toggle-id');
+                if (toggleId) {
+                    const isHiddenNow = subMenu.classList.contains('hidden');
+                    localStorage.setItem('toggle_' + toggleId, isHiddenNow ? 'collapsed' : 'expanded');
                 }
             }
-        });
+        }
 
-        // 2. Override with stored expand/collapse states
-        document.querySelectorAll('[data-toggle-id]').forEach(el => {
-            const id = el.getAttribute('data-toggle-id');
-            if (id) {
-                const state = localStorage.getItem('toggle_' + id);
-                if (state) {
-                    const subMenu = el.nextElementSibling;
-                    if (subMenu && subMenu.classList.contains('sub-menu')) {
-                        if (state === 'collapsed') {
-                            subMenu.classList.add('hidden');
-                            const icon = el.querySelector('.toggle-icon');
-                            if (icon) {
-                                icon.classList.remove('fa-chevron-down');
-                                icon.classList.add('fa-chevron-right');
-                            }
-                        } else if (state === 'expanded') {
-                            subMenu.classList.remove('hidden');
-                            const icon = el.querySelector('.toggle-icon');
-                            if (icon) {
-                                icon.classList.remove('fa-chevron-right');
-                                icon.classList.add('fa-chevron-down');
+        // ==============================
+        // EXPAND / COLLAPSE ALL (with localStorage update)
+        // ==============================
+        function expandAll() {
+            document.querySelectorAll('.sub-menu').forEach(el => el.classList.remove('hidden'));
+            document.querySelectorAll('.toggle-icon').forEach(icon => {
+                icon.classList.remove('fa-chevron-right');
+                icon.classList.add('fa-chevron-down');
+            });
+            document.querySelectorAll('[data-toggle-id]').forEach(el => {
+                const id = el.getAttribute('data-toggle-id');
+                if (id) localStorage.setItem('toggle_' + id, 'expanded');
+            });
+        }
+
+        function collapseAll() {
+            document.querySelectorAll('.sub-menu').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.toggle-icon').forEach(icon => {
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-right');
+            });
+            document.querySelectorAll('[data-toggle-id]').forEach(el => {
+                const id = el.getAttribute('data-toggle-id');
+                if (id) localStorage.setItem('toggle_' + id, 'collapsed');
+            });
+        }
+
+        // ==============================
+        // RESTORE STORED STATE ON PAGE LOAD
+        // ==============================
+        document.addEventListener('DOMContentLoaded', function () {
+            // 1. Set default expansion: top-level & second-level open, deeper closed
+            document.querySelectorAll('.menu-section > .sub-menu').forEach(el => el.classList.remove('hidden'));
+            document.querySelectorAll('.sub-section-title + .sub-menu').forEach(el => el.classList.remove('hidden'));
+            document.querySelectorAll('.sub-menu .sub-menu').forEach(el => el.classList.add('hidden'));
+
+            // Set default icons
+            document.querySelectorAll('.toggle-icon').forEach(icon => {
+                icon.classList.remove('fa-chevron-right');
+                icon.classList.add('fa-chevron-down');
+            });
+            // For deeper nested, set to right arrow (collapsed)
+            document.querySelectorAll('.sub-menu .sub-menu').forEach(sub => {
+                const parentTitle = sub.previousElementSibling;
+                if (parentTitle && parentTitle.classList.contains('sub-section-title')) {
+                    const icon = parentTitle.querySelector('.toggle-icon');
+                    if (icon) {
+                        icon.classList.remove('fa-chevron-down');
+                        icon.classList.add('fa-chevron-right');
+                    }
+                }
+            });
+
+            // 2. Override with stored expand/collapse states
+            document.querySelectorAll('[data-toggle-id]').forEach(el => {
+                const id = el.getAttribute('data-toggle-id');
+                if (id) {
+                    const state = localStorage.getItem('toggle_' + id);
+                    if (state) {
+                        const subMenu = el.nextElementSibling;
+                        if (subMenu && subMenu.classList.contains('sub-menu')) {
+                            if (state === 'collapsed') {
+                                subMenu.classList.add('hidden');
+                                const icon = el.querySelector('.toggle-icon');
+                                if (icon) {
+                                    icon.classList.remove('fa-chevron-down');
+                                    icon.classList.add('fa-chevron-right');
+                                }
+                            } else if (state === 'expanded') {
+                                subMenu.classList.remove('hidden');
+                                const icon = el.querySelector('.toggle-icon');
+                                if (icon) {
+                                    icon.classList.remove('fa-chevron-right');
+                                    icon.classList.add('fa-chevron-down');
+                                }
                             }
                         }
                     }
                 }
+            });
+
+            // 3. Restore active menu item using stored data-item-id
+            const allItems = document.querySelectorAll('.menu-item');
+            const storedId = localStorage.getItem('activeItemId');
+            let activeItem = null;
+            if (storedId) {
+                allItems.forEach(item => {
+                    if (item.getAttribute('data-item-id') === storedId) {
+                        activeItem = item;
+                    }
+                });
+            }
+            // Fallback: if no stored ID found, match by URL (first match)
+            if (!activeItem) {
+                const currentPath = window.location.pathname;
+                allItems.forEach(item => {
+                    const href = item.getAttribute('href');
+                    if (href && href !== 'javascript:void(0)') {
+                        try {
+                            const linkUrl = new URL(href, window.location.origin);
+                            if (linkUrl.pathname === currentPath) {
+                                activeItem = item;
+                            }
+                        } catch (e) { /* ignore */ }
+                    }
+                });
+            }
+            if (activeItem) {
+                setActiveItem(activeItem);
             }
         });
 
-        // 3. Restore active menu item using stored data-item-id
-        const allItems = document.querySelectorAll('.menu-item');
-        const storedId = localStorage.getItem('activeItemId');
-        let activeItem = null;
-        if (storedId) {
+        // ==============================
+        // RADIO-BUTTON ACTIVE STATE (stores by data-item-id)
+        // ==============================
+        function setActiveItem(activeElement) {
+            const allItems = document.querySelectorAll('.menu-item');
             allItems.forEach(item => {
-                if (item.getAttribute('data-item-id') === storedId) {
-                    activeItem = item;
+                item.classList.remove('active');
+                const icon = item.querySelector('i');
+                if (icon) {
+                    icon.className = 'fa-regular fa-circle';
                 }
             });
+            if (activeElement) {
+                activeElement.classList.add('active');
+                const icon = activeElement.querySelector('i');
+                if (icon) {
+                    icon.className = 'fa-solid fa-circle-dot';
+                }
+                // Store its data-item-id in localStorage
+                const id = activeElement.getAttribute('data-item-id');
+                if (id) {
+                    localStorage.setItem('activeItemId', id);
+                }
+            }
         }
-        // Fallback: if no stored ID found, match by URL (first match)
-        if (!activeItem) {
-            const currentPath = window.location.pathname;
-            allItems.forEach(item => {
-                const href = item.getAttribute('href');
+
+        // On click, set active and store ID (before navigation)
+        document.addEventListener('click', function(e) {
+            const target = e.target.closest('.menu-item');
+            if (target) {
+                const href = target.getAttribute('href');
                 if (href && href !== 'javascript:void(0)') {
-                    try {
-                        const linkUrl = new URL(href, window.location.origin);
-                        if (linkUrl.pathname === currentPath) {
-                            activeItem = item;
-                        }
-                    } catch (e) { /* ignore */ }
+                    setActiveItem(target);
                 }
-            });
-        }
-        if (activeItem) {
-            setActiveItem(activeItem);
-        }
-    });
-
-    // ==============================
-    // RADIO-BUTTON ACTIVE STATE (stores by data-item-id)
-    // ==============================
-    function setActiveItem(activeElement) {
-        const allItems = document.querySelectorAll('.menu-item');
-        allItems.forEach(item => {
-            item.classList.remove('active');
-            const icon = item.querySelector('i');
-            if (icon) {
-                icon.className = 'fa-regular fa-circle';
             }
         });
-        if (activeElement) {
-            activeElement.classList.add('active');
-            const icon = activeElement.querySelector('i');
-            if (icon) {
-                icon.className = 'fa-solid fa-circle-dot';
-            }
-            // Store its data-item-id in localStorage
-            const id = activeElement.getAttribute('data-item-id');
-            if (id) {
-                localStorage.setItem('activeItemId', id);
-            }
-        }
-    }
 
-    // On click, set active and store ID (before navigation)
-    document.addEventListener('click', function(e) {
-        const target = e.target.closest('.menu-item');
-        if (target) {
-            const href = target.getAttribute('href');
-            if (href && href !== 'javascript:void(0)') {
-                setActiveItem(target);
-            }
-        }
-    });
+        // Expose for debugging
+        window.setActiveMenuItem = setActiveItem;
+    </script>
 
-    // Expose for debugging
-    window.setActiveMenuItem = setActiveItem;
-</script>
-
-{% block extra_js %}
-{% endblock %}
-
+    {% block extra_js %}
+    {% endblock %}
 </body>
 </html>

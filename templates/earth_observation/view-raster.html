@@ -1,283 +1,3674 @@
-{% extends 'base.html' %}
-{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Raster Viewer – GIS Tools</title>
 
-{% block title %}Raster Viewer{% endblock %}
+  <!-- Leaflet CSS + JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Leaflet.draw -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+  <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+  <!-- gif.js for GIF export -->
+  <script src="https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.js"></script>
+  <!-- Chart.js for time series graph -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- html2canvas for PNG export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 
-{% block extra_css %}
-<!-- Leaflet + Font Awesome already loaded in base, but we keep them here too -->
-<style>
-    #map { height: 500px; width: 100%; background: #e0e7ef; }
-    /* override content padding if needed */
-    .content { padding: 0 !important; }
-
-    /* Legend (floating) */
-    #legend {
-        position: absolute;
-        bottom: 20px;
-        left: 20px;
-        z-index: 1000;
-        background: rgba(255,255,255,0.95);
-        padding: 8px 12px;
-        border-radius: 6px;
-        box-shadow: 0 0 12px rgba(0,0,0,0.2);
-        font-size: 11px;
-        display: none;
-        max-width: 180px;
-    }
+  <style>
+    /* --- Reset & base --- */
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body, html { height:100%; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; }
+    .navbar { height:50px; background:#003366; color:#fff; display:flex; align-items:center; padding:0 16px; font-size:18px; font-weight:bold; flex-shrink:0; }
+    .app { display:flex; height:calc(100vh - 100px); }
+    .sidebar { width:270px; background:#fff; border-right:1px solid #ddd; overflow-y:auto; padding:10px 14px; flex-shrink:0; font-size:13px; }
+    .sidebar h5 { color:#003366; border-bottom:2px solid #003366; padding-bottom:4px; margin:0 0 6px 0; font-size:14px; }
+    .menu-item { display:block; padding:3px 8px 3px 20px; color:#333; cursor:pointer; border-radius:3px; margin:1px 0; text-decoration:none; font-size:13px; }
+    .menu-item:hover { background:#e8f4fd; }
+    .menu-item.active { background:#d4e6f1; font-weight:600; }
+    .section-title { cursor:pointer; font-weight:600; padding:4px 0; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; font-size:13px; }
+    .section-title:hover { background:#f5f8fc; }
+    .sub-menu { padding-left:10px; max-height:0; overflow:hidden; transition:max-height 0.25s ease; }
+    .sub-menu.open { max-height:2000px; }
+    .toggle-icon { font-size:11px; color:#888; transition:0.2s; }
+    .toggle-icon.rotated { transform:rotate(180deg); }
+    .map-area { flex:1; position:relative; }
+    #map { height:100%; width:100%; background:#e0e7ef; }
+    #legend { position:absolute; bottom:20px; left:20px; z-index:1000; background:rgba(255,255,255,0.95); padding:8px 12px; border-radius:6px; box-shadow:0 0 12px rgba(0,0,0,0.2); font-size:11px; display:none; max-width:180px; }
     #legend h6 { margin:0 0 3px 0; color:#003366; border-bottom:1px solid #ddd; padding-bottom:2px; }
     .legend-item { display:flex; align-items:center; gap:6px; margin:1px 0; }
     .color-box { width:14px; height:12px; border:1px solid #aaa; flex-shrink:0; }
+    #month-control { position:absolute; bottom:20px; right:20px; z-index:1000; background:rgba(255,255,255,0.95); padding:10px 14px; border-radius:6px; box-shadow:0 0 12px rgba(0,0,0,0.2); display:none; align-items:center; gap:10px; font-size:13px; }
+    #month-control input[type="range"] { width:120px; cursor:pointer; }
+    #month-control span { min-width:28px; text-align:center; font-weight:bold; }
+    .vector-control { background:rgba(255,255,255,0.95); padding:6px 10px; border-radius:6px; box-shadow:0 0 12px rgba(0,0,0,0.2); font-size:13px; min-width:140px; max-width:200px; }
+    .vector-header { display:flex; justify-content:space-between; align-items:center; cursor:pointer; user-select:none; }
+    .vector-header h6 { margin:0; color:#003366; font-size:13px; font-weight:600; }
+    .vector-header .toggle-btn { font-size:12px; color:#888; transition:transform 0.2s; margin-left:8px; }
+    .vector-header .toggle-btn.rotated { transform:rotate(180deg); }
+    .vector-rows { margin-top:4px; padding-top:4px; border-top:1px solid #eee; display:block; }
+    .vector-rows.hidden { display:none; }
+    .vector-row { display:flex; align-items:center; padding:2px 0; }
+    .vector-row label { cursor:pointer; display:flex; align-items:center; gap:6px; font-weight:400; }
+    .vector-row input[type="checkbox"] { cursor:pointer; margin:0; }
+    .gis-toolbar { height:40px; background:#fff; border-bottom:1px solid #dcdcdc; display:flex; align-items:center; gap:6px; padding:0 10px; overflow-x:auto; flex-shrink:0; }
+    .tool-btn { border:none; background:none; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; min-width:70px; padding:5px; color:#444; border-radius:5px; transition:0.2s; }
+    .tool-btn:hover { background:#e8f4fd; color:#003366; }
+    .tool-btn i { font-size:18px; margin-bottom:2px; }
+    .tool-btn span { font-size:11px; }
+    .identify-popup { min-width:200px; background:#fff; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,0.15); overflow:hidden; }
+    .identify-popup .header { background:#003366; color:#fff; padding:6px 12px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:8px; }
+    .identify-popup .header i { font-size:16px; }
+    .identify-popup .body { padding:10px 12px 8px; font-size:13px; line-height:1.6; }
+    .identify-popup .body .field { display:flex; justify-content:space-between; border-bottom:1px solid #f0f0f0; padding:2px 0; }
+    .identify-popup .body .field:last-child { border-bottom:none; }
+    .identify-popup .body .label { color:#555; font-weight:500; }
+    .identify-popup .body .value { color:#003366; font-weight:600; }
+    .identify-popup .body .value.nodata { color:#999; font-style:italic; }
+    .leaflet-popup-content { padding:0 !important; margin:0 !important; min-width:200px; }
+    .leaflet-popup-content-wrapper { padding:0 !important; border-radius:8px !important; overflow:hidden; }
+    #geocode-control { position:absolute; top:10px; right:50px; z-index:1000; background:#fff; padding:4px 8px; border-radius:4px; box-shadow:0 0 12px rgba(0,0,0,0.2); display:none; align-items:center; gap:6px; }
+    #geocode-control input { border:1px solid #ccc; border-radius:3px; padding:4px 8px; font-size:13px; width:200px; }
+    #geocode-control button { background:#003366; color:#fff; border:none; border-radius:3px; padding:4px 10px; cursor:pointer; font-size:13px; }
 
-    /* Month control */
-    #month-control {
-        position: absolute;
-        bottom: 20px;
-        right: 20px;
-        z-index: 1000;
-        background: rgba(255,255,255,0.95);
-        padding: 10px 14px;
-        border-radius: 6px;
-        box-shadow: 0 0 12px rgba(0,0,0,0.2);
-        display: none;
-        align-items: center;
-        gap: 10px;
-        font-size: 13px;
+    /* --- Zonal Stats Panel --- */
+    #zonal-panel {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1001;
+      background: rgba(255,255,255,0.95);
+      border-radius: 8px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+      display: none;
+      min-width: 380px;
+      min-height: 320px;
+      max-height: 70vh;
+      border: 1px solid #ccc;
+      overflow: hidden;
     }
-    #month-control input[type="range"] { width: 120px; cursor: pointer; }
-    #month-control span { min-width: 28px; text-align: center; font-weight: bold; }
+    .zonal-header {
+      background: #003366;
+      color: #fff;
+      padding: 8px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: move;
+      user-select: none;
+      font-weight: 600;
+      font-size: 14px;
+      border-radius: 8px 8px 0 0;
+      flex-shrink: 0;
+    }
+    .zonal-header .title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .zonal-header .title i { font-size:16px; }
+    .zonal-header .close-btn {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 18px;
+      cursor: pointer;
+      padding: 0 4px;
+      line-height: 1;
+    }
+    .zonal-header .close-btn:hover { color:#ffdddd; }
+    .zonal-body {
+      padding: 14px 20px 16px;
+      font-size: 13px;
+      overflow-y: auto;
+      flex: 1;
+      max-height: calc(70vh - 50px);
+    }
+    .zonal-welcome {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      align-items: center;
+      padding: 6px 0 4px;
+    }
+    .zonal-welcome .welcome-btn {
+      width: 100%;
+      padding: 10px 0;
+      border: 2px solid #003366;
+      border-radius: 6px;
+      background: #f0f6fc;
+      color: #003366;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      transition: 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .zonal-welcome .welcome-btn:hover {
+      background: #d4e6f1;
+      transform: scale(1.02);
+    }
+    .zonal-welcome .welcome-btn i { font-size: 18px; }
+    .zonal-main { display: none; }
+    .zonal-main .row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+    .zonal-main .row label {
+      font-weight: 500;
+      min-width: 70px;
+    }
+    .zonal-main select,
+    .zonal-main input[type="number"] {
+      padding: 4px 8px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      font-size: 13px;
+      flex: 1;
+    }
+    .zonal-main .pick-btn {
+      background: #e0e0e0;
+      border: none;
+      border-radius: 4px;
+      padding: 4px 8px;
+      cursor: pointer;
+      color: #333;
+      font-size: 14px;
+      transition: 0.2s;
+      white-space: nowrap;
+    }
+    .zonal-main .pick-btn:hover { background: #b3d4f0; }
+    .zonal-main .pick-btn.active { background: #003366; color: #fff; }
+    .zonal-main .actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 6px;
+    }
+    .zonal-main .actions button {
+      padding: 5px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .zonal-main .actions .apply-btn {
+      background: #003366;
+      color: #fff;
+    }
+    .zonal-main .actions .apply-btn:hover { background:#002244; }
+    .zonal-main .actions .close-btn-body {
+      background: #e0e0e0;
+      color: #333;
+    }
+    .zonal-main .actions .close-btn-body:hover { background:#ccc; }
+    .zonal-month { width:60px; }
+    .zonal-pick-view {
+      display: none;
+      text-align: center;
+      padding: 10px 0 6px;
+    }
+    .zonal-pick-view .pick-message {
+      font-size: 14px;
+      color: #333;
+      margin-bottom: 12px;
+    }
+    .zonal-pick-view .pick-message i {
+      color: #003366;
+      margin-right: 6px;
+    }
+    .zonal-pick-view .pick-cancel {
+      background: none;
+      border: none;
+      color: #003366;
+      cursor: pointer;
+      font-size: 13px;
+      padding: 4px 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .zonal-pick-view .pick-cancel:hover { text-decoration: underline; }
+    .zonal-result {
+      font-size: 15px;
+      font-weight: 500;
+      color: #003366;
+      padding: 8px 0;
+      text-align: center;
+      border-top: 1px solid #eee;
+      margin-top: 8px;
+    }
+    .zonal-result .avg-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: #003366;
+      display: block;
+      margin-top: 4px;
+    }
+    .zonal-result .avg-label {
+      font-size: 14px;
+      color: #555;
+      font-weight: 400;
+    }
+    .zonal-back {
+      background: none;
+      border: none;
+      color: #003366;
+      cursor: pointer;
+      font-size: 13px;
+      padding: 4px 0;
+      margin-bottom: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .zonal-back:hover { text-decoration: underline; }
 
-    /* Vector control – we keep it inside the map container */
-    .vector-control { ... } /* already in base, but we can add styles here if needed */
-</style>
-{% endblock %}
+    /* --- Animation Panel --- */
+    #animate-panel {
+      position: absolute;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1001;
+      background: rgba(255,255,255,0.95);
+      border-radius: 8px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+      display: none;
+      min-width: 380px;
+      border: 1px solid #ccc;
+      overflow: hidden;
+    }
+    .animate-header {
+      background: #003366;
+      color: #fff;
+      padding: 8px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: move;
+      user-select: none;
+      font-weight: 600;
+      font-size: 14px;
+      border-radius: 8px 8px 0 0;
+    }
+    .animate-header .title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .animate-header .title i { font-size:16px; }
+    .animate-header .close-btn {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 18px;
+      cursor: pointer;
+      padding: 0 4px;
+      line-height: 1;
+    }
+    .animate-header .close-btn:hover { color:#ffdddd; }
+    .animate-body {
+      padding: 14px 20px 16px;
+      font-size: 13px;
+    }
+    .animate-body .row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+    .animate-body .row label {
+      font-weight: 500;
+      min-width: 60px;
+    }
+    .animate-body .row input[type="range"] {
+      flex: 1;
+      cursor: pointer;
+    }
+    .animate-body .row .month-display {
+      font-weight: 600;
+      color: #003366;
+      min-width: 28px;
+      text-align: center;
+    }
+    .animate-body .animate-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .animate-body .animate-controls button {
+      padding: 5px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      background: #e0e0e0;
+      color: #333;
+      transition: 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .animate-body .animate-controls button:hover { background: #b3d4f0; }
+    .animate-body .animate-controls button.primary {
+      background: #003366;
+      color: #fff;
+    }
+    .animate-body .animate-controls button.primary:hover { background: #002244; }
+    .animate-body .animate-controls select {
+      padding: 4px 8px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      font-size: 13px;
+    }
+    .animate-body .animate-status {
+      margin-top: 6px;
+      text-align: center;
+      font-size: 12px;
+      color: #555;
+      border-top: 1px solid #eee;
+      padding-top: 6px;
+    }
+    .animate-body .animate-status .highlight {
+      color: #003366;
+      font-weight: 600;
+    }
+    .animate-export-buttons {
+      display: flex;
+      gap: 8px;
+      margin-left: auto;
+    }
+    .animate-export-buttons button {
+      padding: 4px 12px;
+      border: 1px solid #003366;
+      border-radius: 4px;
+      background: #f0f6fc;
+      color: #003366;
+      cursor: pointer;
+      font-size: 12px;
+      transition: 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .animate-export-buttons button:hover {
+      background: #d4e6f1;
+    }
 
-{% block content %}
-<div style="position:relative; height:100%;">
-    <div id="map"></div>
+    /* --- Time Series Graph Panel --- */
+    #timeseries-panel {
+      position: absolute;
+      bottom: 80px;
+      right: 20px;
+      z-index: 1001;
+      background: rgba(255,255,255,0.95);
+      border-radius: 8px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+      display: none;
+      min-width: 420px;
+      min-height: 400px;
+      width: 480px;
+      height: 500px;
+      border: 1px solid #ccc;
+      overflow: hidden;
+      cursor: default;
+    }
+    .timeseries-header {
+      background: #003366;
+      color: #fff;
+      padding: 8px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: move;
+      user-select: none;
+      font-weight: 600;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+    .timeseries-header .title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .timeseries-header .title i { font-size:16px; }
+    .timeseries-header .close-btn {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 18px;
+      cursor: pointer;
+      padding: 0 4px;
+      line-height: 1;
+    }
+    .timeseries-header .close-btn:hover { color:#ffdddd; }
+    .timeseries-body {
+      padding: 12px 16px 16px;
+      font-size: 13px;
+      display: flex;
+      flex-direction: column;
+      height: calc(100% - 45px);
+    }
+    .timeseries-body .info {
+      font-size: 12px;
+      color: #555;
+      margin-bottom: 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #eee;
+      flex-shrink: 0;
+    }
+    .timeseries-body .info .highlight {
+      color: #003366;
+      font-weight: 600;
+    }
+    #timeseries-chart-container {
+      width: 100%;
+      flex: 1;
+      min-height: 200px;
+      height: auto;
+      position: relative;
+    }
+    #timeseries-chart-container canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+    .timeseries-export-buttons {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      justify-content: flex-end;
+      border-top: 1px solid #eee;
+      padding-top: 8px;
+      flex-shrink: 0;
+    }
+    .timeseries-export-buttons button {
+      padding: 4px 12px;
+      border: 1px solid #003366;
+      border-radius: 4px;
+      background: #f0f6fc;
+      color: #003366;
+      cursor: pointer;
+      font-size: 12px;
+      transition: 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .timeseries-export-buttons button:hover {
+      background: #d4e6f1;
+    }
+    .timeseries-export-buttons button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .timeseries-mode-selector {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+    .timeseries-mode-selector button {
+      padding: 4px 12px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background: #f5f5f5;
+      color: #333;
+      cursor: pointer;
+      font-size: 12px;
+      transition: 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .timeseries-mode-selector button:hover {
+      background: #e8f4fd;
+    }
+    .timeseries-mode-selector button.active {
+      background: #003366;
+      color: #fff;
+      border-color: #003366;
+    }
+    .resize-handle {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 20px;
+      height: 20px;
+      cursor: nwse-resize;
+      background: linear-gradient(135deg, transparent 50%, #003366 50%);
+      z-index: 10;
+      opacity: 0.6;
+      transition: opacity 0.2s;
+    }
+    .resize-handle:hover {
+      opacity: 1;
+    }
 
-    <!-- Legend -->
-    <div id="legend">
-        <h6>Legend</h6>
-        <div id="legend-content"></div>
+    /* --- Split Map Styles --- */
+    #split-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 500;
+      display: none;
+      background: #e0e7ef;
+    }
+    .split-grid {
+      display: grid;
+      width: 100%;
+      height: 100%;
+      gap: 2px;
+      background: #003366;
+      padding: 2px;
+    }
+    .split-grid-4 {
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+    }
+    .split-grid-2 {
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr;
+    }
+    .split-grid-3 {
+      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+    }
+    .split-grid-3 .split-cell:nth-child(3) {
+      grid-column: 2 / 3;
+    }
+    .split-grid-1 {
+      grid-template-columns: 1fr;
+      grid-template-rows: 1fr;
+    }
+    
+    .split-cell {
+      position: relative;
+      background: #e0e7ef;
+      overflow: hidden;
+      min-height: 100px;
+    }
+    .split-cell .map-container {
+      width: 100%;
+      height: 100%;
+      background: #e0e7ef;
+    }
+    .split-cell .map-container .leaflet-control-zoom {
+      display: none;
+    }
+    .split-label {
+      position: absolute;
+      top: 4px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      background: rgba(0, 51, 102, 0.8);
+      color: #fff;
+      padding: 1px 8px;
+      border-radius: 3px;
+      font-size: 9px;
+      font-weight: 600;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .split-label-right {
+      background: rgba(220, 50, 50, 0.8);
+    }
+    .split-label-green {
+      background: rgba(46, 125, 50, 0.8);
+    }
+    .split-label-purple {
+      background: rgba(123, 31, 162, 0.8);
+    }
+    
+    /* Smaller elongated legend - moved up 40px */
+    .split-legend {
+      position: absolute;
+      bottom: 100px;
+      right: 4px;
+      z-index: 1000;
+      background: rgba(255,255,255,0.92);
+      padding: 2px 5px;
+      border-radius: 3px;
+      box-shadow: 0 0 6px rgba(0,0,0,0.1);
+      font-size: 7px;
+      max-width: 90px;
+      border: 1px solid #ddd;
+      cursor: grab;
+      user-select: none;
+      max-height: 50%;
+      overflow-y: auto;
+    }
+    .split-legend:active {
+      cursor: grabbing;
+    }
+    .split-legend h6 {
+      margin: 0 0 1px 0;
+      color: #003366;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 1px;
+      font-size: 7px;
+      text-align: center;
+    }
+    .split-legend .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      margin: 1px 0;
+    }
+    .split-legend .color-box {
+      width: 7px;
+      height: 5px;
+      border: 1px solid #aaa;
+      flex-shrink: 0;
+    }
+    .split-legend .label {
+      font-size: 6px;
+      color: #333;
+      line-height: 1;
+      word-break: break-word;
+    }
+    .split-legend .legend-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 1px;
+      margin-bottom: 1px;
+    }
+    .split-legend .legend-header h6 {
+      border-bottom: none;
+      padding-bottom: 0;
+      margin: 0;
+    }
+    .split-legend .legend-drag-handle {
+      color: #999;
+      font-size: 7px;
+      cursor: grab;
+      padding: 0 2px;
+    }
+    .split-legend .legend-drag-handle:active {
+      cursor: grabbing;
+    }
+
+    /* Movable controls bar - fixed width, maintains dimensions */
+    #split-controls-wrapper {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1001;
+      background: rgba(255,255,255,0.95);
+      border-radius: 6px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      border: 1px solid #ccc;
+      cursor: move;
+      user-select: none;
+      touch-action: none;
+      width: auto;
+      max-width: calc(100% - 80px);
+      min-width: 200px;
+      display: inline-block;
+    }
+    #split-controls-wrapper:active {
+      cursor: grabbing;
+    }
+    #split-controls-wrapper .controls-header {
+      background: #003366;
+      color: #fff;
+      padding: 1px 8px;
+      font-size: 8px;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-radius: 5px 5px 0 0;
+      cursor: move;
+      user-select: none;
+    }
+    #split-controls-wrapper .controls-header .drag-icon {
+      font-size: 8px;
+      color: rgba(255,255,255,0.6);
+      cursor: move;
+    }
+    #split-controls-wrapper .controls-header .close-btn-mini {
+      background: none;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      font-size: 9px;
+      padding: 0 4px;
+    }
+    #split-controls-wrapper .controls-header .close-btn-mini:hover {
+      color: #ffdddd;
+    }
+    #split-controls {
+      display: flex;
+      gap: 3px;
+      flex-wrap: nowrap;
+      justify-content: center;
+      align-items: center;
+      padding: 3px 8px;
+      font-size: 8px;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+    #split-controls .ctrl-group {
+      display: flex;
+      align-items: center;
+      gap: 1px;
+      white-space: nowrap;
+    }
+    #split-controls .ctrl-group label {
+      font-weight: 500;
+      color: #333;
+      font-size: 7px;
+    }
+    #split-controls select {
+      padding: 1px 2px;
+      border-radius: 2px;
+      border: 1px solid #ccc;
+      font-size: 7px;
+      max-width: 60px;
+    }
+    #split-controls input[type="number"] {
+      padding: 1px 2px;
+      border-radius: 2px;
+      border: 1px solid #ccc;
+      font-size: 7px;
+      width: 20px;
+    }
+    #split-controls .color-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      display: inline-block;
+      border: 1px solid #999;
+      flex-shrink: 0;
+    }
+    #split-controls .split-btn {
+      padding: 1px 4px;
+      border: none;
+      border-radius: 2px;
+      cursor: pointer;
+      font-size: 7px;
+      transition: 0.2s;
+      white-space: nowrap;
+    }
+    #split-controls .split-btn-apply {
+      background: #003366;
+      color: #fff;
+    }
+    #split-controls .split-btn-apply:hover {
+      background: #002244;
+    }
+    #split-controls .split-btn-close {
+      background: #e0e0e0;
+      color: #333;
+    }
+    #split-controls .split-btn-close:hover {
+      background: #ccc;
+    }
+    #split-controls .split-btn-screen {
+      background: #f0f0f0;
+      color: #333;
+      border: 1px solid #ccc;
+      padding: 1px 3px;
+      font-size: 7px;
+    }
+    #split-controls .month-label {
+      font-size: 6px;
+      color: #888;
+      margin-left: 1px;
+    }
+    .ctrl-separator {
+      width: 1px;
+      height: 14px;
+      background: #ddd;
+      margin: 0 2px;
+      flex-shrink: 0;
+    }
+
+    /* Screen selector modal */
+    #screen-selector {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 2000;
+      background: rgba(255,255,255,0.98);
+      padding: 24px 32px;
+      border-radius: 12px;
+      box-shadow: 0 4px 30px rgba(0,0,0,0.3);
+      display: none;
+      text-align: center;
+      min-width: 300px;
+      border: 2px solid #003366;
+    }
+    #screen-selector h3 {
+      color: #003366;
+      margin-bottom: 16px;
+      font-size: 18px;
+    }
+    #screen-selector .screen-options {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    #screen-selector .screen-options button {
+      padding: 12px 20px;
+      border: 2px solid #003366;
+      border-radius: 8px;
+      background: #f0f6fc;
+      color: #003366;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      transition: 0.2s;
+      min-width: 60px;
+    }
+    #screen-selector .screen-options button:hover {
+      background: #d4e6f1;
+      transform: scale(1.05);
+    }
+    #screen-selector .screen-options button.active {
+      background: #003366;
+      color: #fff;
+    }
+    #screen-selector .close-selector {
+      margin-top: 16px;
+      background: none;
+      border: none;
+      color: #999;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    #screen-selector .close-selector:hover {
+      color: #333;
+    }
+
+    @media (max-width: 768px) {
+      .split-grid-4 {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+      }
+      .split-grid-3 {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+      }
+      .split-grid-3 .split-cell:nth-child(3) {
+        grid-column: 1 / 3;
+      }
+      .split-grid-2 {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr;
+      }
+      #split-controls {
+        flex-wrap: wrap;
+        padding: 2px 4px;
+      }
+      #split-controls select {
+        max-width: 45px;
+      }
+      .split-legend {
+        max-width: 70px;
+        bottom: 80px;
+        right: 2px;
+        padding: 2px 3px;
+      }
+      #split-controls-wrapper {
+        max-width: calc(100% - 20px);
+        min-width: 150px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- ===== NAVBAR ===== -->
+  <div class="navbar">🛰 Raster Viewer</div>
+
+  <!-- ===== TOOLBAR ===== -->
+  <div class="gis-toolbar">
+    <button class="tool-btn" id="btnIdentify"><i class="fa-solid fa-crosshairs"></i><span>Identify</span></button>
+    <button class="tool-btn" id="btnSplit"><i class="fa-solid fa-table-cells"></i><span>Split Map</span></button>
+    <button class="tool-btn" id="btnTimeseries"><i class="fa-solid fa-chart-line"></i><span>Time Series</span></button>
+    <button class="tool-btn" id="btnAnimate"><i class="fa-solid fa-play"></i><span>Animate</span></button>
+    <button class="tool-btn" id="btnZonal"><i class="fa-solid fa-table-cells-large"></i><span>Zonal Stats</span></button>
+    <button class="tool-btn" id="btnMeasure"><i class="fa-solid fa-ruler"></i><span>Measure</span></button>
+    <button class="tool-btn" id="btnBuffer"><i class="fa-solid fa-circle-dot"></i><span>Buffer</span></button>
+    <button class="tool-btn" id="btnGeocode"><i class="fa-solid fa-magnifying-glass-location"></i><span>Search</span></button>
+    <button class="tool-btn" id="btnLocate"><i class="fa-solid fa-location-dot"></i><span>Locate</span></button>
+    <button class="tool-btn" id="btnGrid"><i class="fa-solid fa-border-all"></i><span>Grid</span></button>
+    <button class="tool-btn" id="btnScreenshot"><i class="fa-solid fa-camera"></i><span>Export</span></button>
+  </div>
+
+  <!-- ===== MAIN ===== -->
+  <div class="app">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <h5>📋 Products</h5>
+      <!-- Population -->
+      <div class="section-title" onclick="toggleMenu(this)">
+        Population & Demographics
+        <i class="fa-solid fa-chevron-down toggle-icon"></i>
+      </div>
+      <div class="sub-menu">
+        <a class="menu-item" data-slug="demographics_children">Total Child Population</a>
+        <a class="menu-item" data-slug="demographics_children_female">Child Population (Female)</a>
+        <a class="menu-item" data-slug="demographics_children_male">Child Population (Male)</a>
+      </div>
+      <!-- Climate -->
+      <div class="section-title" onclick="toggleMenu(this)">
+        Baseline Climate
+        <i class="fa-solid fa-chevron-down toggle-icon"></i>
+      </div>
+      <div class="sub-menu">
+        <div class="section-title" onclick="toggleMenu(this)" style="padding-left:6px; border-bottom:1px dashed #ddd; font-weight:500;">
+          🌧 Rainfall <i class="fa-solid fa-chevron-down toggle-icon"></i>
+        </div>
+        <div class="sub-menu">
+          <a class="menu-item" data-slug="rainfall">Mean Annual Rainfall</a>
+        </div>
+        <div class="section-title" onclick="toggleMenu(this)" style="padding-left:6px; border-bottom:1px dashed #ddd; font-weight:500;">
+          🌡 Temperature <i class="fa-solid fa-chevron-down toggle-icon"></i>
+        </div>
+        <div class="sub-menu">
+          <a class="menu-item" data-slug="temperature_avg">Mean Temperature</a>
+          <a class="menu-item" data-slug="temperature_max">Maximum Temperature</a>
+          <a class="menu-item" data-slug="temperature_min">Minimum Temperature</a>
+        </div>
+        <div class="section-title" onclick="toggleMenu(this)" style="padding-left:6px; border-bottom:1px dashed #ddd; font-weight:500;">
+          💨 Wind <i class="fa-solid fa-chevron-down toggle-icon"></i>
+        </div>
+        <div class="sub-menu">
+          <a class="menu-item" data-slug="wind_speed">Wind Speed</a>
+        </div>
+        <div class="section-title" onclick="toggleMenu(this)" style="padding-left:6px; border-bottom:1px dashed #ddd; font-weight:500;">
+          🌿 Vegetation & Land <i class="fa-solid fa-chevron-down toggle-icon"></i>
+        </div>
+        <div class="sub-menu">
+          <a class="menu-item" data-slug="land_degradation">Land Degradation</a>
+        </div>
+      </div>
+      <!-- Hazards -->
+      <div class="section-title" onclick="toggleMenu(this)">
+        Water‑Related Hazards
+        <i class="fa-solid fa-chevron-down toggle-icon"></i>
+      </div>
+      <div class="sub-menu">
+        <a class="menu-item" data-slug="flood_risk_coastal">Coastal Flood Risk</a>
+        <a class="menu-item" data-slug="flood_risk_fluvial">Fluvial Flood Risk</a>
+        <a class="menu-item" data-slug="drought_risk">Drought Risk</a>
+      </div>
+      <!-- Pollution & Health -->
+      <div class="section-title" onclick="toggleMenu(this)">
+        Pollution & Health
+        <i class="fa-solid fa-chevron-down toggle-icon"></i>
+      </div>
+      <div class="sub-menu">
+        <a class="menu-item" data-slug="pollution_air">Air Pollution</a>
+        <a class="menu-item" data-slug="pollution_water">Water Pollution</a>
+        <a class="menu-item" data-slug="diseases_cholera">Cholera Risk</a>
+        <a class="menu-item" data-slug="diseases_malaria">Malaria Risk</a>
+        <a class="menu-item" data-slug="cyclone_risk">Cyclone Risk</a>
+      </div>
     </div>
 
-    <!-- Month slider -->
-    <div id="month-control">
+    <!-- Map -->
+    <div class="map-area">
+      <div id="map"></div>
+      <div id="legend"><h6>Legend</h6><div id="legend-content"></div></div>
+      <div id="month-control">
         <label>Month:</label>
         <input type="range" id="monthSlider" min="1" max="12" value="1" />
         <span id="monthDisplay">1</span>
-    </div>
-</div>
-{% endblock %}
+      </div>
+      <div id="geocode-control">
+        <input type="text" id="geocode-input" placeholder="Search place..." />
+        <button id="geocode-btn">Go</button>
+      </div>
 
-{% block extra_js %}
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-    // ================================================================
-    // 1. DATASET REGISTRY (same as before)
-    // ================================================================
-    const LEGEND_RAINFALL = [ ... ]; // keep all legends from your original
+      <!-- Screen Selector -->
+      <div id="screen-selector">
+        <h3>📊 Select Number of Screens</h3>
+        <div class="screen-options">
+          <button data-screens="1">1</button>
+          <button data-screens="2" class="active">2</button>
+          <button data-screens="3">3</button>
+          <button data-screens="4">4</button>
+        </div>
+        <button class="close-selector" id="screen-selector-close">Cancel</button>
+      </div>
+
+      <!-- Split Map Container -->
+      <div id="split-container">
+        <div class="split-grid split-grid-2" id="split-grid"></div>
+        
+        <!-- Movable Controls Bar - fixed width -->
+        <div id="split-controls-wrapper">
+          <div class="controls-header">
+            <span>🔧 Tool Bar <span class="drag-icon">⠿</span></span>
+            <button class="close-btn-mini" id="split-close-mini">✕</button>
+          </div>
+          <div id="split-controls">
+            <div class="ctrl-group">
+              <span class="color-dot" style="background:#003366;"></span>
+              <select id="split-dataset-0"></select>
+              <label class="month-label">M</label>
+              <input type="number" id="split-month-0" min="1" max="12" value="1" />
+            </div>
+            <div class="ctrl-separator"></div>
+            <div class="ctrl-group">
+              <span class="color-dot" style="background:#dc3232;"></span>
+              <select id="split-dataset-1"></select>
+              <label class="month-label">M</label>
+              <input type="number" id="split-month-1" min="1" max="12" value="1" />
+            </div>
+            <div class="ctrl-separator" id="sep-2" style="display:none;"></div>
+            <div class="ctrl-group" id="ctrl-group-2" style="display:none;">
+              <span class="color-dot" style="background:#2e7d32;"></span>
+              <select id="split-dataset-2"></select>
+              <label class="month-label">M</label>
+              <input type="number" id="split-month-2" min="1" max="12" value="1" />
+            </div>
+            <div class="ctrl-separator" id="sep-3" style="display:none;"></div>
+            <div class="ctrl-group" id="ctrl-group-3" style="display:none;">
+              <span class="color-dot" style="background:#7b1fa2;"></span>
+              <select id="split-dataset-3"></select>
+              <label class="month-label">M</label>
+              <input type="number" id="split-month-3" min="1" max="12" value="1" />
+            </div>
+            <div class="ctrl-separator"></div>
+            <button class="split-btn split-btn-apply" id="split-apply">Apply</button>
+            <button class="split-btn split-btn-close" id="split-close">✕</button>
+            <button class="split-btn split-btn-screen" id="split-change-screens">📐</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Zonal Stats Panel -->
+      <div id="zonal-panel">
+        <div class="zonal-header">
+          <span class="title"><i class="fa-solid fa-table-cells-large"></i> Zonal Statistics</span>
+          <button class="close-btn" id="zonal-close" title="Close panel">✕</button>
+        </div>
+        <div class="zonal-body">
+          <div class="zonal-welcome" id="zonal-welcome">
+            <button class="welcome-btn" id="welcome-pick">
+              <i class="fa-solid fa-location-dot"></i> Pick from map
+            </button>
+            <button class="welcome-btn" id="welcome-select">
+              <i class="fa-solid fa-list"></i> Select from list
+            </button>
+            <button class="welcome-btn" id="welcome-draw" style="border-color:#003366; color:#003366;">
+              <i class="fa-solid fa-draw-polygon"></i> Draw Polygon
+            </button>
+          </div>
+          <div class="zonal-pick-view" id="zonal-pick-view">
+            <div class="pick-message">
+              <i class="fa-solid fa-hand-pointer"></i>
+              Click on the map to select a country
+            </div>
+            <button class="pick-cancel" id="pick-cancel">
+              <i class="fa-solid fa-arrow-left"></i> Cancel
+            </button>
+            <div id="zonal-pick-result"></div>
+          </div>
+          <div class="zonal-main" id="zonal-main">
+            <button class="zonal-back" id="zonal-back">
+              <i class="fa-solid fa-arrow-left"></i> Back
+            </button>
+            <div class="row">
+              <label>Country:</label>
+              <select id="zonal-country"></select>
+              <button class="pick-btn" id="zonal-pick-country" title="Pick country from map">
+                <i class="fa-solid fa-location-dot"></i>
+              </button>
+            </div>
+            <div class="row">
+              <label>Dataset:</label>
+              <select id="zonal-dataset"></select>
+            </div>
+            <div class="row">
+              <label>Month:</label>
+              <input type="number" id="zonal-month" class="zonal-month" min="1" max="12" value="1" />
+            </div>
+            <div class="actions">
+              <button class="apply-btn" id="zonal-apply">Get Stats</button>
+              <button class="close-btn-body" id="zonal-close-body">✕</button>
+            </div>
+            <div id="zonal-result"></div>
+          </div>
+          <div class="zonal-pick-view" id="zonal-draw-view" style="display:none;">
+            <div class="pick-message">
+              <i class="fa-solid fa-draw-polygon"></i>
+              Draw a polygon, rectangle, or circle on the map<br>
+              <span style="font-size:12px; color:#888;">Double-click to finish drawing</span>
+            </div>
+            <button class="pick-cancel" id="draw-cancel">
+              <i class="fa-solid fa-arrow-left"></i> Cancel
+            </button>
+            <div id="zonal-draw-result"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Animation Panel -->
+      <div id="animate-panel">
+        <div class="animate-header">
+          <span class="title"><i class="fa-solid fa-play"></i> Time‑lapse Animation</span>
+          <button class="close-btn" id="animate-close" title="Close panel">✕</button>
+        </div>
+        <div class="animate-body">
+          <div class="row">
+            <label>Month:</label>
+            <input type="range" id="animateSlider" min="1" max="12" value="1" step="1" />
+            <span class="month-display" id="animateMonthDisplay">1</span>
+          </div>
+          <div class="animate-controls">
+            <button id="animatePlayBtn" class="primary"><i class="fa-solid fa-play"></i> Play</button>
+            <label>Speed:</label>
+            <select id="animateSpeed">
+              <option value="500">0.5s</option>
+              <option value="1000" selected>1s</option>
+              <option value="2000">2s</option>
+              <option value="3000">3s</option>
+            </select>
+            <div class="animate-export-buttons">
+              <button id="exportGifBtn"><i class="fa-solid fa-file-image"></i> GIF</button>
+              <button id="exportVideoBtn"><i class="fa-solid fa-video"></i> Video</button>
+            </div>
+          </div>
+          <div class="animate-status" id="animateStatus">
+            <span class="highlight" id="animateProductName">No dataset loaded</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Time Series Graph Panel -->
+      <div id="timeseries-panel">
+        <div class="timeseries-header">
+          <span class="title"><i class="fa-solid fa-chart-line"></i> Time Series</span>
+          <button class="close-btn" id="timeseries-close" title="Close panel">✕</button>
+        </div>
+        <div class="timeseries-body">
+          <div class="timeseries-mode-selector">
+            <button class="active" data-mode="pixel"><i class="fa-solid fa-crosshairs"></i> Pixel</button>
+            <button data-mode="polygon"><i class="fa-solid fa-vector-square"></i> Select Polygon</button>
+            <button data-mode="draw"><i class="fa-solid fa-draw-polygon"></i> Draw Polygon</button>
+          </div>
+          <div class="info" id="timeseries-info">
+            <span class="highlight">Click on the map</span> to see the time series
+          </div>
+          <div id="timeseries-chart-container">
+            <canvas id="timeseries-chart"></canvas>
+          </div>
+          <div class="timeseries-export-buttons">
+            <button id="exportPNGBtn" disabled><i class="fa-solid fa-file-image"></i> PNG</button>
+            <button id="exportCSVBtn" disabled><i class="fa-solid fa-file-csv"></i> CSV</button>
+          </div>
+        </div>
+        <div class="resize-handle" id="resizeHandle"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =============================================================
+    // 1. DATASET REGISTRY & LEGEND
+    // =============================================================
+    const LEGEND_RAINFALL = [
+      { color: 'rgb(222,235,247)', label: 'Very Low (0-25 mm)' },
+      { color: 'rgb(158,202,225)', label: 'Low (25-75 mm)' },
+      { color: 'rgb(49,130,189)',  label: 'Moderate (75-150 mm)' },
+      { color: 'rgb(8,48,107)',    label: 'High (>150 mm)' },
+      { color: '#ffffff',          label: 'No Data' },
+    ];
+    const LEGEND_TEMPERATURE = [
+      { color: 'rgb(103,0,31)',   label: 'Very Cold (< -10°C)' },
+      { color: 'rgb(178,24,43)',  label: 'Cold (-10–0°C)' },
+      { color: 'rgb(214,96,77)',  label: 'Moderate (0–10°C)' },
+      { color: 'rgb(244,165,130)', label: 'Warm (10–20°C)' },
+      { color: 'rgb(253,219,199)', label: 'Hot (>20°C)' },
+      { color: '#ffffff',          label: 'No Data' },
+    ];
+    const LEGEND_DEMO = [
+      { color: 'rgb(237,248,233)', label: 'Very Low (<10)' },
+      { color: 'rgb(199,233,180)', label: 'Low (10-50)' },
+      { color: 'rgb(127,205,187)', label: 'Moderate (50-200)' },
+      { color: 'rgb(65,182,196)',  label: 'High (200-500)' },
+      { color: 'rgb(29,145,192)',  label: 'Very High (>500)' },
+      { color: '#ffffff',          label: 'No Data' },
+    ];
+    const LEGEND_FLOOD = [
+      { color: 'rgb(254,224,139)', label: 'No Risk' },
+      { color: 'rgb(253,174,97)',  label: 'Very Low' },
+      { color: 'rgb(244,109,67)',  label: 'Low' },
+      { color: 'rgb(213,62,79)',   label: 'Moderate' },
+      { color: 'rgb(158,1,66)',    label: 'High' },
+      { color: '#ffffff',          label: 'No Data' },
+    ];
+    const LEGEND_POLLUTION = [
+      { color: 'rgb(255,255,204)', label: 'Low' },
+      { color: 'rgb(255,237,160)', label: 'Moderate' },
+      { color: 'rgb(254,196,79)',  label: 'High' },
+      { color: 'rgb(254,153,41)',  label: 'Very High' },
+      { color: 'rgb(217,95,14)',   label: 'Extreme' },
+      { color: '#ffffff',          label: 'No Data' },
+    ];
+    const LEGEND_CYCLONE = LEGEND_DEMO;
+    const LEGEND_DISEASE = LEGEND_POLLUTION;
 
     const DATASETS = {
-        rainfall:          { type: 'month', legend: LEGEND_RAINFALL },
-        temperature_avg:   { type: 'month', legend: LEGEND_TEMPERATURE },
-        // ... all other products
+      rainfall:          { type: 'month', legend: LEGEND_RAINFALL },
+      temperature_avg:   { type: 'month', legend: LEGEND_TEMPERATURE },
+      temperature_max:   { type: 'month', legend: LEGEND_TEMPERATURE },
+      temperature_min:   { type: 'month', legend: LEGEND_TEMPERATURE },
+      wind_speed:        { type: 'month', legend: LEGEND_DEMO },
+      demographics_children_female: { type: 'static', legend: LEGEND_DEMO },
+      demographics_children_male:   { type: 'static', legend: LEGEND_DEMO },
+      demographics_children:        { type: 'static', legend: LEGEND_DEMO },
+      land_degradation:             { type: 'static', legend: LEGEND_DEMO },
+      flood_risk_coastal:           { type: 'static', legend: LEGEND_FLOOD },
+      flood_risk_fluvial:           { type: 'static', legend: LEGEND_FLOOD },
+      drought_risk:                 { type: 'static', legend: LEGEND_FLOOD },
+      pollution_air:                { type: 'static', legend: LEGEND_POLLUTION },
+      pollution_water:              { type: 'static', legend: LEGEND_POLLUTION },
+      cyclone_risk:                 { type: 'static', legend: LEGEND_CYCLONE },
+      diseases_cholera:             { type: 'static', legend: LEGEND_DISEASE },
+      diseases_malaria:             { type: 'static', legend: LEGEND_DISEASE },
     };
 
-    // ================================================================
-    // 2. MAP SETUP
-    // ================================================================
+    const PRODUCT_NAMES = {
+      'demographics_children': 'Total Child Population',
+      'demographics_children_female': 'Child Population (Female)',
+      'demographics_children_male': 'Child Population (Male)',
+      'rainfall': 'Mean Annual Rainfall',
+      'temperature_avg': 'Mean Temperature',
+      'temperature_max': 'Maximum Temperature',
+      'temperature_min': 'Minimum Temperature',
+      'wind_speed': 'Wind Speed',
+      'land_degradation': 'Land Degradation',
+      'flood_risk_coastal': 'Coastal Flood Risk',
+      'flood_risk_fluvial': 'Fluvial Flood Risk',
+      'drought_risk': 'Drought Risk',
+      'pollution_air': 'Air Pollution',
+      'pollution_water': 'Water Pollution',
+      'diseases_cholera': 'Cholera Risk',
+      'diseases_malaria': 'Malaria Risk',
+      'cyclone_risk': 'Cyclone Risk',
+    };
+    const WORLD_BOUNDS = [[-90, -180], [90, 180]];
+
+    // =============================================================
+    // 2. SIDEBAR TOGGLE
+    // =============================================================
+    function toggleMenu(element) {
+      let sub = element.nextElementSibling;
+      while (sub && !sub.classList.contains('sub-menu')) {
+        sub = sub.nextElementSibling;
+      }
+      if (!sub) return;
+      sub.classList.toggle('open');
+      const icon = element.querySelector('.toggle-icon');
+      if (icon) icon.classList.toggle('rotated');
+    }
+
+    // =============================================================
+    // 3. LEAFLET MAP (Main)
+    // =============================================================
     const map = L.map('map', {
-        center: [0, 20],
-        zoom: 3,
-        maxBounds: [[-90, -180], [90, 180]],
-        maxBoundsViscosity: 1.0
+      center: [0, 20],
+      zoom: 3,
+      maxBounds: [[-90, -180], [90, 180]],
+      maxBoundsViscosity: 1.0
     });
-
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap'
+      attribution: '&copy; OpenStreetMap'
     }).addTo(map);
-
     map.createPane('rasterPane');
     map.getPane('rasterPane').style.zIndex = 300;
 
-    const WORLD_BOUNDS = [[-90, -180], [90, 180]];
     let currentOverlay = null;
     let currentSlug = null;
 
-    // ================================================================
-    // 3. VECTOR LAYERS (same as before, with GeoJSON URLs)
-    // ================================================================
+    // =============================================================
+    // 4. VECTOR LAYERS (Main)
+    // =============================================================
     const VECTOR_LAYERS = [
-        { id: 'chk-countries', label: 'Countries', url: '/static/data/geojson/ne_10m_admin_0_countries_sm.geojson', style: { color: '#3388ff', weight: 1, fill: false }, defaultChecked: true },
-        { id: 'chk-provinces', label: 'Provinces (adm1)', url: '/static/data/geojson/ne_10m_admin_1_countries_sm.geojson', style: { color: '#ff7f0e', weight: 0.8, fill: false, opacity: 0.6 }, defaultChecked: true },
-        { id: 'chk-rivers', label: 'Rivers', url: '/static/data/geojson/world_rivers.geojson', style: { color: '#1f77b4', weight: 1.5, fill: false, opacity: 0.7 }, defaultChecked: false },
+      {
+        id: 'chk-countries',
+        label: 'Countries',
+        url: '/static/data/geojson/ne_10m_admin_0_countries_sm.geojson',
+        style: { color: '#3388ff', weight: 1, fill: false },
+        defaultChecked: true,
+      },
+      {
+        id: 'chk-provinces',
+        label: 'Provinces (adm1)',
+        url: '/static/data/geojson/ne_10m_admin_1_countries_sm.geojson',
+        style: { color: '#ff7f0e', weight: 0.8, fill: false, opacity: 0.6 },
+        defaultChecked: true,
+      },
+      {
+        id: 'chk-rivers',
+        label: 'Rivers',
+        url: '/static/data/geojson/world_rivers.geojson',
+        style: { color: '#1f77b4', weight: 1.5, fill: false, opacity: 0.7 },
+        defaultChecked: false,
+      },
     ];
-
     const vectorLayers = {};
 
-    // ================================================================
-    // 4. CUSTOM VECTOR CONTROL (unchanged)
-    // ================================================================
     const VectorControl = L.Control.extend({
-        options: { position: 'topright' },
-        onAdd: function() {
-            const container = L.DomUtil.create('div', 'vector-control');
-            const header = L.DomUtil.create('div', 'vector-header', container);
-            header.innerHTML = '<h6>🗺️ Vector Layers</h6><i class="fa-solid fa-chevron-down toggle-btn"></i>';
-            const rowsContainer = L.DomUtil.create('div', 'vector-rows', container);
+      options: { position: 'topright' },
+      onAdd: function() {
+        const container = L.DomUtil.create('div', 'vector-control');
+        const header = L.DomUtil.create('div', 'vector-header', container);
+        header.innerHTML = '<h6>🗺️ Vector Layers</h6><i class="fa-solid fa-chevron-down toggle-btn"></i>';
+        const rowsContainer = L.DomUtil.create('div', 'vector-rows', container);
 
-            VECTOR_LAYERS.forEach(layer => {
-                const row = document.createElement('div');
-                row.className = 'vector-row';
-                const label = document.createElement('label');
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.id = layer.id;
-                checkbox.checked = layer.defaultChecked;
-                label.appendChild(checkbox);
-                label.appendChild(document.createTextNode(' ' + layer.label));
-                row.appendChild(label);
-                rowsContainer.appendChild(row);
+        VECTOR_LAYERS.forEach(layer => {
+          const row = document.createElement('div');
+          row.className = 'vector-row';
+          const label = document.createElement('label');
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.id = layer.id;
+          checkbox.checked = layer.defaultChecked;
+          checkbox.dataset.layerId = layer.id;
+          label.appendChild(checkbox);
+          label.appendChild(document.createTextNode(' ' + layer.label));
+          row.appendChild(label);
+          rowsContainer.appendChild(row);
 
-                fetch(layer.url)
-                    .then(res => res.ok ? res.json() : Promise.reject())
-                    .then(data => {
-                        const geojsonLayer = L.geoJSON(data, {
-                            style: layer.style,
-                            pane: 'overlayPane'
-                        });
-                        vectorLayers[layer.id] = geojsonLayer;
-                        if (layer.defaultChecked) geojsonLayer.addTo(map);
-                        checkbox.addEventListener('change', function() {
-                            const ref = vectorLayers[layer.id];
-                            if (!ref) return;
-                            if (this.checked) {
-                                if (!map.hasLayer(ref)) ref.addTo(map);
-                            } else {
-                                if (map.hasLayer(ref)) map.removeLayer(ref);
-                            }
-                        });
-                    })
-                    .catch(() => console.warn('Failed to load ' + layer.id));
-            });
+          fetch(layer.url)
+            .then(res => res.ok ? res.json() : Promise.reject())
+            .then(data => {
+              const geojsonLayer = L.geoJSON(data, { style: layer.style, pane: 'overlayPane' });
+              vectorLayers[layer.id] = geojsonLayer;
+              if (layer.defaultChecked) geojsonLayer.addTo(map);
+              checkbox.addEventListener('change', function() {
+                const ref = vectorLayers[layer.id];
+                if (!ref) return;
+                if (this.checked) { if (!map.hasLayer(ref)) ref.addTo(map); }
+                else { if (map.hasLayer(ref)) map.removeLayer(ref); }
+              });
+            })
+            .catch(() => console.warn('Failed to load ' + layer.id));
+        });
 
-            // Toggle collapse
-            const toggleBtn = header.querySelector('.toggle-btn');
-            let isCollapsed = false;
-            function toggleCollapse() {
-                isCollapsed = !isCollapsed;
-                rowsContainer.classList.toggle('hidden', isCollapsed);
-                toggleBtn.classList.toggle('fa-chevron-down', !isCollapsed);
-                toggleBtn.classList.toggle('fa-chevron-right', isCollapsed);
-            }
-            header.addEventListener('click', function(e) {
-                e.stopPropagation();
-                toggleCollapse();
-            });
-            return container;
+        const toggleBtn = header.querySelector('.toggle-btn');
+        let isCollapsed = false;
+        function toggleCollapse() {
+          isCollapsed = !isCollapsed;
+          if (isCollapsed) {
+            rowsContainer.classList.add('hidden');
+            toggleBtn.classList.remove('fa-chevron-down');
+            toggleBtn.classList.add('fa-chevron-right');
+          } else {
+            rowsContainer.classList.remove('hidden');
+            toggleBtn.classList.remove('fa-chevron-right');
+            toggleBtn.classList.add('fa-chevron-down');
+          }
         }
+        header.addEventListener('click', function(e) { e.stopPropagation(); toggleCollapse(); });
+        return container;
+      }
     });
-
     map.addControl(new VectorControl());
 
-    // ================================================================
-    // 5. LEGEND UPDATE
-    // ================================================================
+    // =============================================================
+    // 5. LEGEND UPDATE (Main)
+    // =============================================================
     const legendBox = document.getElementById('legend');
     const legendContent = document.getElementById('legend-content');
 
     function updateLegend(slug) {
-        const config = DATASETS[slug];
-        if (!config || !config.legend) {
-            legendBox.style.display = 'none';
-            return;
-        }
-        let html = '';
-        config.legend.forEach(item => {
-            html += `<div class="legend-item">
-                        <span class="color-box" style="background:${item.color};"></span>
-                        <span>${item.label}</span>
-                    </div>`;
-        });
-        legendContent.innerHTML = html;
-        legendBox.style.display = 'block';
+      const config = DATASETS[slug];
+      if (!config || !config.legend) {
+        legendBox.style.display = 'none';
+        return;
+      }
+      let html = '';
+      config.legend.forEach(item => {
+        html += `<div class="legend-item">
+                  <span class="color-box" style="background:${item.color};"></span>
+                  <span>${item.label}</span>
+                </div>`;
+      });
+      legendContent.innerHTML = html;
+      legendBox.style.display = 'block';
     }
 
-    // ================================================================
+    // =============================================================
     // 6. MONTH CONTROLS
-    // ================================================================
+    // =============================================================
     const monthControl = document.getElementById('month-control');
     const monthSlider = document.getElementById('monthSlider');
     const monthDisplay = document.getElementById('monthDisplay');
 
-    // ================================================================
-    // 7. LOAD RASTER
-    // ================================================================
-    function loadRaster(slug, month) {
-        const config = DATASETS[slug];
-        if (!config) return;
+    // =============================================================
+    // 7. LOAD RASTER (Main)
+    // =============================================================
+    function loadRaster(slug) {
+      const config = DATASETS[slug];
+      if (!config) return;
 
-        let url = `/earth_observation/raster/${slug}/`;
-        if (config.type === 'month') {
-            monthControl.style.display = 'flex';
-            if (!month) month = parseInt(monthSlider.value, 10) || 1;
-            month = Math.min(Math.max(month, 1), 12);
-            monthSlider.value = month;
-            monthDisplay.textContent = month;
-            url += `${month}/`;
-        } else {
-            monthControl.style.display = 'none';
-        }
+      let url = `/earth_observation/raster/${slug}/`;
+      let month = 1;
+      if (config.type === 'month') {
+        monthControl.style.display = 'flex';
+        month = parseInt(monthSlider.value, 10) || 1;
+        url += `${month}/`;
+      } else {
+        monthControl.style.display = 'none';
+      }
 
-        if (currentOverlay) {
-            map.removeLayer(currentOverlay);
-            currentOverlay = null;
-        }
+      if (currentOverlay) {
+        map.removeLayer(currentOverlay);
+        currentOverlay = null;
+      }
 
-        currentOverlay = L.imageOverlay(url, WORLD_BOUNDS, {
-            opacity: 0.7,
-            pane: 'rasterPane'
-        }).addTo(map);
+      currentOverlay = L.imageOverlay(url, WORLD_BOUNDS, {
+        opacity: 0.7,
+        pane: 'rasterPane'
+      }).addTo(map);
 
-        updateLegend(slug);
+      updateLegend(slug);
 
-        // Highlight active menu item
-        document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll(`.menu-item[data-slug="${slug}"]`).forEach(el => el.classList.add('active'));
+      document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll(`.menu-item[data-slug="${slug}"]`).forEach(el => el.classList.add('active'));
 
-        currentSlug = slug;
+      currentSlug = slug;
     }
 
-    // ================================================================
-    // 8. EVENT LISTENERS
-    // ================================================================
-    // Click on sidebar items (delegated)
-    document.addEventListener('click', function(e) {
-        const item = e.target.closest('.menu-item');
-        if (!item) return;
-        const slug = item.dataset.slug;
-        if (slug) {
-            e.preventDefault();
-            loadRaster(slug);
-        }
+    // =============================================================
+    // 8. SIDEBAR & MONTH SLIDER EVENTS
+    // =============================================================
+    document.querySelector('.sidebar').addEventListener('click', function(e) {
+      const item = e.target.closest('.menu-item');
+      if (!item) return;
+      e.preventDefault();
+      const slug = item.dataset.slug;
+      if (slug) loadRaster(slug);
     });
 
     monthSlider.addEventListener('input', function() {
-        monthDisplay.textContent = this.value;
-        if (currentSlug) loadRaster(currentSlug, parseInt(this.value, 10));
+      monthDisplay.textContent = this.value;
+      if (currentSlug) loadRaster(currentSlug);
     });
 
-    // ================================================================
+    // =============================================================
     // 9. INITIAL LOAD
-    // ================================================================
-    // Get the first product from the sidebar or from a default
-    const firstItem = document.querySelector('.menu-item[data-slug]');
-    if (firstItem) {
-        loadRaster(firstItem.dataset.slug);
-    } else {
-        // Fallback to rainfall
-        loadRaster('rainfall');
+    // =============================================================
+    const firstItem = document.querySelector('.menu-item');
+    if (firstItem) loadRaster(firstItem.dataset.slug);
+
+    // =============================================================
+    // 10. IDENTIFY TOOL
+    // =============================================================
+    let identifyMode = false;
+    let identifyPopup = null;
+
+    document.getElementById('btnIdentify').addEventListener('click', function() {
+      identifyMode = !identifyMode;
+      this.style.background = identifyMode ? '#e8f4fd' : 'none';
+      this.style.color = identifyMode ? '#003366' : '#444';
+      map.getContainer().style.cursor = identifyMode ? 'crosshair' : '';
+      if (!identifyMode && identifyPopup) {
+        map.closePopup(identifyPopup);
+        identifyPopup = null;
+      }
+    });
+
+    map.on('click', function(e) {
+      if (!identifyMode) return;
+      const lat = e.latlng.lat.toFixed(4);
+      const lng = e.latlng.lng.toFixed(4);
+
+      let url = `/earth_observation/api/point/${currentSlug}/`;
+      if (DATASETS[currentSlug] && DATASETS[currentSlug].type === 'month') {
+        url += `${monthSlider.value}/`;
+      }
+      url += `?lat=${lat}&lon=${lng}`;
+
+      fetch(url)
+        .then(res => {
+          if (!res.ok) throw new Error('Network response was not ok');
+          return res.json();
+        })
+        .then(data => {
+          if (data.error) {
+            alert('Error: ' + data.error);
+            return;
+          }
+          const prodName = PRODUCT_NAMES[currentSlug] || currentSlug;
+          const val = data.value !== null ? data.value.toFixed(2) : 'No data';
+          const valueClass = data.value !== null ? '' : 'nodata';
+          const html = `
+            <div class="identify-popup">
+              <div class="header">
+                <i class="fa-solid fa-map-pin"></i>
+                ${prodName}
+              </div>
+              <div class="body">
+                <div class="field">
+                  <span class="label">Latitude</span>
+                  <span class="value">${lat}</span>
+                </div>
+                <div class="field">
+                  <span class="label">Longitude</span>
+                  <span class="value">${lng}</span>
+                </div>
+                <div class="field">
+                  <span class="label">Pixel Value</span>
+                  <span class="value ${valueClass}">${val}</span>
+                </div>
+              </div>
+            </div>
+          `;
+          if (identifyPopup) map.closePopup(identifyPopup);
+          identifyPopup = L.popup()
+            .setLatLng(e.latlng)
+            .setContent(html)
+            .openOn(map);
+        })
+        .catch(err => {
+          console.error(err);
+          alert('Failed to get pixel value.');
+        });
+    });
+
+    // =============================================================
+    // 11. SPLIT MAP TOOL (fixed width toolbar)
+    // =============================================================
+    let splitMaps = [];
+    let splitOverlays = [];
+    let splitSync = false;
+    let splitVectorLayers = [];
+    let numScreens = 2;
+    let splitActive = false;
+
+    const splitContainer = document.getElementById('split-container');
+    const splitGrid = document.getElementById('split-grid');
+    const screenSelector = document.getElementById('screen-selector');
+    const controlsWrapper = document.getElementById('split-controls-wrapper');
+
+    const splitColors = ['#003366', '#dc3232', '#2e7d32', '#7b1fa2'];
+    const labelClasses = ['', 'split-label-right', 'split-label-green', 'split-label-purple'];
+
+    // Make controls draggable - maintain dimensions
+    let isDraggingControls = false;
+    let dragStartX, dragStartY, startLeft, startTop;
+    let wrapperWidth, wrapperHeight;
+
+    controlsWrapper.addEventListener('mousedown', function(e) {
+      if (e.target.closest('.controls-header') || e.target.closest('.drag-icon')) {
+        isDraggingControls = true;
+        const rect = controlsWrapper.getBoundingClientRect();
+        const parentRect = controlsWrapper.parentElement.getBoundingClientRect();
+        dragStartX = e.clientX;
+        dragStartY = e.clientY;
+        // Store current position
+        startLeft = controlsWrapper.offsetLeft || (rect.left - parentRect.left);
+        startTop = controlsWrapper.offsetTop || (rect.top - parentRect.top);
+        // Store current dimensions to maintain them
+        wrapperWidth = controlsWrapper.offsetWidth;
+        wrapperHeight = controlsWrapper.offsetHeight;
+        controlsWrapper.style.width = wrapperWidth + 'px';
+        controlsWrapper.style.height = wrapperHeight + 'px';
+        controlsWrapper.style.cursor = 'grabbing';
+        e.preventDefault();
+      }
+    });
+
+    document.addEventListener('mousemove', function(e) {
+      if (!isDraggingControls) return;
+      const dx = e.clientX - dragStartX;
+      const dy = e.clientY - dragStartY;
+      const parentRect = controlsWrapper.parentElement.getBoundingClientRect();
+      let newX = startLeft + dx;
+      let newY = startTop + dy;
+      // Maintain margins: keep 40px on each side
+      newX = Math.max(40, Math.min(parentRect.width - wrapperWidth - 40, newX));
+      newY = Math.max(0, Math.min(parentRect.height - wrapperHeight - 10, newY));
+      controlsWrapper.style.left = newX + 'px';
+      controlsWrapper.style.top = newY + 'px';
+      controlsWrapper.style.transform = 'none';
+      controlsWrapper.style.width = wrapperWidth + 'px';
+      controlsWrapper.style.height = wrapperHeight + 'px';
+    });
+
+    document.addEventListener('mouseup', function() {
+      if (isDraggingControls) {
+        isDraggingControls = false;
+        controlsWrapper.style.cursor = 'grab';
+      }
+    });
+
+    // Populate split dropdowns
+    function populateSplitSelects(count) {
+      const slugs = Object.keys(PRODUCT_NAMES).sort();
+      for (let i = 0; i < count; i++) {
+        const sel = document.getElementById(`split-dataset-${i}`);
+        if (!sel) continue;
+        sel.innerHTML = '';
+        slugs.forEach(slug => {
+          const opt = document.createElement('option');
+          opt.value = slug;
+          opt.textContent = PRODUCT_NAMES[slug] || slug;
+          sel.appendChild(opt);
+        });
+        if (slugs.length > i) {
+          sel.value = slugs[i % slugs.length];
+        }
+        updateSplitMonthVisibility(i);
+      }
     }
-</script>
-{% endblock %}
+
+    function updateSplitMonthVisibility(index) {
+      const sel = document.getElementById(`split-dataset-${index}`);
+      const monthInput = document.getElementById(`split-month-${index}`);
+      if (!sel || !monthInput) return;
+      const slug = sel.value;
+      const config = DATASETS[slug];
+      const isMonthly = config && config.type === 'month';
+      monthInput.style.display = isMonthly ? 'inline-block' : 'none';
+      const label = monthInput.previousElementSibling;
+      if (label && label.tagName === 'LABEL') {
+        label.style.display = isMonthly ? 'inline-block' : 'none';
+      }
+    }
+
+    function buildSplitGrid(count) {
+      splitGrid.innerHTML = '';
+      
+      let gridClass = 'split-grid-1';
+      if (count === 2) gridClass = 'split-grid-2';
+      else if (count === 3) gridClass = 'split-grid-3';
+      else if (count === 4) gridClass = 'split-grid-4';
+      splitGrid.className = `split-grid ${gridClass}`;
+      
+      for (let i = 0; i < count; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'split-cell';
+        cell.id = `split-cell-${i}`;
+        
+        const label = document.createElement('div');
+        label.className = `split-label ${labelClasses[i] || ''}`;
+        label.textContent = `Map ${i+1}`;
+        cell.appendChild(label);
+        
+        const mapContainer = document.createElement('div');
+        mapContainer.className = 'map-container';
+        mapContainer.id = `split-map-${i}`;
+        cell.appendChild(mapContainer);
+        
+        const legendContainer = document.createElement('div');
+        legendContainer.className = 'split-legend';
+        legendContainer.id = `split-legend-${i}`;
+        legendContainer.style.display = 'none';
+        cell.appendChild(legendContainer);
+        
+        splitGrid.appendChild(cell);
+      }
+
+      for (let i = 0; i < 4; i++) {
+        const group = document.getElementById(`ctrl-group-${i}`);
+        if (group) {
+          group.style.display = i < count ? 'flex' : 'none';
+        }
+        const sep = document.getElementById(`sep-${i}`);
+        if (sep) {
+          sep.style.display = (i > 0 && i < count) ? 'block' : 'none';
+        }
+      }
+    }
+
+    function createSplitMaps(count) {
+      splitMaps.forEach(m => { if (m) m.remove(); });
+      splitMaps = [];
+      splitOverlays = [];
+      splitVectorLayers = [];
+
+      for (let i = 0; i < count; i++) {
+        const container = document.getElementById(`split-map-${i}`);
+        if (!container) continue;
+
+        const mapObj = L.map(container, {
+          center: [0, 20],
+          zoom: 3,
+          maxBounds: [[-90, -180], [90, 180]],
+          maxBoundsViscosity: 1.0,
+          zoomControl: false
+        });
+        splitMaps.push(mapObj);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; OpenStreetMap'
+        }).addTo(mapObj);
+
+        mapObj.createPane('rasterPane');
+        mapObj.getPane('rasterPane').style.zIndex = 300;
+
+        splitVectorLayers[i] = {};
+        VECTOR_LAYERS.forEach(layer => {
+          fetch(layer.url)
+            .then(res => res.ok ? res.json() : Promise.reject())
+            .then(data => {
+              const geojsonLayer = L.geoJSON(data, {
+                style: layer.style,
+                pane: 'overlayPane'
+              });
+              splitVectorLayers[i][layer.id] = geojsonLayer;
+              if (layer.defaultChecked) {
+                geojsonLayer.addTo(mapObj);
+              }
+            })
+            .catch(() => console.warn('Failed to load ' + layer.id + ' for split map ' + i));
+        });
+
+        splitOverlays.push(null);
+
+        if (i === 0) {
+          mapObj.on('move', function(e) {
+            if (splitSync) {
+              splitMaps.forEach((m, idx) => {
+                if (idx !== 0 && m) {
+                  m.setView(e.target.getCenter(), e.target.getZoom(), { animate: false });
+                }
+              });
+            }
+          });
+        }
+      }
+
+      splitSync = true;
+    }
+
+    function updateSplitLegend(slug, index) {
+      const legendContainer = document.getElementById(`split-legend-${index}`);
+      if (!legendContainer) return;
+      const config = DATASETS[slug];
+      if (!config || !config.legend) {
+        legendContainer.style.display = 'none';
+        return;
+      }
+      let html = '<div class="legend-header"><h6>Legend</h6><span class="legend-drag-handle">⠿</span></div>';
+      config.legend.forEach(item => {
+        html += `<div class="legend-item">
+                  <span class="color-box" style="background:${item.color};"></span>
+                  <span class="label">${item.label}</span>
+                </div>`;
+      });
+      legendContainer.innerHTML = html;
+      legendContainer.style.display = 'block';
+      
+      makeLegendDraggable(legendContainer);
+    }
+
+    function makeLegendDraggable(legend) {
+      let isDragging = false;
+      let startX, startY, origX, origY;
+      
+      legend.addEventListener('mousedown', function(e) {
+        if (e.target.closest('.legend-drag-handle') || e.target === legend || e.target.closest('.split-legend')) {
+          isDragging = true;
+          const rect = legend.getBoundingClientRect();
+          const parentRect = legend.parentElement.getBoundingClientRect();
+          startX = e.clientX;
+          startY = e.clientY;
+          origX = legend.offsetLeft || (rect.left - parentRect.left);
+          origY = legend.offsetTop || (rect.top - parentRect.top);
+          legend.style.cursor = 'grabbing';
+          e.preventDefault();
+        }
+      });
+      
+      document.addEventListener('mousemove', function(e) {
+        if (!isDragging) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        const parentRect = legend.parentElement.getBoundingClientRect();
+        let newX = origX + dx;
+        let newY = origY + dy;
+        const legendWidth = legend.offsetWidth || 90;
+        const legendHeight = legend.offsetHeight || 70;
+        newX = Math.max(0, Math.min(parentRect.width - legendWidth, newX));
+        newY = Math.max(0, Math.min(parentRect.height - legendHeight, newY));
+        legend.style.left = newX + 'px';
+        legend.style.top = newY + 'px';
+        legend.style.right = 'auto';
+        legend.style.bottom = 'auto';
+        legend.style.position = 'absolute';
+      });
+      
+      document.addEventListener('mouseup', function() {
+        if (isDragging) {
+          isDragging = false;
+          legend.style.cursor = 'grab';
+        }
+      });
+    }
+
+    function applySplitLayers(count) {
+      for (let i = 0; i < count; i++) {
+        const sel = document.getElementById(`split-dataset-${i}`);
+        const monthInput = document.getElementById(`split-month-${i}`);
+        if (!sel) continue;
+        const slug = sel.value;
+        let month = 1;
+        const config = DATASETS[slug];
+        if (config && config.type === 'month' && monthInput) {
+          month = parseInt(monthInput.value) || 1;
+        }
+
+        if (splitOverlays[i]) {
+          splitMaps[i].removeLayer(splitOverlays[i]);
+          splitOverlays[i] = null;
+        }
+
+        let url = `/earth_observation/raster/${slug}/`;
+        if (config && config.type === 'month') {
+          url += `${month}/`;
+        }
+
+        splitOverlays[i] = L.imageOverlay(url, WORLD_BOUNDS, {
+          opacity: 0.7,
+          pane: 'rasterPane'
+        }).addTo(splitMaps[i]);
+
+        updateSplitLegend(slug, i);
+      }
+    }
+
+    function openSplitMap(count) {
+      numScreens = count;
+      splitActive = true;
+      splitContainer.style.display = 'block';
+      
+      buildSplitGrid(count);
+      populateSplitSelects(count);
+      createSplitMaps(count);
+      
+      setTimeout(() => {
+        applySplitLayers(count);
+      }, 200);
+      
+      document.getElementById('map').style.display = 'none';
+      document.getElementById('legend').style.display = 'none';
+      document.getElementById('month-control').style.display = 'none';
+      
+      document.getElementById('zonal-panel').style.display = 'none';
+      document.getElementById('animate-panel').style.display = 'none';
+      document.getElementById('timeseries-panel').style.display = 'none';
+      
+      controlsWrapper.style.display = 'block';
+      controlsWrapper.style.left = '50%';
+      controlsWrapper.style.top = 'auto';
+      controlsWrapper.style.bottom = '10px';
+      controlsWrapper.style.transform = 'translateX(-50%)';
+      controlsWrapper.style.width = 'auto';
+      controlsWrapper.style.height = 'auto';
+    }
+
+    function closeSplitMap() {
+      splitActive = false;
+      splitContainer.style.display = 'none';
+      document.getElementById('map').style.display = 'block';
+      document.getElementById('legend').style.display = 'block';
+      document.getElementById('month-control').style.display = 'block';
+      controlsWrapper.style.display = 'none';
+      controlsWrapper.style.width = 'auto';
+      controlsWrapper.style.height = 'auto';
+      
+      splitMaps.forEach(m => { if (m) m.remove(); });
+      splitMaps = [];
+      splitOverlays = [];
+      splitVectorLayers = [];
+      
+      if (currentSlug) {
+        loadRaster(currentSlug);
+      }
+    }
+
+    document.getElementById('btnSplit').addEventListener('click', function() {
+      if (splitActive) {
+        closeSplitMap();
+        this.style.background = 'none';
+        this.style.color = '#444';
+        return;
+      }
+      screenSelector.style.display = 'block';
+      this.style.background = '#e8f4fd';
+      this.style.color = '#003366';
+    });
+
+    document.querySelectorAll('#screen-selector .screen-options button').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('#screen-selector .screen-options button').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        const screens = parseInt(this.dataset.screens);
+        screenSelector.style.display = 'none';
+        openSplitMap(screens);
+        document.getElementById('btnSplit').style.background = '#e8f4fd';
+        document.getElementById('btnSplit').style.color = '#003366';
+      });
+    });
+
+    document.getElementById('screen-selector-close').addEventListener('click', function() {
+      screenSelector.style.display = 'none';
+      document.getElementById('btnSplit').style.background = 'none';
+      document.getElementById('btnSplit').style.color = '#444';
+    });
+
+    document.getElementById('split-change-screens').addEventListener('click', function() {
+      screenSelector.style.display = 'block';
+      document.querySelectorAll('#screen-selector .screen-options button').forEach(b => {
+        b.classList.toggle('active', parseInt(b.dataset.screens) === numScreens);
+      });
+    });
+
+    document.getElementById('split-apply').addEventListener('click', function() {
+      if (splitActive && splitMaps.length > 0) {
+        applySplitLayers(splitMaps.length);
+      }
+    });
+
+    document.getElementById('split-close').addEventListener('click', function() {
+      closeSplitMap();
+      document.getElementById('btnSplit').style.background = 'none';
+      document.getElementById('btnSplit').style.color = '#444';
+    });
+
+    document.getElementById('split-close-mini').addEventListener('click', function() {
+      closeSplitMap();
+      document.getElementById('btnSplit').style.background = 'none';
+      document.getElementById('btnSplit').style.color = '#444';
+    });
+
+    document.addEventListener('change', function(e) {
+      if (e.target && e.target.id && e.target.id.startsWith('split-dataset-')) {
+        const idx = parseInt(e.target.id.split('-')[2]);
+        updateSplitMonthVisibility(idx);
+      }
+    });
+
+    // =============================================================
+    // 12. ZONAL STATS TOOL (fully restored)
+    // =============================================================
+    const zonalPanel = document.getElementById('zonal-panel');
+    const zonalHeader = zonalPanel.querySelector('.zonal-header');
+    const zonalWelcome = document.getElementById('zonal-welcome');
+    const zonalMain = document.getElementById('zonal-main');
+    const zonalPickView = document.getElementById('zonal-pick-view');
+    const zonalDrawView = document.getElementById('zonal-draw-view');
+    const countrySelect = document.getElementById('zonal-country');
+    const datasetSelect = document.getElementById('zonal-dataset');
+    const monthInput = document.getElementById('zonal-month');
+    const resultDiv = document.getElementById('zonal-result');
+    const pickResultDiv = document.getElementById('zonal-pick-result');
+    const drawResultDiv = document.getElementById('zonal-draw-result');
+    const pickBtn = document.getElementById('zonal-pick-country');
+
+    let zonalIsDragging = false;
+    let zonalDragOffsetX = 0, zonalDragOffsetY = 0;
+    let drawStatsControl = null;
+    let drawnPolygonLayer = null;
+
+    function startZonalDrag(e) {
+      e.preventDefault();
+      const ev = e.touches ? e.touches[0] : e;
+      const rect = zonalPanel.getBoundingClientRect();
+      const mapRect = document.getElementById('map').getBoundingClientRect();
+      zonalPanel.style.width = zonalPanel.offsetWidth + 'px';
+      zonalPanel.style.height = zonalPanel.offsetHeight + 'px';
+      let panelLeft = rect.left - mapRect.left;
+      let panelTop = rect.top - mapRect.top;
+      zonalPanel.style.left = panelLeft + 'px';
+      zonalPanel.style.top = panelTop + 'px';
+      zonalPanel.style.transform = 'none';
+      zonalDragOffsetX = ev.clientX - rect.left;
+      zonalDragOffsetY = ev.clientY - rect.top;
+      zonalIsDragging = true;
+      document.addEventListener('mousemove', onZonalDrag);
+      document.addEventListener('touchmove', onZonalDrag, { passive: false });
+      document.addEventListener('mouseup', stopZonalDrag);
+      document.addEventListener('touchend', stopZonalDrag);
+    }
+
+    function onZonalDrag(e) {
+      if (!zonalIsDragging) return;
+      e.preventDefault();
+      const ev = e.touches ? e.touches[0] : e;
+      const mapRect = document.getElementById('map').getBoundingClientRect();
+      let newLeft = ev.clientX - mapRect.left - zonalDragOffsetX;
+      let newTop = ev.clientY - mapRect.top - zonalDragOffsetY;
+      const panelWidth = zonalPanel.offsetWidth;
+      const panelHeight = zonalPanel.offsetHeight;
+      const mapWidth = mapRect.width;
+      const mapHeight = mapRect.height;
+      newLeft = Math.max(0, Math.min(mapWidth - panelWidth, newLeft));
+      newTop = Math.max(0, Math.min(mapHeight - panelHeight, newTop));
+      zonalPanel.style.left = newLeft + 'px';
+      zonalPanel.style.top = newTop + 'px';
+    }
+
+    function stopZonalDrag() {
+      zonalIsDragging = false;
+      document.removeEventListener('mousemove', onZonalDrag);
+      document.removeEventListener('touchmove', onZonalDrag);
+      document.removeEventListener('mouseup', stopZonalDrag);
+      document.removeEventListener('touchend', stopZonalDrag);
+    }
+
+    zonalHeader.addEventListener('mousedown', startZonalDrag);
+    zonalHeader.addEventListener('touchstart', startZonalDrag, { passive: false });
+
+    function populateDatasetSelect() {
+      datasetSelect.innerHTML = '';
+      const slugs = Object.keys(PRODUCT_NAMES).sort();
+      slugs.forEach(slug => {
+        const opt = document.createElement('option');
+        opt.value = slug;
+        opt.textContent = PRODUCT_NAMES[slug] || slug;
+        datasetSelect.appendChild(opt);
+      });
+    }
+    populateDatasetSelect();
+
+    let countryFeatures = [];
+    function populateCountries() {
+      const url = '/static/data/geojson/ne_10m_admin_0_countries_sm.geojson';
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          countryFeatures = data.features;
+          const names = countryFeatures
+            .map(f => f.properties.NAME_EN)
+            .filter(n => n)
+            .sort();
+          countrySelect.innerHTML = '';
+          names.forEach(name => {
+            const opt = document.createElement('option');
+            opt.value = name;
+            opt.textContent = name;
+            countrySelect.appendChild(opt);
+          });
+        })
+        .catch(err => console.warn('Failed to load countries:', err));
+    }
+    populateCountries();
+
+    function updateZonalMonthVisibility() {
+      const slug = datasetSelect.value;
+      const config = DATASETS[slug];
+      monthInput.style.display = (config && config.type === 'month') ? 'inline-block' : 'none';
+    }
+    datasetSelect.addEventListener('change', updateZonalMonthVisibility);
+    updateZonalMonthVisibility();
+
+    function showWelcome() {
+      zonalWelcome.style.display = 'flex';
+      zonalMain.style.display = 'none';
+      zonalPickView.style.display = 'none';
+      zonalDrawView.style.display = 'none';
+      if (pickCountryMode) togglePickMode();
+    }
+    function showMain() {
+      zonalWelcome.style.display = 'none';
+      zonalMain.style.display = 'block';
+      zonalPickView.style.display = 'none';
+      zonalDrawView.style.display = 'none';
+      if (pickCountryMode) togglePickMode();
+      if (currentSlug) {
+        const options = datasetSelect.options;
+        for (let i=0; i<options.length; i++) {
+          if (options[i].value === currentSlug) {
+            datasetSelect.selectedIndex = i;
+            break;
+          }
+        }
+        updateZonalMonthVisibility();
+      }
+    }
+    function showPickView() {
+      zonalWelcome.style.display = 'none';
+      zonalMain.style.display = 'none';
+      zonalPickView.style.display = 'block';
+      zonalDrawView.style.display = 'none';
+      pickResultDiv.innerHTML = '';
+      if (!pickCountryMode) togglePickMode();
+    }
+    function showDrawView() {
+      zonalWelcome.style.display = 'none';
+      zonalMain.style.display = 'none';
+      zonalPickView.style.display = 'none';
+      zonalDrawView.style.display = 'block';
+      drawResultDiv.innerHTML = '';
+      activateDrawMode();
+    }
+
+    function activateDrawMode() {
+      if (drawStatsControl) {
+        map.removeControl(drawStatsControl);
+        drawStatsControl = null;
+      }
+      if (drawnPolygonLayer) {
+        map.removeLayer(drawnPolygonLayer);
+        drawnPolygonLayer = null;
+      }
+      
+      drawStatsControl = new L.Control.Draw({
+        draw: {
+          polygon: {
+            allowIntersection: false,
+            showArea: true,
+            shapeOptions: {
+              color: '#003366',
+              weight: 2,
+              fillColor: '#003366',
+              fillOpacity: 0.2
+            }
+          },
+          rectangle: {
+            shapeOptions: {
+              color: '#003366',
+              weight: 2,
+              fillColor: '#003366',
+              fillOpacity: 0.2
+            }
+          },
+          circle: {
+            shapeOptions: {
+              color: '#003366',
+              weight: 2,
+              fillColor: '#003366',
+              fillOpacity: 0.2
+            }
+          },
+          polyline: false,
+          marker: false,
+          circlemarker: false
+        },
+        edit: {
+          featureGroup: new L.FeatureGroup()
+        }
+      });
+      
+      map.addControl(drawStatsControl);
+      
+      map.once('draw:created', function(e) {
+        const layer = e.layer;
+        const layerType = e.layerType;
+        drawnPolygonLayer = layer;
+        
+        let coords, geojson;
+        if (layerType === 'rectangle') {
+          const bounds = layer.getBounds();
+          const corners = [
+            bounds.getSouthWest(),
+            bounds.getSouthEast(),
+            bounds.getNorthEast(),
+            bounds.getNorthWest()
+          ];
+          coords = corners.map(p => [p.lng, p.lat]);
+          geojson = {
+            type: 'Feature',
+            geometry: {
+              type: 'Polygon',
+              coordinates: [coords]
+            }
+          };
+        } else if (layerType === 'circle') {
+          const center = layer.getLatLng();
+          const radius = layer.getRadius();
+          const points = 64;
+          coords = [];
+          for (let i = 0; i <= points; i++) {
+            const angle = (i / points) * 2 * Math.PI;
+            const lat = center.lat + (radius / 111320) * Math.cos(angle);
+            const lng = center.lng + (radius / (111320 * Math.cos(center.lat * Math.PI / 180))) * Math.sin(angle);
+            coords.push([lng, lat]);
+          }
+          geojson = {
+            type: 'Feature',
+            geometry: {
+              type: 'Polygon',
+              coordinates: [coords]
+            }
+          };
+        } else {
+          const latlngs = layer.getLatLngs()[0];
+          coords = latlngs.map(p => [p.lng, p.lat]);
+          geojson = {
+            type: 'Feature',
+            geometry: {
+              type: 'Polygon',
+              coordinates: [coords]
+            }
+          };
+        }
+        
+        computeDrawStats(geojson, layer, layerType);
+        
+        if (drawStatsControl) {
+          map.removeControl(drawStatsControl);
+          drawStatsControl = null;
+        }
+      });
+    }
+
+    function computeDrawStats(geojson, layer, layerType) {
+      if (!currentSlug) {
+        drawResultDiv.innerHTML = '<p style="color:red;">Please load a raster first.</p>';
+        return;
+      }
+
+      const dataset = currentSlug;
+      const config = DATASETS[dataset];
+      let month = 1;
+      if (config.type === 'month') {
+        month = parseInt(monthSlider.value) || 1;
+      }
+
+      let url = `/earth_observation/api/zonal_stats_by_polygon/${dataset}/`;
+      if (config.type === 'month') {
+        url += `${month}/`;
+      }
+
+      drawResultDiv.innerHTML = '<p>Loading...</p>';
+      fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(geojson)
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) {
+          drawResultDiv.innerHTML = `<p style="color:red;">Error: ${data.error}</p>`;
+          return;
+        }
+
+        const prodName = PRODUCT_NAMES[dataset] || dataset;
+        const shapeNames = {
+          'polygon': 'Polygon',
+          'rectangle': 'Rectangle',
+          'circle': 'Circle'
+        };
+        const avgValue = data.mean !== undefined ? Math.round(data.mean) : 'N/A';
+        
+        let html = `
+          <div class="zonal-result">
+            <span class="avg-label">Average (${prodName})</span>
+            <span class="avg-value">${avgValue}</span>
+            <div style="font-size:11px; color:#888; margin-top:4px;">
+              ${shapeNames[layerType] || 'Shape'} 
+              ${config.type === 'month' ? `• Month ${month}` : ''}
+            </div>
+          </div>
+        `;
+        drawResultDiv.innerHTML = html;
+      })
+      .catch(err => {
+        drawResultDiv.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
+      });
+    }
+
+    document.getElementById('btnZonal').addEventListener('click', function() {
+      const isOpen = zonalPanel.style.display === 'block';
+      zonalPanel.style.display = isOpen ? 'none' : 'block';
+      if (!isOpen) {
+        zonalPanel.style.left = '50%';
+        zonalPanel.style.top = '50%';
+        zonalPanel.style.transform = 'translate(-50%, -50%)';
+        showWelcome();
+        resultDiv.innerHTML = '';
+        pickResultDiv.innerHTML = '';
+        drawResultDiv.innerHTML = '';
+        if (pickCountryMode) togglePickMode();
+        if (drawStatsControl) {
+          map.removeControl(drawStatsControl);
+          drawStatsControl = null;
+        }
+        if (drawnPolygonLayer) {
+          map.removeLayer(drawnPolygonLayer);
+          drawnPolygonLayer = null;
+        }
+      } else {
+        if (pickCountryMode) togglePickMode();
+        if (drawStatsControl) {
+          map.removeControl(drawStatsControl);
+          drawStatsControl = null;
+        }
+        if (drawnPolygonLayer) {
+          map.removeLayer(drawnPolygonLayer);
+          drawnPolygonLayer = null;
+        }
+      }
+    });
+
+    function closeZonalPanel() {
+      zonalPanel.style.display = 'none';
+      if (pickCountryMode) togglePickMode();
+      if (drawStatsControl) {
+        map.removeControl(drawStatsControl);
+        drawStatsControl = null;
+      }
+      if (drawnPolygonLayer) {
+        map.removeLayer(drawnPolygonLayer);
+        drawnPolygonLayer = null;
+      }
+    }
+    document.getElementById('zonal-close').addEventListener('click', closeZonalPanel);
+    document.getElementById('zonal-close-body').addEventListener('click', closeZonalPanel);
+
+    document.getElementById('welcome-pick').addEventListener('click', function() {
+      showPickView();
+    });
+    document.getElementById('welcome-select').addEventListener('click', function() {
+      showMain();
+    });
+    document.getElementById('welcome-draw').addEventListener('click', function() {
+      showDrawView();
+    });
+
+    document.getElementById('zonal-back').addEventListener('click', function() {
+      showWelcome();
+      if (pickCountryMode) togglePickMode();
+    });
+    document.getElementById('pick-cancel').addEventListener('click', function() {
+      showWelcome();
+      if (pickCountryMode) togglePickMode();
+    });
+    document.getElementById('draw-cancel').addEventListener('click', function() {
+      showWelcome();
+      if (drawStatsControl) {
+        map.removeControl(drawStatsControl);
+        drawStatsControl = null;
+      }
+      if (drawnPolygonLayer) {
+        map.removeLayer(drawnPolygonLayer);
+        drawnPolygonLayer = null;
+      }
+    });
+
+    function runZonalStats(country, resultContainer, showDatasetInfo = false) {
+      const dataset = datasetSelect.value;
+      if (!country || !dataset) {
+        alert('Please select both country and dataset.');
+        return;
+      }
+      let month = 1;
+      const config = DATASETS[dataset];
+      if (config.type === 'month') {
+        month = parseInt(monthInput.value) || 1;
+        if (month < 1 || month > 12) {
+          alert('Month must be 1–12.');
+          return;
+        }
+      }
+      let url = `/earth_observation/api/zonal_stats/${dataset}/`;
+      if (config.type === 'month') {
+        url += `${month}/`;
+      }
+      url += `?country=${encodeURIComponent(country)}`;
+      resultContainer.innerHTML = '<p>Loading...</p>';
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          if (data.error) {
+            resultContainer.innerHTML = `<p style="color:red;">Error: ${data.error}</p>`;
+            return;
+          }
+          
+          const dsName = PRODUCT_NAMES[dataset] || dataset;
+          const avgValue = data.mean !== undefined ? Math.round(data.mean) : 'N/A';
+          
+          let info = '';
+          if (showDatasetInfo) {
+            info = `<div style="font-size:12px; color:#555; margin-bottom:4px;">
+                      ${dsName} ${config.type === 'month' ? `(Month ${month})` : ''}
+                    </div>`;
+          }
+          
+          let html = info + `
+            <div class="zonal-result">
+              <span class="avg-label">Average (${dsName})</span>
+              <span class="avg-value">${avgValue}</span>
+            </div>
+          `;
+          resultContainer.innerHTML = html;
+        })
+        .catch(err => {
+          resultContainer.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
+        });
+    }
+
+    document.getElementById('zonal-apply').addEventListener('click', function() {
+      runZonalStats(countrySelect.value, resultDiv, false);
+    });
+
+    let pickCountryMode = false;
+
+    function togglePickMode() {
+      pickCountryMode = !pickCountryMode;
+      pickBtn.classList.toggle('active', pickCountryMode);
+      map.getContainer().style.cursor = pickCountryMode ? 'crosshair' : '';
+      if (!pickCountryMode) {
+        if (window.tempPickPopup) {
+          map.removeLayer(window.tempPickPopup);
+          window.tempPickPopup = null;
+        }
+      }
+    }
+    pickBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      togglePickMode();
+    });
+
+    function getDefaultPickDataset() {
+      if (currentSlug) {
+        return currentSlug;
+      }
+      const slugs = Object.keys(PRODUCT_NAMES).sort();
+      return slugs.length > 0 ? slugs[0] : null;
+    }
+
+    function pointInPolygon(lat, lng, polygon) {
+      let inside = false;
+      const coords = polygon.type === 'Polygon' ? [polygon.coordinates] : polygon.coordinates;
+      for (let poly of coords) {
+        const ring = poly[0];
+        for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+          const xi = ring[i][0], yi = ring[i][1];
+          const xj = ring[j][0], yj = ring[j][1];
+          const intersect = ((yi > lat) !== (yj > lat)) &&
+              (lng < (xj - xi) * (lat - yi) / (yj - yi) + xi);
+          if (intersect) inside = !inside;
+        }
+      }
+      return inside;
+    }
+
+    map.on('click', function(e) {
+      if (!pickCountryMode) return;
+      const { lat, lng } = e.latlng;
+      let foundCountry = null;
+      for (let feat of countryFeatures) {
+        const geom = feat.geometry;
+        if (pointInPolygon(lat, lng, geom)) {
+          foundCountry = feat.properties.NAME_EN;
+          break;
+        }
+      }
+      if (!foundCountry) {
+        alert('No country found at this location (ocean or outside coverage).');
+        return;
+      }
+
+      const ds = getDefaultPickDataset();
+      if (!ds) {
+        alert('No dataset available.');
+        return;
+      }
+      let chosenDataset = ds;
+      let chosenMonth = 1;
+      const config = DATASETS[chosenDataset];
+      if (config.type === 'month') {
+        chosenMonth = parseInt(monthInput.value) || 1;
+        if (chosenMonth < 1 || chosenMonth > 12) chosenMonth = 1;
+      }
+
+      let url = `/earth_observation/api/zonal_stats/${chosenDataset}/`;
+      if (config.type === 'month') {
+        url += `${chosenMonth}/`;
+      }
+      url += `?country=${encodeURIComponent(foundCountry)}`;
+
+      let resultContainer = null;
+      let showInfo = false;
+      if (zonalPickView.style.display === 'block') {
+        resultContainer = pickResultDiv;
+        showInfo = true;
+      } else {
+        countrySelect.value = foundCountry;
+        resultContainer = resultDiv;
+        showInfo = false;
+      }
+
+      if (resultContainer) {
+        resultContainer.innerHTML = '<p>Loading...</p>';
+        fetch(url)
+          .then(res => res.json())
+          .then(data => {
+            if (data.error) {
+              resultContainer.innerHTML = `<p style="color:red;">Error: ${data.error}</p>`;
+              return;
+            }
+            const dsName = PRODUCT_NAMES[chosenDataset] || chosenDataset;
+            const avgValue = data.mean !== undefined ? Math.round(data.mean) : 'N/A';
+            
+            let info = '';
+            if (showInfo) {
+              info = `<div style="font-size:12px; color:#555; margin-bottom:4px;">
+                        ${dsName} ${config.type === 'month' ? `(Month ${chosenMonth})` : ''}
+                      </div>`;
+            }
+            
+            let html = info + `
+              <div class="zonal-result">
+                <span class="avg-label">Average (${dsName})</span>
+                <span class="avg-value">${avgValue}</span>
+              </div>
+            `;
+            resultContainer.innerHTML = html;
+          })
+          .catch(err => {
+            resultContainer.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
+          });
+      }
+
+      if (window.tempPickPopup) {
+        map.removeLayer(window.tempPickPopup);
+      }
+      window.tempPickPopup = L.popup()
+        .setLatLng(e.latlng)
+        .setContent(`<b>${foundCountry}</b>`)
+        .openOn(map);
+      setTimeout(() => {
+        if (window.tempPickPopup) {
+          map.removeLayer(window.tempPickPopup);
+          window.tempPickPopup = null;
+        }
+      }, 3000);
+    });
+
+    // =============================================================
+    // 13. ANIMATION TOOL (fully restored)
+    // =============================================================
+    const animatePanel = document.getElementById('animate-panel');
+    const animateSlider = document.getElementById('animateSlider');
+    const animateMonthDisplay = document.getElementById('animateMonthDisplay');
+    const animatePlayBtn = document.getElementById('animatePlayBtn');
+    const animateSpeed = document.getElementById('animateSpeed');
+    const animateProductName = document.getElementById('animateProductName');
+    const animateCloseBtn = document.getElementById('animate-close');
+    const animateHeader = animatePanel.querySelector('.animate-header');
+
+    let animationTimer = null;
+    let isAnimating = false;
+    let isPanelOpen = false;
+
+    function loadRasterWithMonth(slug, month) {
+      const config = DATASETS[slug];
+      if (!config || config.type !== 'month') return;
+      let url = `/earth_observation/raster/${slug}/${month}/`;
+      if (currentOverlay) map.removeLayer(currentOverlay);
+      currentOverlay = L.imageOverlay(url, WORLD_BOUNDS, { opacity: 0.7, pane: 'rasterPane' }).addTo(map);
+      updateLegend(slug);
+      document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll(`.menu-item[data-slug="${slug}"]`).forEach(el => el.classList.add('active'));
+      currentSlug = slug;
+    }
+
+    function updateAnimateStatus() {
+      if (currentSlug && DATASETS[currentSlug] && DATASETS[currentSlug].type === 'month') {
+        const name = PRODUCT_NAMES[currentSlug] || currentSlug;
+        animateProductName.textContent = `Animating: ${name}`;
+        animateSlider.disabled = false;
+        animatePlayBtn.disabled = false;
+        animateSpeed.disabled = false;
+        if (!isAnimating) {
+          const m = parseInt(animateSlider.value) || 1;
+          animateProductName.textContent = `${name} – Month ${m}`;
+        }
+      } else if (currentSlug) {
+        animateProductName.textContent = `${PRODUCT_NAMES[currentSlug] || currentSlug} (static – no animation)`;
+        animateSlider.disabled = true;
+        animatePlayBtn.disabled = true;
+        animateSpeed.disabled = true;
+        if (isAnimating) stopAnimation();
+      } else {
+        animateProductName.textContent = 'No dataset loaded';
+        animateSlider.disabled = true;
+        animatePlayBtn.disabled = true;
+        animateSpeed.disabled = true;
+        if (isAnimating) stopAnimation();
+      }
+    }
+
+    animateSlider.addEventListener('input', function() {
+      const val = parseInt(this.value);
+      animateMonthDisplay.textContent = val;
+      if (isAnimating) stopAnimation();
+      if (currentSlug && DATASETS[currentSlug] && DATASETS[currentSlug].type === 'month') {
+        loadRasterWithMonth(currentSlug, val);
+        monthSlider.value = val;
+        monthDisplay.textContent = val;
+      }
+    });
+
+    animatePlayBtn.addEventListener('click', function() {
+      if (isAnimating) stopAnimation();
+      else startAnimation();
+    });
+
+    function startAnimation() {
+      if (!currentSlug || !DATASETS[currentSlug] || DATASETS[currentSlug].type !== 'month') {
+        alert('Please load a monthly dataset first (e.g., Rainfall, Temperature).');
+        return;
+      }
+      if (animationTimer) return;
+      isAnimating = true;
+      animatePlayBtn.innerHTML = '<i class="fa-solid fa-pause"></i> Pause';
+      animatePlayBtn.style.background = '#cc3333';
+      animatePlayBtn.style.color = '#fff';
+      const speed = parseInt(animateSpeed.value);
+      let currentMonth = parseInt(animateSlider.value) || 1;
+      const maxMonth = 12;
+      const name = PRODUCT_NAMES[currentSlug] || currentSlug;
+      animateProductName.textContent = `▶ Animating: ${name}`;
+
+      function step() {
+        if (!isAnimating) return;
+        currentMonth++;
+        if (currentMonth > maxMonth) currentMonth = 1;
+        animateSlider.value = currentMonth;
+        animateMonthDisplay.textContent = currentMonth;
+        monthSlider.value = currentMonth;
+        monthDisplay.textContent = currentMonth;
+        loadRasterWithMonth(currentSlug, currentMonth);
+        animationTimer = setTimeout(step, speed);
+      }
+      animationTimer = setTimeout(step, speed);
+    }
+
+    function stopAnimation() {
+      if (animationTimer) {
+        clearTimeout(animationTimer);
+        animationTimer = null;
+      }
+      isAnimating = false;
+      animatePlayBtn.innerHTML = '<i class="fa-solid fa-play"></i> Play';
+      animatePlayBtn.style.background = '#003366';
+      animatePlayBtn.style.color = '#fff';
+      if (currentSlug && DATASETS[currentSlug] && DATASETS[currentSlug].type === 'month') {
+        const name = PRODUCT_NAMES[currentSlug] || currentSlug;
+        const m = parseInt(animateSlider.value) || 1;
+        animateProductName.textContent = `${name} – Month ${m}`;
+      }
+    }
+
+    document.getElementById('btnAnimate').addEventListener('click', function() {
+      isPanelOpen = !isPanelOpen;
+      animatePanel.style.display = isPanelOpen ? 'block' : 'none';
+      if (!isPanelOpen && isAnimating) stopAnimation();
+      else {
+        updateAnimateStatus();
+        if (currentSlug && DATASETS[currentSlug] && DATASETS[currentSlug].type === 'month') {
+          const m = parseInt(monthSlider.value) || 1;
+          animateSlider.value = m;
+          animateMonthDisplay.textContent = m;
+        }
+      }
+    });
+
+    animateCloseBtn.addEventListener('click', function() {
+      animatePanel.style.display = 'none';
+      isPanelOpen = false;
+      if (isAnimating) stopAnimation();
+    });
+
+    animateSpeed.addEventListener('change', function() {
+      if (isAnimating) {
+        stopAnimation();
+        startAnimation();
+      }
+    });
+
+    // Animation Panel Drag
+    let animateIsDragging = false;
+    let animateDragOffsetX = 0, animateDragOffsetY = 0;
+
+    function startAnimateDrag(e) {
+      e.preventDefault();
+      const ev = e.touches ? e.touches[0] : e;
+      const rect = animatePanel.getBoundingClientRect();
+      const mapRect = document.getElementById('map').getBoundingClientRect();
+      animatePanel.style.width = animatePanel.offsetWidth + 'px';
+      animatePanel.style.height = animatePanel.offsetHeight + 'px';
+      let panelLeft = rect.left - mapRect.left;
+      let panelTop = rect.top - mapRect.top;
+      animatePanel.style.left = panelLeft + 'px';
+      animatePanel.style.top = panelTop + 'px';
+      animatePanel.style.transform = 'none';
+      animateDragOffsetX = ev.clientX - rect.left;
+      animateDragOffsetY = ev.clientY - rect.top;
+      animateIsDragging = true;
+      document.addEventListener('mousemove', onAnimateDrag);
+      document.addEventListener('touchmove', onAnimateDrag, { passive: false });
+      document.addEventListener('mouseup', stopAnimateDrag);
+      document.addEventListener('touchend', stopAnimateDrag);
+    }
+
+    function onAnimateDrag(e) {
+      if (!animateIsDragging) return;
+      e.preventDefault();
+      const ev = e.touches ? e.touches[0] : e;
+      const mapRect = document.getElementById('map').getBoundingClientRect();
+      let newLeft = ev.clientX - mapRect.left - animateDragOffsetX;
+      let newTop = ev.clientY - mapRect.top - animateDragOffsetY;
+      const panelWidth = animatePanel.offsetWidth;
+      const panelHeight = animatePanel.offsetHeight;
+      const mapWidth = mapRect.width;
+      const mapHeight = mapRect.height;
+      newLeft = Math.max(0, Math.min(mapWidth - panelWidth, newLeft));
+      newTop = Math.max(0, Math.min(mapHeight - panelHeight, newTop));
+      animatePanel.style.left = newLeft + 'px';
+      animatePanel.style.top = newTop + 'px';
+    }
+
+    function stopAnimateDrag() {
+      animateIsDragging = false;
+      document.removeEventListener('mousemove', onAnimateDrag);
+      document.removeEventListener('touchmove', onAnimateDrag);
+      document.removeEventListener('mouseup', stopAnimateDrag);
+      document.removeEventListener('touchend', stopAnimateDrag);
+    }
+
+    if (animateHeader) {
+      animateHeader.addEventListener('mousedown', startAnimateDrag);
+      animateHeader.addEventListener('touchstart', startAnimateDrag, { passive: false });
+    }
+
+    // --- Export GIF ---
+    document.getElementById('exportGifBtn').addEventListener('click', function() {
+      if (!currentSlug || !DATASETS[currentSlug] || DATASETS[currentSlug].type !== 'month') {
+        alert('Please load a monthly dataset first.');
+        return;
+      }
+      const gif = new GIF({ workers: 2, quality: 10, width: 800, height: 400 });
+      const totalMonths = 12;
+      let loaded = 0;
+      for (let m = 1; m <= totalMonths; m++) {
+        const url = `/earth_observation/raster/${currentSlug}/${m}/`;
+        fetch(url)
+          .then(res => res.blob())
+          .then(blob => {
+            const imgUrl = URL.createObjectURL(blob);
+            const img = new Image();
+            img.onload = function() {
+              const canvas = document.createElement('canvas');
+              canvas.width = img.width;
+              canvas.height = img.height;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0);
+              gif.addFrame(ctx, { copy: true, delay: 200 });
+              loaded++;
+              if (loaded === totalMonths) gif.render();
+              URL.revokeObjectURL(imgUrl);
+            };
+            img.src = imgUrl;
+          })
+          .catch(err => console.error('Error loading month', m, err));
+      }
+      gif.on('finished', function(blob) {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'animation.gif';
+        link.click();
+        URL.revokeObjectURL(link.href);
+      });
+    });
+
+    // --- Export Video (Canvas-based) ---
+    document.getElementById('exportVideoBtn').addEventListener('click', function() {
+      if (!currentSlug || !DATASETS[currentSlug] || DATASETS[currentSlug].type !== 'month') {
+        alert('Please load a monthly dataset first.');
+        return;
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = 800;
+      canvas.height = 400;
+      const ctx = canvas.getContext('2d');
+      const stream = canvas.captureStream(30);
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
+      let chunks = [];
+      mediaRecorder.ondataavailable = e => chunks.push(e.data);
+      mediaRecorder.onstop = function() {
+        const blob = new Blob(chunks, { type: 'video/webm' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'animation.webm';
+        link.click();
+        URL.revokeObjectURL(link.href);
+        chunks = [];
+      };
+      mediaRecorder.start();
+      const totalMonths = 12;
+      const monthImages = [];
+      let loaded = 0;
+      for (let m = 1; m <= totalMonths; m++) {
+        const url = `/earth_observation/raster/${currentSlug}/${m}/`;
+        fetch(url)
+          .then(res => res.blob())
+          .then(blob => {
+            const imgUrl = URL.createObjectURL(blob);
+            const img = new Image();
+            img.onload = function() {
+              monthImages[m] = img;
+              loaded++;
+              if (loaded === totalMonths) {
+                let frameIndex = 0;
+                function captureFrame() {
+                  if (frameIndex >= totalMonths * 2) {
+                    mediaRecorder.stop();
+                    return;
+                  }
+                  const monthNum = (frameIndex % totalMonths) + 1;
+                  const img = monthImages[monthNum];
+                  if (img) {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    ctx.fillStyle = 'white';
+                    ctx.font = 'bold 24px Arial';
+                    ctx.shadowColor = 'rgba(0,0,0,0.8)';
+                    ctx.shadowBlur = 8;
+                    ctx.fillText(`Month ${monthNum}`, 20, 40);
+                    ctx.shadowBlur = 0;
+                    ctx.font = '16px Arial';
+                    ctx.fillStyle = 'white';
+                    ctx.shadowColor = 'rgba(0,0,0,0.8)';
+                    ctx.shadowBlur = 6;
+                    const dsName = PRODUCT_NAMES[currentSlug] || currentSlug;
+                    ctx.fillText(dsName, 20, 70);
+                    ctx.shadowBlur = 0;
+                  }
+                  frameIndex++;
+                  setTimeout(captureFrame, 200);
+                }
+                captureFrame();
+              }
+              URL.revokeObjectURL(imgUrl);
+            };
+            img.src = imgUrl;
+          })
+          .catch(err => console.error('Error loading month', m, err));
+      }
+    });
+
+    updateAnimateStatus();
+
+    // =============================================================
+    // 14. TIME SERIES GRAPH TOOL (fully restored)
+    // =============================================================
+    const timeseriesPanel = document.getElementById('timeseries-panel');
+    const timeseriesInfo = document.getElementById('timeseries-info');
+    const timeseriesHeader = timeseriesPanel.querySelector('.timeseries-header');
+    let timeseriesChart = null;
+    let timeseriesMode = false;
+    let currentTimeSeriesData = null;
+    let currentTimeSeriesMode = 'pixel';
+    let selectedPolygonLayer = null;
+    let drawnPolygonLayerTS = null;
+    let polygonDrawControlTS = null;
+    let currentPolygonName = '';
+
+    const resizeHandle = document.getElementById('resizeHandle');
+    let isResizing = false;
+    let resizeStartX, resizeStartY, resizeStartWidth, resizeStartHeight;
+
+    resizeHandle.addEventListener('mousedown', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      isResizing = true;
+      resizeStartX = e.clientX;
+      resizeStartY = e.clientY;
+      resizeStartWidth = timeseriesPanel.offsetWidth;
+      resizeStartHeight = timeseriesPanel.offsetHeight;
+      document.addEventListener('mousemove', onResize);
+      document.addEventListener('mouseup', stopResize);
+    });
+
+    function onResize(e) {
+      if (!isResizing) return;
+      const deltaX = e.clientX - resizeStartX;
+      const deltaY = e.clientY - resizeStartY;
+      let newWidth = Math.max(420, resizeStartWidth + deltaX);
+      let newHeight = Math.max(350, resizeStartHeight + deltaY);
+      timeseriesPanel.style.width = newWidth + 'px';
+      timeseriesPanel.style.height = newHeight + 'px';
+      if (timeseriesChart) {
+        setTimeout(() => { timeseriesChart.resize(); }, 100);
+      }
+    }
+
+    function stopResize() {
+      isResizing = false;
+      document.removeEventListener('mousemove', onResize);
+      document.removeEventListener('mouseup', stopResize);
+    }
+
+    const modeButtons = document.querySelectorAll('.timeseries-mode-selector button');
+    modeButtons.forEach(btn => {
+      btn.addEventListener('click', function() {
+        modeButtons.forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        currentTimeSeriesMode = this.dataset.mode;
+        
+        if (selectedPolygonLayer) {
+          map.removeLayer(selectedPolygonLayer);
+          selectedPolygonLayer = null;
+        }
+        if (drawnPolygonLayerTS) {
+          map.removeLayer(drawnPolygonLayerTS);
+          drawnPolygonLayerTS = null;
+        }
+        if (polygonDrawControlTS) {
+          map.removeControl(polygonDrawControlTS);
+          polygonDrawControlTS = null;
+        }
+
+        const modeNames = {
+          'pixel': 'Click on the map to select a pixel',
+          'polygon': 'Click on a country or polygon on the map',
+          'draw': 'Draw a polygon on the map (double-click to finish)'
+        };
+        timeseriesInfo.innerHTML = `<span class="highlight">${modeNames[currentTimeSeriesMode]}</span>`;
+        
+        if (currentTimeSeriesMode === 'draw') {
+          activateDrawModeTS();
+        }
+        
+        if (timeseriesChart) {
+          timeseriesChart.destroy();
+          timeseriesChart = null;
+        }
+        currentPolygonName = '';
+      });
+    });
+
+    function activateDrawModeTS() {
+      if (polygonDrawControlTS) {
+        map.removeControl(polygonDrawControlTS);
+        polygonDrawControlTS = null;
+      }
+      
+      polygonDrawControlTS = new L.Control.Draw({
+        draw: {
+          polygon: {
+            allowIntersection: false,
+            showArea: true,
+            shapeOptions: {
+              color: '#003366',
+              weight: 2,
+              fillColor: '#003366',
+              fillOpacity: 0.2
+            }
+          },
+          rectangle: {
+            shapeOptions: {
+              color: '#d62728',
+              weight: 2,
+              fillColor: '#d62728',
+              fillOpacity: 0.2
+            }
+          },
+          circle: {
+            shapeOptions: {
+              color: '#2ca02c',
+              weight: 2,
+              fillColor: '#2ca02c',
+              fillOpacity: 0.2
+            }
+          },
+          polyline: false,
+          marker: false,
+          circlemarker: false
+        },
+        edit: {
+          featureGroup: new L.FeatureGroup()
+        }
+      });
+      
+      map.addControl(polygonDrawControlTS);
+      
+      map.once('draw:created', function(e) {
+        const layer = e.layer;
+        const layerType = e.layerType;
+        drawnPolygonLayerTS = layer;
+        currentPolygonName = 'Drawn ' + (layerType.charAt(0).toUpperCase() + layerType.slice(1));
+        
+        let coords, geojson;
+        if (layerType === 'rectangle') {
+          const bounds = layer.getBounds();
+          const corners = [
+            bounds.getSouthWest(),
+            bounds.getSouthEast(),
+            bounds.getNorthEast(),
+            bounds.getNorthWest()
+          ];
+          coords = corners.map(p => [p.lng, p.lat]);
+          geojson = {
+            type: 'Feature',
+            geometry: {
+              type: 'Polygon',
+              coordinates: [coords]
+            }
+          };
+        } else if (layerType === 'circle') {
+          const center = layer.getLatLng();
+          const radius = layer.getRadius();
+          const points = 64;
+          coords = [];
+          for (let i = 0; i <= points; i++) {
+            const angle = (i / points) * 2 * Math.PI;
+            const lat = center.lat + (radius / 111320) * Math.cos(angle);
+            const lng = center.lng + (radius / (111320 * Math.cos(center.lat * Math.PI / 180))) * Math.sin(angle);
+            coords.push([lng, lat]);
+          }
+          geojson = {
+            type: 'Feature',
+            geometry: {
+              type: 'Polygon',
+              coordinates: [coords]
+            }
+          };
+        } else {
+          const latlngs = layer.getLatLngs()[0];
+          coords = latlngs.map(p => [p.lng, p.lat]);
+          geojson = {
+            type: 'Feature',
+            geometry: {
+              type: 'Polygon',
+              coordinates: [coords]
+            }
+          };
+        }
+        
+        computePolygonTimeSeriesTS(geojson, layer);
+        
+        if (polygonDrawControlTS) {
+          map.removeControl(polygonDrawControlTS);
+          polygonDrawControlTS = null;
+        }
+      });
+    }
+
+    function computePolygonTimeSeriesTS(geojson, layer) {
+      if (!currentSlug || DATASETS[currentSlug].type !== 'month') {
+        timeseriesInfo.innerHTML = 'Please load a <span class="highlight">monthly dataset</span> first.';
+        return;
+      }
+
+      const prodName = PRODUCT_NAMES[currentSlug] || currentSlug;
+      const displayName = currentPolygonName || 'Polygon average';
+      timeseriesInfo.innerHTML = `📍 ${displayName} – <span class="highlight">${prodName}</span> (loading...)`;
+
+      const promises = [];
+      for (let m = 1; m <= 12; m++) {
+        const url = `/earth_observation/api/zonal_stats_by_polygon/${currentSlug}/${m}/`;
+        promises.push(
+          fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(geojson)
+          })
+          .then(res => res.json())
+          .then(data => data.mean !== undefined ? data.mean : null)
+          .catch(() => null)
+        );
+      }
+
+      Promise.all(promises)
+        .then(values => {
+          currentTimeSeriesData = {
+            values: values,
+            label: prodName,
+            location: displayName
+          };
+          renderTimeSeriesChartTS(values, prodName, displayName);
+          const validCount = values.filter(v => v !== null).length;
+          timeseriesInfo.innerHTML = `📍 ${displayName} – <span class="highlight">${prodName}</span> (${validCount}/12 months)`;
+        })
+        .catch(err => {
+          console.error('Error computing polygon time series:', err);
+          timeseriesInfo.innerHTML = 'Error computing polygon time series.';
+        });
+    }
+
+    let tsIsDragging = false;
+    let tsDragOffsetX = 0, tsDragOffsetY = 0;
+
+    function startTsDrag(e) {
+      e.preventDefault();
+      const ev = e.touches ? e.touches[0] : e;
+      const rect = timeseriesPanel.getBoundingClientRect();
+      const mapRect = document.getElementById('map').getBoundingClientRect();
+      timeseriesPanel.style.width = timeseriesPanel.offsetWidth + 'px';
+      timeseriesPanel.style.height = timeseriesPanel.offsetHeight + 'px';
+      let panelLeft = rect.left - mapRect.left;
+      let panelTop = rect.top - mapRect.top;
+      timeseriesPanel.style.left = panelLeft + 'px';
+      timeseriesPanel.style.top = panelTop + 'px';
+      timeseriesPanel.style.transform = 'none';
+      tsDragOffsetX = ev.clientX - rect.left;
+      tsDragOffsetY = ev.clientY - rect.top;
+      tsIsDragging = true;
+      document.addEventListener('mousemove', onTsDrag);
+      document.addEventListener('touchmove', onTsDrag, { passive: false });
+      document.addEventListener('mouseup', stopTsDrag);
+      document.addEventListener('touchend', stopTsDrag);
+    }
+
+    function onTsDrag(e) {
+      if (!tsIsDragging) return;
+      e.preventDefault();
+      const ev = e.touches ? e.touches[0] : e;
+      const mapRect = document.getElementById('map').getBoundingClientRect();
+      let newLeft = ev.clientX - mapRect.left - tsDragOffsetX;
+      let newTop = ev.clientY - mapRect.top - tsDragOffsetY;
+      const panelWidth = timeseriesPanel.offsetWidth;
+      const panelHeight = timeseriesPanel.offsetHeight;
+      const mapWidth = mapRect.width;
+      const mapHeight = mapRect.height;
+      newLeft = Math.max(0, Math.min(mapWidth - panelWidth, newLeft));
+      newTop = Math.max(0, Math.min(mapHeight - panelHeight, newTop));
+      timeseriesPanel.style.left = newLeft + 'px';
+      timeseriesPanel.style.top = newTop + 'px';
+    }
+
+    function stopTsDrag() {
+      tsIsDragging = false;
+      document.removeEventListener('mousemove', onTsDrag);
+      document.removeEventListener('touchmove', onTsDrag);
+      document.removeEventListener('mouseup', stopTsDrag);
+      document.removeEventListener('touchend', stopTsDrag);
+    }
+
+    timeseriesHeader.addEventListener('mousedown', startTsDrag);
+    timeseriesHeader.addEventListener('touchstart', startTsDrag, { passive: false });
+
+    document.getElementById('btnTimeseries').addEventListener('click', function() {
+      timeseriesMode = !timeseriesMode;
+      this.style.background = timeseriesMode ? '#e8f4fd' : 'none';
+      this.style.color = timeseriesMode ? '#003366' : '#444';
+      map.getContainer().style.cursor = timeseriesMode ? 'crosshair' : '';
+
+      if (timeseriesMode) {
+        timeseriesPanel.style.display = 'block';
+        if (!timeseriesPanel.style.left) {
+          timeseriesPanel.style.left = '50%';
+          timeseriesPanel.style.top = '50%';
+          timeseriesPanel.style.transform = 'translate(-50%, -50%)';
+        }
+        const modeNames = {
+          'pixel': 'Click on the map to select a pixel',
+          'polygon': 'Click on a country or polygon on the map',
+          'draw': 'Draw a polygon on the map (double-click to finish)'
+        };
+        timeseriesInfo.innerHTML = `<span class="highlight">${modeNames[currentTimeSeriesMode]}</span>`;
+        if (timeseriesChart) {
+          timeseriesChart.destroy();
+          timeseriesChart = null;
+        }
+        if (currentTimeSeriesMode === 'draw') {
+          activateDrawModeTS();
+        }
+      } else {
+        timeseriesPanel.style.display = 'none';
+        if (polygonDrawControlTS) {
+          map.removeControl(polygonDrawControlTS);
+          polygonDrawControlTS = null;
+        }
+        if (drawnPolygonLayerTS) {
+          map.removeLayer(drawnPolygonLayerTS);
+          drawnPolygonLayerTS = null;
+        }
+        if (selectedPolygonLayer) {
+          map.removeLayer(selectedPolygonLayer);
+          selectedPolygonLayer = null;
+        }
+      }
+    });
+
+    document.getElementById('timeseries-close').addEventListener('click', function() {
+      timeseriesPanel.style.display = 'none';
+      timeseriesMode = false;
+      document.getElementById('btnTimeseries').style.background = 'none';
+      document.getElementById('btnTimeseries').style.color = '#444';
+      map.getContainer().style.cursor = '';
+      if (timeseriesChart) {
+        timeseriesChart.destroy();
+        timeseriesChart = null;
+      }
+      if (polygonDrawControlTS) {
+        map.removeControl(polygonDrawControlTS);
+        polygonDrawControlTS = null;
+      }
+      if (drawnPolygonLayerTS) {
+        map.removeLayer(drawnPolygonLayerTS);
+        drawnPolygonLayerTS = null;
+      }
+      if (selectedPolygonLayer) {
+        map.removeLayer(selectedPolygonLayer);
+        selectedPolygonLayer = null;
+      }
+    });
+
+    function renderTimeSeriesChartTS(values, label, location) {
+      const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const canvas = document.getElementById('timeseries-chart');
+      if (!canvas) return;
+      
+      const ctx = canvas.getContext('2d');
+      if (timeseriesChart) {
+        timeseriesChart.destroy();
+        timeseriesChart = null;
+      }
+
+      const hasValidData = values.some(v => v !== null);
+      if (!hasValidData) {
+        timeseriesInfo.innerHTML = `No valid data found for this location.`;
+        return;
+      }
+
+      const chartTitle = location || 'Time Series';
+      
+      timeseriesChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: monthLabels,
+          datasets: [{
+            label: label,
+            data: values,
+            backgroundColor: 'rgba(0, 51, 102, 0.7)',
+            borderColor: '#003366',
+            borderWidth: 1,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { 
+              display: true,
+              labels: {
+                font: { size: 12, weight: 'bold' },
+                color: '#003366'
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return context.parsed.y !== null ? context.parsed.y.toFixed(2) : 'No data';
+                }
+              }
+            },
+            title: {
+              display: true,
+              text: chartTitle,
+              font: { size: 14, weight: 'bold' },
+              color: '#003366',
+              padding: { bottom: 8 }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: { color: 'rgba(0,0,0,0.05)' }
+            },
+            x: {
+              grid: { display: false }
+            }
+          }
+        }
+      });
+      
+      timeseriesChart.update();
+      
+      document.getElementById('exportPNGBtn').disabled = false;
+      document.getElementById('exportCSVBtn').disabled = false;
+    }
+
+    map.on('click', function(e) {
+      if (!timeseriesMode) return;
+      
+      if (currentTimeSeriesMode === 'pixel') {
+        const lat = e.latlng.lat.toFixed(4);
+        const lng = e.latlng.lng.toFixed(4);
+
+        if (!currentSlug || DATASETS[currentSlug].type !== 'month') {
+          timeseriesInfo.innerHTML = 'Please load a <span class="highlight">monthly dataset</span> (e.g., Rainfall, Temperature).';
+          return;
+        }
+
+        const prodName = PRODUCT_NAMES[currentSlug] || currentSlug;
+        currentPolygonName = `${lat}, ${lng}`;
+        timeseriesInfo.innerHTML = `📍 ${lat}, ${lng} – <span class="highlight">${prodName}</span> (loading...)`;
+
+        const promises = [];
+        for (let m = 1; m <= 12; m++) {
+          const url = `/earth_observation/api/point/${currentSlug}/${m}/?lat=${lat}&lon=${lng}`;
+          promises.push(
+            fetch(url)
+              .then(res => res.json())
+              .then(data => data.value !== null && data.value !== undefined ? data.value : null)
+              .catch(() => null)
+          );
+        }
+
+        Promise.all(promises)
+          .then(values => {
+            currentTimeSeriesData = {
+              values: values,
+              label: prodName,
+              location: `${lat}, ${lng}`
+            };
+            renderTimeSeriesChartTS(values, prodName, `${lat}, ${lng}`);
+            const validCount = values.filter(v => v !== null).length;
+            timeseriesInfo.innerHTML = `📍 ${lat}, ${lng} – <span class="highlight">${prodName}</span> (${validCount}/12 months)`;
+          })
+          .catch(err => {
+            console.error('Error:', err);
+            timeseriesInfo.innerHTML = 'Error loading data.';
+          });
+      }
+      else if (currentTimeSeriesMode === 'polygon') {
+        const latlng = e.latlng;
+        let foundPolygon = null;
+        let foundGeojson = null;
+        let foundName = null;
+        
+        function checkPolygonLayer(layer) {
+          if (!layer.getLatLngs || typeof layer.getLatLngs !== 'function') return false;
+          try {
+            const coords = layer.getLatLngs()[0];
+            if (!coords || coords.length < 3) return false;
+            const geojson = {
+              type: 'Feature',
+              geometry: {
+                type: 'Polygon',
+                coordinates: [coords.map(p => [p.lng, p.lat])]
+              }
+            };
+            if (pointInPolygon(latlng.lat, latlng.lng, geojson.geometry)) {
+              foundPolygon = layer;
+              foundGeojson = geojson;
+              return true;
+            }
+          } catch(e) {}
+          return false;
+        }
+        
+        if (!foundPolygon && countryFeatures) {
+          for (let feat of countryFeatures) {
+            const geom = feat.geometry;
+            if (pointInPolygon(latlng.lat, latlng.lng, geom)) {
+              foundName = feat.properties.NAME_EN;
+              currentPolygonName = foundName;
+              const coords = geom.coordinates[0].map(c => [c[1], c[0]]);
+              foundPolygon = L.polygon(coords, {
+                color: '#ff0000',
+                weight: 3,
+                fillColor: '#ff0000',
+                fillOpacity: 0.3
+              }).addTo(map);
+              foundGeojson = { type: 'Feature', geometry: geom };
+              setTimeout(() => {
+                if (foundPolygon) { map.removeLayer(foundPolygon); foundPolygon = null; }
+              }, 2000);
+              break;
+            }
+          }
+        }
+        
+        if (!foundPolygon && drawnFeatureGroup) {
+          drawnFeatureGroup.eachLayer(function(layer) {
+            if (!foundPolygon) { checkPolygonLayer(layer); }
+          });
+          if (foundPolygon) { currentPolygonName = 'Drawn Polygon'; }
+        }
+        
+        if (!foundPolygon && drawnPolygonLayerTS) {
+          checkPolygonLayer(drawnPolygonLayerTS);
+          if (foundPolygon && !foundName) { currentPolygonName = 'Drawn Shape'; }
+        }
+        
+        if (!foundPolygon) {
+          map.eachLayer(function(layer) {
+            if (!foundPolygon) { checkPolygonLayer(layer); }
+          });
+          if (foundPolygon && !foundName) { currentPolygonName = 'Selected Polygon'; }
+        }
+        
+        if (foundPolygon && foundGeojson) {
+          selectedPolygonLayer = foundPolygon;
+          computePolygonTimeSeriesTS(foundGeojson, foundPolygon);
+          if (foundPolygon.setStyle && !foundName) {
+            foundPolygon.setStyle({ color: '#ff0000', weight: 3, fillOpacity: 0.3 });
+            setTimeout(() => {
+              if (foundPolygon && foundPolygon.setStyle) {
+                foundPolygon.setStyle({ color: '#003366', weight: 2, fillOpacity: 0.2 });
+              }
+            }, 2000);
+          }
+        } else {
+          timeseriesInfo.innerHTML = 'No country or polygon found at this location. Try clicking inside a country or polygon.';
+        }
+      }
+    });
+
+    // --- EXPORT: PNG ---
+    document.getElementById('exportPNGBtn').addEventListener('click', function() {
+      if (!timeseriesChart) {
+        alert('No chart to export. Please generate a time series first.');
+        return;
+      }
+      
+      const chartContainer = document.getElementById('timeseries-chart-container');
+      html2canvas(chartContainer, {
+        scale: 2,
+        backgroundColor: '#ffffff'
+      }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = 'timeseries.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      }).catch(err => {
+        console.error('PNG export error:', err);
+        alert('Error exporting PNG: ' + err.message);
+      });
+    });
+
+    // --- EXPORT: CSV ---
+    document.getElementById('exportCSVBtn').addEventListener('click', function() {
+      if (!currentTimeSeriesData || !currentTimeSeriesData.values) {
+        alert('No data to export. Please generate a time series first.');
+        return;
+      }
+      
+      const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      let csv = 'Month,Value\n';
+      monthLabels.forEach((label, i) => {
+        const val = currentTimeSeriesData.values[i] !== null ? currentTimeSeriesData.values[i] : '';
+        csv += `${label},${val}\n`;
+      });
+      
+      csv += `\nDataset,${currentTimeSeriesData.label || ''}\n`;
+      csv += `Location,${currentTimeSeriesData.location || ''}\n`;
+      
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'timeseries.csv';
+      link.click();
+      URL.revokeObjectURL(link.href);
+    });
+
+    // =============================================================
+    // 15. MEASURE (unchanged)
+    // =============================================================
+    let measureControl = null;
+    document.getElementById('btnMeasure').addEventListener('click', function() {
+      if (measureControl) {
+        map.removeControl(measureControl);
+        measureControl = null;
+        this.style.background = 'none';
+        this.style.color = '#444';
+        return;
+      }
+      measureControl = new L.Control.Draw({
+        draw: {
+          polyline: { allowIntersection: false, showLength: true, metric: true },
+          polygon: { showArea: true, metric: true },
+          circle: false,
+          rectangle: false,
+          marker: false,
+          circlemarker: false
+        },
+        edit: { featureGroup: null }
+      });
+      map.addControl(measureControl);
+      this.style.background = '#e8f4fd';
+      this.style.color = '#003366';
+      map.once('draw:created', function() {
+        map.removeControl(measureControl);
+        measureControl = null;
+        document.getElementById('btnMeasure').style.background = 'none';
+        document.getElementById('btnMeasure').style.color = '#444';
+      });
+    });
+
+    // =============================================================
+    // 16. BUFFER (unchanged)
+    // =============================================================
+    let bufferMode = false;
+    let bufferCircle = null;
+    document.getElementById('btnBuffer').addEventListener('click', function() {
+      bufferMode = !bufferMode;
+      this.style.background = bufferMode ? '#e8f4fd' : 'none';
+      this.style.color = bufferMode ? '#003366' : '#444';
+      map.getContainer().style.cursor = bufferMode ? 'crosshair' : '';
+      if (!bufferMode && bufferCircle) {
+        map.removeLayer(bufferCircle);
+        bufferCircle = null;
+      }
+    });
+
+    map.on('click', function(e) {
+      if (!bufferMode) return;
+      const latlng = e.latlng;
+      const radius = prompt('Enter buffer radius (km):', '10');
+      if (!radius || isNaN(radius)) { bufferMode = false; return; }
+      if (bufferCircle) map.removeLayer(bufferCircle);
+      bufferCircle = L.circle(latlng, { radius: radius*1000, color:'red', fillColor:'red', fillOpacity:0.2 }).addTo(map);
+      L.popup().setLatLng(latlng).setContent(`Buffer: ${radius} km`).openOn(map);
+      bufferMode = false;
+      document.getElementById('btnBuffer').style.background = 'none';
+      document.getElementById('btnBuffer').style.color = '#444';
+      map.getContainer().style.cursor = '';
+    });
+
+    // =============================================================
+    // 17. GEOCODE (unchanged)
+    // =============================================================
+    document.getElementById('btnGeocode').addEventListener('click', function() {
+      const panel = document.getElementById('geocode-control');
+      panel.style.display = panel.style.display === 'flex' ? 'none' : 'flex';
+      if (panel.style.display === 'flex') document.getElementById('geocode-input').focus();
+    });
+
+    document.getElementById('geocode-btn').addEventListener('click', function() {
+      const query = document.getElementById('geocode-input').value.trim();
+      if (!query) return;
+      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`)
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.length > 0) {
+            const { lat, lon, display_name } = data[0];
+            map.setView([parseFloat(lat), parseFloat(lon)], 12);
+            L.popup().setLatLng([lat, lon]).setContent(display_name).openOn(map);
+          } else {
+            alert('Location not found.');
+          }
+        })
+        .catch(err => alert('Geocoding error: ' + err.message));
+    });
+    document.getElementById('geocode-input').addEventListener('keyup', function(e) {
+      if (e.key === 'Enter') document.getElementById('geocode-btn').click();
+    });
+
+    // =============================================================
+    // 18. LOCATE (unchanged)
+    // =============================================================
+    document.getElementById('btnLocate').addEventListener('click', function() {
+      if (!navigator.geolocation) { alert('Geolocation not supported.'); return; }
+      navigator.geolocation.getCurrentPosition(
+        function(pos) {
+          const { latitude, longitude } = pos.coords;
+          map.setView([latitude, longitude], 13);
+          L.circle([latitude, longitude], { radius: 100, color:'blue' }).addTo(map);
+          L.popup().setLatLng([latitude, longitude]).setContent('You are here').openOn(map);
+        },
+        function(err) {
+          alert('Geolocation error: ' + err.message);
+        }
+      );
+    });
+
+    // =============================================================
+    // 19. GRID (unchanged)
+    // =============================================================
+    let gridLayer = null;
+    document.getElementById('btnGrid').addEventListener('click', function() {
+      if (gridLayer) {
+        map.removeLayer(gridLayer);
+        gridLayer = null;
+        this.style.background = 'none';
+        this.style.color = '#444';
+        return;
+      }
+      const lines = [];
+      for (let lat = -80; lat <= 80; lat += 10) {
+        lines.push(L.polyline([ [lat, -180], [lat, 180] ], { color:'gray', weight:0.5, opacity:0.5 }));
+      }
+      for (let lon = -180; lon <= 180; lon += 10) {
+        lines.push(L.polyline([ [-90, lon], [90, lon] ], { color:'gray', weight:0.5, opacity:0.5 }));
+      }
+      gridLayer = L.layerGroup(lines).addTo(map);
+      this.style.background = '#e8f4fd';
+      this.style.color = '#003366';
+    });
+
+    // =============================================================
+    // 20. EXPORT (unchanged)
+    // =============================================================
+    document.getElementById('btnScreenshot').addEventListener('click', function() {
+      alert('Export map: you can implement screenshot using html2canvas.');
+    });
+
+  </script>
+</body>
+</html>

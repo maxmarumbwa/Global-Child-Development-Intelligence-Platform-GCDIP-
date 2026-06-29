@@ -406,6 +406,66 @@ def zonal_stats_by_polygon(request, dataset, month=None):
         return JsonResponse({'error': str(e)}, status=500)
 
 
+######################################################################################
+##################### profile view for raster datasets################################
+def raster_point_query(request, dataset, month=None):
+    try:
+        config = DATASET_REGISTRY.get(dataset)
+        if not config:
+            return JsonResponse({'error': 'Unknown dataset'}, status=404)
+
+        lat = float(request.GET.get('lat', 0))
+        lon = float(request.GET.get('lon', 0))
+
+        param_values = {}
+        if 'month' in config.get('params', []):
+            if month is None:
+                return JsonResponse({'error': 'Month required'}, status=400)
+            param_values['month'] = int(month)
+
+        filename = config['file_pattern'].format(**param_values)
+        file_path = os.path.join(DATA_ROOT, config['folder'], filename)
+
+        if not os.path.exists(file_path):
+            return JsonResponse({'error': f'File not found: {file_path}'}, status=404)
+
+        # Convert lat/lon to EPSG:3857
+        x, y = lonlat_to_webmercator(lon, lat)
+
+        with rasterio.open(file_path) as src:
+            row, col = src.index(x, y)
+            
+            # Debug info
+            print(f"Point: ({x}, {y}), Row: {row}, Col: {col}, Shape: {src.shape}")
+            
+            if row < 0 or row >= src.height or col < 0 or col >= src.width:
+                return JsonResponse({
+                    'error': f'Point outside raster bounds. Row: {row}, Col: {col}, Height: {src.height}, Width: {src.width}'
+                }, status=400)
+
+            value = src.read(1)[row, col]
+            print(f"Raw value: {value}, Nodata: {src.nodata}")
+
+            # Handle nodata and convert numpy type to Python float
+            if src.nodata is not None and value == src.nodata:
+                value = None
+            else:
+                value = float(value)
+
+            return JsonResponse({
+                'value': value,
+                'lat': lat,
+                'lon': lon,
+                'row': row,
+                'col': col
+            })
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'error': str(e)}, status=500)
+
+
 ####################################################################################
 #####################################################################################
 ########### Old code for rendering raster to png image

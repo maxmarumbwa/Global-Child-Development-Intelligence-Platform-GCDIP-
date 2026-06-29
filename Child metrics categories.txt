@@ -1,0 +1,385 @@
+
+CHILD SURVIVAL & DEVELOPMENT (Health, Nutrition & Maternal Care)
+	Mortality & Maternal Health
+		SH.DTH.IMRT | Number of infant deaths
+		SH.DTH.MORT | Number of under-five deaths
+		SH.DTH.NMRT | Number of neonatal deaths
+		SH.DTH.STLB | Number of stillbirths
+		SH.DYN.0509 | Probability of dying among children ages 5-9 years (per 1,000)
+		SH.DYN.MORT | Mortality rate, under-5 (per 1,000 live births)
+		SH.DYN.STLB | Stillbirth rate (per 1,000 total births)
+		SH.MMR.DTHS | Number of maternal deaths
+
+	Antenatal & Maternal Care
+		SH.STA.ANV4.ZS | Pregnant women receiving prenatal care of at least four visits (% of pregnant women)
+		SH.STA.ANVC.ZS | Pregnant women receiving prenatal care (%)
+		SH.STA.BRTC.ZS | Births attended by skilled health staff (% of total)
+
+	Child Health & Immunization
+			SH.IMM.HEPB | Immunization, HepB3 (% of one-year-old children)
+			SH.IMM.HIB3 | Immunization, Hib3 (% of children ages 12-23 months)
+			SH.IMM.IBCG | Immunization, BCG (% of one-year-old children)
+			SH.IMM.IDPT | Immunization, DPT (% of children ages 12-23 months)
+			SH.IMM.MEAS | Immunization, measles (% of children ages 12-23 months)
+			SH.STA.ARIF.ZS | ARI prevalence (% of children under 5)
+			SH.STA.ORTH | Diarrhea treatment (% of children under 5 who received ORS packet)
+
+WATER, SANITATION & HYGIENE (WASH)
+	SH.H2O.BASW.ZS | People using at least basic drinking water services (% of population)
+	SH.STA.ACSN | Improved sanitation facilities (% of population with access)
+	SH.STA.ODFC.ZS | People practicing open defecation (% of population)
+	SH.STA.SMSS.ZS | People using safely managed sanitation services (% of population)
+
+CHILD PROTECTION (Child Labor & Harmful Practices)
+	Child Labor
+		SL.TLF.0714.ZS | Children in employment, total (% of children ages 7-14)
+		SL.TLF.0714.SW.TM | Average working hours of children, study and work, ages 7-14 (hours per week)
+		SL.TLF.0714.SW.ZS | Children in employment, study and work (% of children in employment, ages 7-14)
+		SL.AGR.0714.ZS | Child employment in agriculture (% of economically active children ages 7-14)
+		SL.FAM.0714.FE.ZS | Children in employment, unpaid family workers, female (% of female children in employment, ages 7-14)
+		SL.MNF.0714.ZS | Child employment in manufacturing (% of economically active children ages 7-14)
+
+	Harmful Practices 
+		SH.STA.FGMS.ZS | Female genital mutilation prevalence (%)
+		SP.M15.2024.FE.ZS | Women who were first married by age 15 (% of women ages 20-24)
+		SP.M18.2024.FE.ZS | Women who were first married by age 18 (% of women ages 20-24)
+
+EDUCATION & ADOLESCENT DEVELOPMENT
+	SE.ENR.ORPH | Ratio of school attendance of orphans to school attendance of non-orphans ages 10-14
+
+
+SOCIAL INCLUSION & BIRTH REGISTRATION (New Class)
+	birth_reg | Children under age 5 whose births are registered, total (%)
+	ID.OWN.BRTH.ZS | Birth certification (%)
+	birth_reg_1 | Children under age 5 whose births are registered, female (%)
+	birth_reg_2 | Children under age 5 whose births are registered, male (%)
+	SP.REG.BRTH.RU.ZS | Completeness of birth registration, rural (%)
+	SP.REG.BRTH.UR.ZS | Completeness of birth registration, urban (%)
+
+EARLY CHILDHOOD DEVELOPMENT (ECD)
+	SH.STA.BFED.ZS | Exclusive breastfeeding (% of children under 6 months)
+	SH.STA.BRTW.ZS | Low-birthweight babies (% of births)
+	SH.STA.OWGH.MA.ZS | Prevalence of overweight, weight for height, male (% of children under 5)
+	SH.STA.STNT.ZS | Prevalence of stunting, height for age (% of children under 5)
+	SH.STA.WAST.ZS | Prevalence of wasting, weight for height (% of children under 5)
+	HD.HCI.STNT | Fraction of Children Under 5 Not Stunted
+	Newborns protected against tetanus (%) | (I kept this separate as you listed it—place it here in ECD)
+
+
+####################################################################################################################################
+##############################################   LONG VERSION   ####################################################################
+####################################################################################################################################
+
+
+1. CHILD SURVIVAL & DEVELOPMENT (Health, Nutrition & Maternal Care)
+Mortality & Maternal Health
+	SH.DTH.IMRT | Number of infant deaths
+
+	SH.DTH.IMRT.FE | Number of infant deaths, female
+
+	SH.DTH.IMRT.MA | Number of infant deaths, male
+
+	SH.DTH.MORT | Number of under-five deaths
+
+	SH.DTH.MORT.FE | Number of under-five deaths, female
+
+	SH.DTH.MORT.MA | Number of under-five deaths, male
+
+	SH.DTH.NMRT | Number of neonatal deaths
+
+	SH.DTH.STLB | Number of stillbirths
+
+	SH.DYN.0509 | Probability of dying among children ages 5-9 years (per 1,000)
+
+	SH.DYN.1014 | Probability of dying among adolescents ages 10-14 years (per 1,000)
+
+	SH.DYN.MORT | Mortality rate, under-5 (per 1,000 live births)
+
+	SH.DYN.MORT.FE | Mortality rate, under-5, female (per 1,000 live births)
+
+	SH.DYN.MORT.MA | Mortality rate, under-5, male (per 1,000 live births)
+
+	SH.DYN.NMRT | Mortality rate, neonatal (per 1,000 live births)
+
+	SH.DYN.STLB | Stillbirth rate (per 1,000 total births)
+
+	SH.MMR.DTHS | Number of maternal deaths
+
+	SH.MMR.RISK.ZS | Lifetime risk of maternal death (%)
+
+Antenatal & Maternal Care
+
+	SH.STA.ANV4.ZS | Pregnant women receiving prenatal care of at least four visits (% of pregnant women)
+
+	SH.STA.ANVC.ZS | Pregnant women receiving prenatal care (%)
+
+	SH.STA.BRTC.ZS | Births attended by skilled health staff (% of total)
+
+Child Health & Immunization
+
+		SH.IMM.HEPB | Immunization, HepB3 (% of one-year-old children)
+
+		SH.IMM.HIB3 | Immunization, Hib3 (% of children ages 12-23 months)
+
+		SH.IMM.IBCG | Immunization, BCG (% of one-year-old children)
+
+		SH.IMM.IDPT | Immunization, DPT (% of children ages 12-23 months)
+
+		SH.IMM.MEA2 | Immunization, measles second dose (% of children by the nationally recommended age)
+
+		SH.IMM.MEAS | Immunization, measles (% of children ages 12-23 months)
+
+		SH.IMM.POL3 | Immunization, Pol3 (% of one-year-old children)
+
+		SH.STA.ARIC.ZS | ARI treatment (% of children under 5 taken to a health provider)
+
+		SH.STA.ARIF.ZS | ARI prevalence (% of children under 5)
+
+		SH.STA.ORCF.ZS | Diarrhea treatment (% of children under 5 receiving oral rehydration and continued feeding)
+
+		SH.STA.ORTH | Diarrhea treatment (% of children under 5 who received ORS packet)
+
+2. WATER, SANITATION & HYGIENE (WASH)
+	SH.H2O.BASW.ZS | People using at least basic drinking water services (% of population)
+
+	SH.H2O.SAFE.RU.ZS | Improved water source, rural (% of rural population with access)
+
+	SH.H2O.SAFE.UR.ZS | Improved water source, urban (% of urban population with access)
+
+	SH.STA.ACSN | Improved sanitation facilities (% of population with access)
+
+	SH.STA.ACSN.RU | Improved sanitation facilities, rural (% of rural population with access)
+
+	SH.STA.ACSN.UR | Improved sanitation facilities, urban (% of urban population with access)
+
+	SH.STA.ODFC.ZS | People practicing open defecation (% of population)
+
+	SH.STA.SMSS.ZS | People using safely managed sanitation services (% of population)
+
+	SH.STA.SMSS.RU.ZS | People using safely managed sanitation services, rural (% of rural population)
+
+	SH.STA.SMSS.UR.ZS | People using safely managed sanitation services, urban (% of urban population)
+
+3. CHILD PROTECTION (Child Labor & Harmful Practices)
+Child Labor
+
+	SL.TLF.0714.ZS | Children in employment, total (% of children ages 7-14)
+
+	SL.TLF.0714.FE.ZS | Children in employment, female (% of female children ages 7-14)
+
+	SL.TLF.0714.MA.ZS | Children in employment, male (% of male children ages 7-14)
+
+	SL.TLF.0714.SW.TM | Average working hours of children, study and work, ages 7-14 (hours per week)
+
+	SL.TLF.0714.SW.FE.TM | Average working hours of children, study and work, female, ages 7-14 (hours per week)
+
+	SL.TLF.0714.WK.MA.TM | Average working hours of children, working only, male, ages 7-14 (hours per week)
+
+	SL.TLF.0714.SW.ZS | Children in employment, study and work (% of children in employment, ages 7-14)
+
+	SL.TLF.0714.SW.FE.ZS | Children in employment, study and work, female (% of female children in employment, ages 7-14)
+
+	SL.TLF.0714.SW.MA.ZS | Children in employment, study and work, male (% of male children in employment, ages 7-14)
+
+	SL.AGR.0714.ZS | Child employment in agriculture (% of economically active children ages 7-14)
+
+	SL.AGR.0714.FE.ZS | Child employment in agriculture, female (% of female economically active children ages 7-14)
+
+	SL.AGR.0714.MA.ZS | Child employment in agriculture, male (% of male economically active children ages 7-14)
+
+	SL.FAM.0714.ZS | Children in employment, unpaid family workers (% of children in employment, ages 7-14)
+
+	SL.FAM.0714.FE.ZS | Children in employment, unpaid family workers, female (% of female children in employment, ages 7-14)
+
+	SL.FAM.0714.MA.ZS | Children in employment, unpaid family workers, male (% of male children in employment, ages 7-14)
+
+	SL.MNF.0714.ZS | Child employment in manufacturing (% of economically active children ages 7-14)
+
+	SL.MNF.0714.FE.ZS | Child employment in manufacturing, female (% of female economically active children ages 7-14)
+
+	SL.MNF.0714.MA.ZS | Child employment in manufacturing, male (% of male economically active children ages 7-14)
+
+	SL.SLF.0714.ZS | Children in employment, self-employed (% of children in employment, ages 7-14)
+
+	SL.SLF.0714.FE.ZS | Children in employment, self-employed, female (% of female children in employment, ages 7-14)
+
+	SL.SLF.0714.MA.ZS | Children in employment, self-employed, male (% of male children in employment, ages 7-14)
+
+Harmful Practices 
+
+	SH.STA.FGMS.ZS | Female genital mutilation prevalence (%)
+
+	SP.M15.2024.FE.ZS | Women who were first married by age 15 (% of women ages 20-24)
+
+	SP.M18.2024.FE.ZS | Women who were first married by age 18 (% of women ages 20-24)
+
+
+4. EDUCATION & ADOLESCENT DEVELOPMENT
+SE.ENR.ORPH | Ratio of school attendance of orphans to school attendance of non-orphans ages 10-14
+
+
+
+5. SOCIAL INCLUSION & BIRTH REGISTRATION (New Class)
+birth_reg | Children under age 5 whose births are registered, total (%)
+ID.OWN.BRTH.ZS | Birth certification (%)
+- birth_reg_1 | Children under age 5 whose births are registered, female (%)
+- birth_reg_2 | Children under age 5 whose births are registered, male (%)
+- SP.REG.BRTH.RU.ZS | Completeness of birth registration, rural (%)
+- SP.REG.BRTH.UR.ZS | Completeness of birth registration, urban (%)
+- SP.REG.BRTH.Q1-ZS / Q5-ZS | Completeness of birth registration by wealth quintile
+
+
+
+
+6. EARLY CHILDHOOD DEVELOPMENT (ECD) - New Class (Pulled from Nutrition/Health)
+	SH.STA.BFED.ZS | Exclusive breastfeeding (% of children under 6 months)
+
+	SH.STA.BRTW.ZS | Low-birthweight babies (% of births)
+
+	SH.STA.OWGH.MA.ZS | Prevalence of overweight, weight for height, male (% of children under 5)
+
+	SH.STA.STNT.ZS | Prevalence of stunting, height for age (% of children under 5)
+
+	SH.STA.WAST.ZS | Prevalence of wasting, weight for height (% of children under 5)
+
+	HD.HCI.STNT | Fraction of Children Under 5 Not Stunted
+
+	Newborns protected against tetanus (%) | (I kept this separate as you listed it—place it here in ECD)
+
+
+
+
+
+
+########################################################################################################################
+##########################################   OLD     ###################################################################
+########################################################################################################################
+
+
+## Child Survival 
+a 
+SH.DTH.IMRT	Number of infant deaths
+	SH.DTH.IMRT.FE	Number of infant deaths, female
+	SH.DTH.IMRT.MA	Number of infant deaths, male
+
+SH.DTH.MORT	Number of under-five deaths
+	SH.DTH.MORT.FE	Number of under-five deaths, female
+	SH.DTH.MORT.MA	Number of under-five deaths, male
+
+SH.DTH.NMRT	Number of neonatal deaths
+SH.DTH.STLB	Number of stillbirths
+
+b
+
+SH.DYN.0509	Probability of dying among children ages 5-9 years (per 1,000)
+SH.DYN.1014	Probability of dying among adolescents ages 10-14 years (per 1,000)
+
+SH.DYN.MORT	Mortality rate, under-5 (per 1,000 live births)
+	SH.DYN.MORT.FE	Mortality rate, under-5, female (per 1,000 live births)
+	SH.DYN.MORT.MA	Mortality rate, under-5, male (per 1,000 live births)
+SH.DYN.NMRT	Mortality rate, neonatal (per 1,000 live births)
+SH.DYN.STLB	Stillbirth rate (per 1,000 total births)
+
+Maternal & Antenatal Care
+	SH.STA.ANV4.ZS	Pregnant women receiving prenatal care of at least four visits (% of pregnant women)
+	SH.STA.ANVC.ZS	Pregnant women receiving prenatal care (%)
+	SH.STA.BFED.ZS	Exclusive breastfeeding (% of children under 6 months)
+	SH.STA.BRTC.ZS	Births attended by skilled health staff (% of total)
+
+
+SH.STA.BRTW.ZS	Low-birthweight babies (% of births)
+
+### Education
+SE.ENR.ORPH	Ratio of school attendance of orphans to school attendance of non-orphans ages 10-14
+
+
+
+### WASH
+SH.H2O.BASW.ZS	People using at least basic drinking water services (% of population)
+	SH.H2O.SAFE.RU.ZS	Improved water source, rural (% of rural population with access)
+	SH.H2O.SAFE.UR.ZS	Improved water source, urban (% of urban population with access)
+
+SH.STA.ACSN	Improved sanitation facilities (% of population with access)
+	SH.STA.ACSN.RU	Improved sanitation facilities, rural (% of rural population with access)
+	SH.STA.ACSN.UR	Improved sanitation facilities, urban (% of urban population with access)
+SH.STA.ODFC.ZS	People practicing open defecation (% of population)
+
+SH.STA.SMSS.ZS	People using safely managed sanitation services (% of population)
+	SH.STA.SMSS.RU.ZS	People using safely managed sanitation services, rural (% of rural population)
+	SH.STA.SMSS.UR.ZS	People using safely managed sanitation services, urban (% of urban population)
+
+
+
+### Child Protection
+SL.TLF.0714.ZS	Children in employment, total (% of children ages 7-14)
+	SL.TLF.0714.FE.ZS	Children in employment, female (% of female children ages 7-14)
+	SL.TLF.0714.MA.ZS	Children in employment, male (% of male children ages 7-14)
+
+SL.TLF.0714.SW.TM	Average working hours of children, study and work, ages 7-14 (hours per week)
+	SL.TLF.0714.SW.FE.TM	Average working hours of children, study and work, female, ages 7-14 (hours per week)
+	SL.TLF.0714.WK.MA.TM	Average working hours of children, working only, male, ages 7-14 (hours per week)
+SL.TLF.0714.SW.ZS	Children in employment, study and work (% of children in employment, ages 7-14)
+	SL.TLF.0714.SW.FE.ZS	Children in employment, study and work, female (% of female children in employment, ages 7-14)
+	SL.TLF.0714.SW.MA.ZS	Children in employment, study and work, male (% of male children in employment, ages 7-14)
+
+
+
+
+SL.AGR.0714.ZS	Child employment in agriculture (% of economically active children ages 7-14)
+	SL.AGR.0714.FE.ZS	Child employment in agriculture, female (% of female economically active children ages 7-14)
+	SL.AGR.0714.MA.ZS	Child employment in agriculture, male (% of male economically active children ages 7-14)
+SL.FAM.0714.ZS	Children in employment, unpaid family workers (% of children in employment, ages 7-14)
+	SL.FAM.0714.FE.ZS	Children in employment, unpaid family workers, female (% of female children in employment, ages 7-14)
+	SL.FAM.0714.MA.ZS	Children in employment, unpaid family workers, male (% of male children in employment, ages 7-14)
+SL.MNF.0714.ZS	Child employment in manufacturing (% of economically active children ages 7-14)
+	SL.MNF.0714.FE.ZS	Child employment in manufacturing, female (% of female economically active children ages 7-14)
+	SL.MNF.0714.MA.ZS	Child employment in manufacturing, male (% of male economically active children ages 7-14)
+SL.SLF.0714.ZS	Children in employment, self-employed (% of children in employment, ages 7-14)
+	SL.SLF.0714.FE.ZS	Children in employment, self-employed, female (% of female children in employment, ages 7-14)
+	SL.SLF.0714.MA.ZS	Children in employment, self-employed, male (% of male children in employment, ages 7-14)
+
+
+
+### Health
+Immunization
+	SH.IMM.HEPB	Immunization, HepB3 (% of one-year-old children)
+	SH.IMM.HIB3	Immunization, Hib3 (% of children ages 12-23 months)
+	SH.IMM.IBCG	Immunization, BCG (% of one-year-old children)
+	SH.IMM.IDPT	Immunization, DPT (% of children ages 12-23 months)
+	SH.IMM.MEA2	Immunization, measles second dose (% of children by the nationally recommended age)
+	SH.IMM.MEAS	Immunization, measles (% of children ages 12-23 months)
+	SH.IMM.POL3	Immunization, Pol3 (% of one-year-old children)
+SH.MMR.DTHS	Number of maternal deaths
+SH.MMR.RISK.ZS	Lifetime risk of maternal death (%)
+SH.STA.ARIC.ZS	ARI treatment (% of children under 5 taken to a health provider)
+SH.STA.ARIF.ZS	ARI prevalence (% of children under 5)
+SH.STA.ORCF.ZS	Diarrhea treatment (% of children under 5 receiving oral rehydration and continued feeding)
+SH.STA.ORTH	Diarrhea treatment (% of children under 5 who received ORS packet)
+SH.STA.OWGH.MA.ZS	Prevalence of overweight, weight for height, male (% of children under 5)
+SH.STA.STNT.ZS	Prevalence of stunting, height for age (% of children under 5)
+SH.STA.WAST.ZS	Prevalence of wasting, weight for height (% of children under 5)
+Newborns protected against tetanus (%)
+
+
+### Gender issues
+SH.STA.FGMS.ZS	Female genital mutilation prevalence (%)
+SP.M15.2024.FE.ZS	Women who were first married by age 15 (% of women ages 20-24)
+SP.M18.2024.FE.ZS	Women who were first married by age 18 (% of women ages 20-24)
+
+
+
+### Nutrition & Food Security
+
+
+
+
+
+
+### Adolescent Development
+
+
+
+
+birth_reg	Children under age 5 whose births are registered, total (%)
+ID.OWN.BRTH.ZS	Birth certification (%)
+HD.HCI.STNT	Fraction of Children Under 5 Not Stunted
