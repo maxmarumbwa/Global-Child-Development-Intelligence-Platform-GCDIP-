@@ -156,7 +156,7 @@
                 <label class="form-label me-1">Years</label>
                 <input type="number" id="rangeFrom" class="form-control form-control-sm" style="width:70px; display:inline;" value="1960" min="1960" max="2024">
                 <span class="mx-1">–</span>
-                <input type="number" id="rangeTo" class="form-control form-control-sm" style="width:70px; display:inline;" value="2024" min="1960" max="2024">
+                <input type="number" id="rangeTo" class="form-control form-control-sm" style="width:70px; display:inline;" value="2020" min="1960" max="2024">
                 <button class="btn btn-outline-primary btn-sm" onclick="applyYearRange()">
                     <i class="fa-solid fa-check"></i>
                 </button>
@@ -191,7 +191,6 @@
             {% endif %}
         </div>
 
-        <!-- MAIN CONTENT AREA -->
         <!-- MAIN CONTENT AREA -->
 {% if view_type == 'chart' %}
 <div class="chart-wrapper" style="position: relative; height: 450px; width: 100%; min-height: 500px; padding: 10px 0;">
