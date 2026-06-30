@@ -26,7 +26,12 @@
 {% endif %}
 {% if view_type == 'chart' %}
 <style>
-    .chart-container { position: relative; height: 400px; width: 100%; }
+    .chart-container { 
+        position: relative; 
+        height: 450px; 
+        width: 100%; 
+        min-height: 400px;
+    }
     #colorLegend { margin-top: 15px; display: none; text-align: center; }
     #legendItems { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
 </style>
@@ -40,17 +45,14 @@
     <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
         <h4 class="mb-0">{{ indicator_name }}</h4>
         <div class="btn-group btn-group-sm" role="group">
-            <a href="{% url 'indicator_view' indicator_code 'chart' %}" class="btn {% if view_type == 'chart' %}btn-secondary active{% else %}btn-outline-secondary{% endif %}">
-                <i class="fa-solid fa-chart-bar"></i> Chart
-            </a>
             <a href="{% url 'indicator_view' indicator_code 'table' %}" class="btn {% if view_type == 'table' %}btn-secondary active{% else %}btn-outline-secondary{% endif %}">
                 <i class="fa-solid fa-table"></i> Table
             </a>
+            <a href="{% url 'indicator_view' indicator_code 'chart' %}" class="btn {% if view_type == 'chart' %}btn-secondary active{% else %}btn-outline-secondary{% endif %}">
+                <i class="fa-solid fa-chart-bar"></i> Chart
+            </a>
             <a href="{% url 'indicator_view' indicator_code 'map' %}" class="btn {% if view_type == 'map' %}btn-secondary active{% else %}btn-outline-secondary{% endif %}">
                 <i class="fa-solid fa-map"></i> Map
-            </a>
-            <a href="{% url 'mortality_all' %}" class="btn btn-outline-secondary">
-                <i class="fa-solid fa-layer-group"></i> All
             </a>
         </div>
         <div>
@@ -59,31 +61,10 @@
     </div>
 
     <div class="card-body">
-        <!-- Indicator Selection Dropdown -->
-        <div class="row mb-3">
-            <div class="col-md-8">
-                <label class="form-label"><i class="fa-solid fa-arrow-right"></i> Select Indicator:</label>
-                <select id="indicatorSelect" class="form-select" onchange="changeIndicator()">
-                    <optgroup label="Mortality & Maternal Health">
-                        <option value="SH.DTH.MORT" {% if indicator_code == 'SH.DTH.MORT' %}selected{% endif %}>Number of under-five deaths</option>
-                        <option value="SH.DTH.IMRT" {% if indicator_code == 'SH.DTH.IMRT' %}selected{% endif %}>Number of infant deaths</option>
-                        <option value="SH.DTH.STLB" {% if indicator_code == 'SH.DTH.STLB' %}selected{% endif %}>Number of stillbirths</option>
-                        <option value="SH.DTH.NMRT" {% if indicator_code == 'SH.DTH.NMRT' %}selected{% endif %}>Number of neonatal deaths</option>
-                        <option value="SH.DYN.STLB" {% if indicator_code == 'SH.DYN.STLB' %}selected{% endif %}>Stillbirth rate (per 1,000 total births)</option>
-                        <option value="SH.DYN.MORT" {% if indicator_code == 'SH.DYN.MORT' %}selected{% endif %}>Under‑5 mortality rate</option>
-                        <option value="SH.DYN.0509" {% if indicator_code == 'SH.DYN.0509' %}selected{% endif %}>5‑9 mortality (per 1,000)</option>
-                        <option value="SH.MMR.DTHS" {% if indicator_code == 'SH.MMR.DTHS' %}selected{% endif %}>Number of maternal deaths</option>
-                    </optgroup>
-                </select>
-            </div>
-            <div class="col-md-4 d-flex align-items-end">
-                <button class="btn btn-primary btn-sm w-100" onclick="changeIndicator()">
-                    <i class="fa-solid fa-rotate"></i> Update View
-                </button>
-            </div>
+        <!-- Indicator displayed for reference -->
+        <div class="mb-3">
+            <small class="text-muted">Current Indicator: <strong>{{ indicator_code }}</strong> - {{ indicator_name }}</small>
         </div>
-
-        <hr>
 
         <!-- YEAR SLIDERS -->
         <div class="row mb-2 align-items-center">
@@ -211,43 +192,44 @@
         </div>
 
         <!-- MAIN CONTENT AREA -->
-        {% if view_type == 'chart' %}
-        <div class="chart-container">
-            <canvas id="mortalityChart"></canvas>
-        </div>
-        <div id="colorLegend">
-            <div id="legendItems"></div>
-        </div>
-        {% elif view_type == 'table' %}
-        <div style="max-height: 500px; overflow-y: auto; margin-top: 10px;">
-            <div id="dataTableContainer"></div>
-        </div>
-        <!-- PAGINATION -->
-        <div class="row align-items-center mt-3">
-            <div class="col-md-6">
-                <span id="pageInfo" class="text-muted">Showing 0-0 of 0</span>
-            </div>
-            <div class="col-md-6 d-flex justify-content-end align-items-center gap-2">
-                <label for="pageSizeSelect" class="form-label me-1 mb-0">Rows per page:</label>
-                <select id="pageSizeSelect" class="form-select form-select-sm" style="width:80px;" onchange="applyFilters()">
-                    <option value="10">10</option>
-                    <option value="25" selected>25</option>
-                    <option value="50">50</option>
-                    <option value="100">100</option>
-                    <option value="0">All</option>
-                </select>
-                <button class="btn btn-outline-secondary btn-sm" onclick="goToPage('prev')" id="prevBtn">
-                    <i class="fa-solid fa-chevron-left"></i>
-                </button>
-                <span id="pageNumberDisplay" class="mx-2">1</span>
-                <button class="btn btn-outline-secondary btn-sm" onclick="goToPage('next')" id="nextBtn">
-                    <i class="fa-solid fa-chevron-right"></i>
-                </button>
-            </div>
-        </div>
-        {% elif view_type == 'map' %}
-        <div id="map"></div>
-        {% endif %}
+        <!-- MAIN CONTENT AREA -->
+{% if view_type == 'chart' %}
+<div class="chart-wrapper" style="position: relative; height: 450px; width: 100%; min-height: 500px; padding: 10px 0;">
+    <canvas id="mortalityChart" style="width: 100% !important; height: 100% !important;"></canvas>
+</div>
+<div id="colorLegend" style="margin-top: 15px; display: none; text-align: center;">
+    <div id="legendItems"></div>
+</div>
+{% elif view_type == 'table' %}
+<div style="max-height: 550px; overflow-y: auto; margin-top: 10px;">
+    <div id="dataTableContainer"></div>
+</div>
+<!-- PAGINATION -->
+<div class="row align-items-center mt-3">
+    <div class="col-md-6">
+        <span id="pageInfo" class="text-muted">Showing 0-0 of 0</span>
+    </div>
+    <div class="col-md-6 d-flex justify-content-end align-items-center gap-2">
+        <label for="pageSizeSelect" class="form-label me-1 mb-0">Rows per page:</label>
+        <select id="pageSizeSelect" class="form-select form-select-sm" style="width:80px;" onchange="applyFilters()">
+            <option value="10">10</option>
+            <option value="25" selected>25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+            <option value="0">All</option>
+        </select>
+        <button class="btn btn-outline-secondary btn-sm" onclick="goToPage('prev')" id="prevBtn">
+            <i class="fa-solid fa-chevron-left"></i>
+        </button>
+        <span id="pageNumberDisplay" class="mx-2">1</span>
+        <button class="btn btn-outline-secondary btn-sm" onclick="goToPage('next')" id="nextBtn">
+            <i class="fa-solid fa-chevron-right"></i>
+        </button>
+    </div>
+</div>
+{% elif view_type == 'map' %}
+<div id="map" style="height: 550px; width: 100%;"></div>
+{% endif %}
 
         <!-- FALLBACK MESSAGE -->
         <div id="noDataMessage" class="alert alert-warning text-center mt-2" style="display:none;">
@@ -330,14 +312,21 @@ try {
 }
 
 // ==============================
-// INDICATOR CHANGE
+// NAVIGATION: Handle menu item clicks
 // ==============================
-function changeIndicator() {
-    const select = document.getElementById('indicatorSelect');
-    const newIndicator = select.value;
-    const url = `/indicator/${newIndicator}/${viewType}/`;
-    window.location.href = url;
-}
+document.addEventListener('DOMContentLoaded', function() {
+    // Add click handlers to all menu items with data-item-id
+    document.querySelectorAll('.menu-item[data-item-id]').forEach(function(item) {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            const indicatorCode = this.getAttribute('data-item-id');
+            if (indicatorCode) {
+                // Navigate to the indicator view with table as default
+                window.location.href = `/indicator/${indicatorCode}/table/`;
+            }
+        });
+    });
+});
 
 // ==============================
 // VIEW-SPECIFIC RENDER FUNCTIONS
@@ -606,9 +595,9 @@ function renderChart(data1, data2, year1Label, year2Label) {
             const index = context.dataIndex;
             const meta = dataset._meta ? dataset._meta[index] : null;
             if (meta) {
-                return `${meta.country}: ${meta.value.toFixed(1)} (${meta.year})`;
+                return `${meta.country}: ${meta.value.toFixed(2)} (${meta.year})`;
             } else {
-                return `${context.label}: ${context.parsed.y.toFixed(1)}`;
+                return `${context.label}: ${context.parsed.y.toFixed(2)}`;
             }
         },
         afterBody: function(tooltipItems) {
@@ -647,13 +636,18 @@ function renderChart(data1, data2, year1Label, year2Label) {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { display: true },
-                title: { display: true, text: titleText },
+                legend: { display: true, position: 'top' },
+                title: { display: true, text: titleText, font: { size: 14 } },
                 tooltip: { callbacks: tooltipCallbacks }
             },
             scales: {
                 x: {
-                    ticks: { autoSkip: false, maxRotation: 90, minRotation: 90 }
+                    ticks: { 
+                        autoSkip: false, 
+                        maxRotation: 90, 
+                        minRotation: 45,
+                        font: { size: 10 }
+                    }
                 },
                 y: {
                     beginAtZero: true,
@@ -662,6 +656,12 @@ function renderChart(data1, data2, year1Label, year2Label) {
             }
         }
     });
+    
+    // Force resize after render
+    setTimeout(() => {
+        if (chart) chart.resize();
+    }, 100);
+    
     console.log('📊 Chart rendered for indicator:', indicatorCode);
 }
 
@@ -669,7 +669,7 @@ function setChartType(type) {
     if (chartType === type) return;
     chartType = type;
     document.getElementById('barBtn').classList.toggle('active', type === 'bar');
-    document.getElementById('lineBtn').classList.toggle('active', type === 'line');
+    document.getElementById('lineBtn').classlist.toggle('active', type === 'line');
     applyFilters();
 }
 
@@ -848,6 +848,10 @@ function initMap() {
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; CartoDB'
     }).addTo(map);
+    // Force a resize after a moment
+    setTimeout(() => {
+        if (map) map.invalidateSize();
+    }, 200);
 }
 
 function loadGeoJSON() {
@@ -862,6 +866,7 @@ function loadGeoJSON() {
                     layer.bindPopup(feature.properties.NAME || feature.properties.name || 'Unknown');
                 }
             }).addTo(map);
+            map.invalidateSize();
             updateMap();
         })
         .catch(err => {
@@ -970,6 +975,11 @@ function updateMap() {
         subregion: d.subregion || ''
     }));
     window._exportGeoJSONFeatures = features;
+    
+    // Force map resize
+    setTimeout(() => {
+        if (map) map.invalidateSize();
+    }, 100);
 }
 
 function exportGeoJSON() {
@@ -1185,8 +1195,11 @@ document.addEventListener('DOMContentLoaded', function() {
     year2 = currentYear;
     
     {% if view_type == 'map' %}
-    initMap();
-    loadGeoJSON();
+    // Give the map container time to render
+    setTimeout(function() {
+        initMap();
+        loadGeoJSON();
+    }, 100);
     {% else %}
     applyFilters();
     {% endif %}

@@ -13,7 +13,7 @@ urlpatterns = [
         include("apps.boundaries.urls")
     ),
     path(
-        "indicators/",
+        "",
         include("apps.indicators.urls")
     ),
 
