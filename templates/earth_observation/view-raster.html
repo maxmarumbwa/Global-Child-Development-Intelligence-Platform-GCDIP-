@@ -25,6 +25,12 @@
     * { margin:0; padding:0; box-sizing:border-box; }
     body, html { height:100%; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; }
     .navbar { height:50px; background:#003366; color:#fff; display:flex; align-items:center; padding:0 16px; font-size:18px; font-weight:bold; flex-shrink:0; }
+    
+.navbar i {
+  margin-right: 12px;
+  font-size: 22px;
+  color: #6ea8fe;
+}
     .app { display:flex; height:calc(100vh - 100px); }
     .sidebar { width:270px; background:#fff; border-right:1px solid #ddd; overflow-y:auto; padding:10px 14px; flex-shrink:0; font-size:13px; }
     .sidebar h5 { color:#003366; border-bottom:2px solid #003366; padding-bottom:4px; margin:0 0 6px 0; font-size:14px; }
@@ -940,11 +946,36 @@
         min-width: 150px;
       }
     }
+  /* Toolbar - positioned on the right side */
+  .gis-toolbar {
+      height: 40px;
+      background: #fff;
+      border-bottom: 1px solid #dcdcdc;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 0 10px;
+      overflow-x: auto;
+      flex-shrink: 0;
+      justify-content: flex-end; /* Align items to the right */
+  }
+
+  .navbar-link {
+    color: inherit;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.navbar-link:hover {
+    text-decoration: none;
+}
   </style>
 </head>
 <body>
   <!-- ===== NAVBAR ===== -->
-  <div class="navbar">🛰 Raster Viewer</div>
+ <div class="navbar">
+    <a href="{% url 'mortality_map' %}" class="navbar-link">🛰 Home</a>
+</div>
 
   <!-- ===== TOOLBAR ===== -->
   <div class="gis-toolbar">
@@ -953,19 +984,18 @@
     <button class="tool-btn" id="btnTimeseries"><i class="fa-solid fa-chart-line"></i><span>Time Series</span></button>
     <button class="tool-btn" id="btnAnimate"><i class="fa-solid fa-play"></i><span>Animate</span></button>
     <button class="tool-btn" id="btnZonal"><i class="fa-solid fa-table-cells-large"></i><span>Zonal Stats</span></button>
-    <button class="tool-btn" id="btnMeasure"><i class="fa-solid fa-ruler"></i><span>Measure</span></button>
     <button class="tool-btn" id="btnBuffer"><i class="fa-solid fa-circle-dot"></i><span>Buffer</span></button>
     <button class="tool-btn" id="btnGeocode"><i class="fa-solid fa-magnifying-glass-location"></i><span>Search</span></button>
     <button class="tool-btn" id="btnLocate"><i class="fa-solid fa-location-dot"></i><span>Locate</span></button>
     <button class="tool-btn" id="btnGrid"><i class="fa-solid fa-border-all"></i><span>Grid</span></button>
-    <button class="tool-btn" id="btnScreenshot"><i class="fa-solid fa-camera"></i><span>Export</span></button>
+    
   </div>
 
   <!-- ===== MAIN ===== -->
   <div class="app">
     <!-- Sidebar -->
     <div class="sidebar">
-      <h5>📋 Products</h5>
+      <h2>Environmental & Hazard Exposure</h2>
       <!-- Population -->
       <div class="section-title" onclick="toggleMenu(this)">
         Population & Demographics
@@ -3528,41 +3558,7 @@
     });
 
     // =============================================================
-    // 15. MEASURE (unchanged)
-    // =============================================================
-    let measureControl = null;
-    document.getElementById('btnMeasure').addEventListener('click', function() {
-      if (measureControl) {
-        map.removeControl(measureControl);
-        measureControl = null;
-        this.style.background = 'none';
-        this.style.color = '#444';
-        return;
-      }
-      measureControl = new L.Control.Draw({
-        draw: {
-          polyline: { allowIntersection: false, showLength: true, metric: true },
-          polygon: { showArea: true, metric: true },
-          circle: false,
-          rectangle: false,
-          marker: false,
-          circlemarker: false
-        },
-        edit: { featureGroup: null }
-      });
-      map.addControl(measureControl);
-      this.style.background = '#e8f4fd';
-      this.style.color = '#003366';
-      map.once('draw:created', function() {
-        map.removeControl(measureControl);
-        measureControl = null;
-        document.getElementById('btnMeasure').style.background = 'none';
-        document.getElementById('btnMeasure').style.color = '#444';
-      });
-    });
-
-    // =============================================================
-    // 16. BUFFER (unchanged)
+    // 16. BUFFER 
     // =============================================================
     let bufferMode = false;
     let bufferCircle = null;
@@ -3592,7 +3588,7 @@
     });
 
     // =============================================================
-    // 17. GEOCODE (unchanged)
+    // 17. GEOCODE 
     // =============================================================
     document.getElementById('btnGeocode').addEventListener('click', function() {
       const panel = document.getElementById('geocode-control');
@@ -3621,7 +3617,7 @@
     });
 
     // =============================================================
-    // 18. LOCATE (unchanged)
+    // 18. LOCATE 
     // =============================================================
     document.getElementById('btnLocate').addEventListener('click', function() {
       if (!navigator.geolocation) { alert('Geolocation not supported.'); return; }
@@ -3639,7 +3635,7 @@
     });
 
     // =============================================================
-    // 19. GRID (unchanged)
+    // 19. GRID 
     // =============================================================
     let gridLayer = null;
     document.getElementById('btnGrid').addEventListener('click', function() {
@@ -3660,13 +3656,6 @@
       gridLayer = L.layerGroup(lines).addTo(map);
       this.style.background = '#e8f4fd';
       this.style.color = '#003366';
-    });
-
-    // =============================================================
-    // 20. EXPORT (unchanged)
-    // =============================================================
-    document.getElementById('btnScreenshot').addEventListener('click', function() {
-      alert('Export map: you can implement screenshot using html2canvas.');
     });
 
   </script>
