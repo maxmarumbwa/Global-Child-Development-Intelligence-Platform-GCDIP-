@@ -2,6 +2,7 @@ import pandas as pd
 import requests
 from django.conf import settings
 from pathlib import Path
+import time
 
 # =========================================================
 # GEOJSON COUNTRY LOOKUP FROM CSV (MATCH API ISO3 CODES)
@@ -26,26 +27,30 @@ country_meta = countries_df.set_index("iso3")[[
 ]].to_dict(orient="index")
 
 # =========================================================
-# WORLD BANK: CHILD MORTALITY (accepts year parameter)
+# GENERIC INDICATOR FETCHER
 # =========================================================
 
-def get_child_mortality(year=2023):
+def get_indicator_data(indicator_code, year=2023):
     """
-    Fetch under‑5 mortality data for a given year from the World Bank API.
-    Returns a pandas DataFrame with country details and mortality value.
+    Fetch data for any World Bank indicator for a given year.
+    Returns a pandas DataFrame with country details and indicator value.
     """
     url = (
         "https://api.worldbank.org/v2/"
         "country/all/"
-        "indicator/SH.DYN.MORT"
+        f"indicator/{indicator_code}"
         "?format=json"
         f"&per_page=20000"
-        f"&date={year}:{year}"          # single year range
+        f"&date={year}:{year}"
     )
 
-    response = requests.get(url)
-    response.raise_for_status()
-    data = response.json()
+    try:
+        response = requests.get(url, timeout=30)
+        response.raise_for_status()
+        data = response.json()
+    except Exception as e:
+        print(f"Error fetching data for {indicator_code}: {e}")
+        return pd.DataFrame()
 
     rows = []
     if len(data) < 2:
@@ -66,34 +71,35 @@ def get_child_mortality(year=2023):
             "income_group": meta.get("INCOME_GRP"),
             "subregion": meta.get("REGION_WB"),
             "year": int(row["date"]),
-            "mortality": float(value)
+            "value": float(value)  # Use 'value' instead of 'mortality' for generic
         })
 
     df = pd.DataFrame(rows)
     if not df.empty:
-        df = df.sort_values("mortality", ascending=False)
+        df = df.sort_values("value", ascending=False)
     return df
 
-#
-# GET CHILD MORTALITY FOR A RANGE OF YEARS (1960-2024)
-#
-def get_child_mortality_range(start_year=1960, end_year=2024):
+def get_indicator_data_range(indicator_code, start_year=1960, end_year=2024):
     """
-    Fetch under‑5 mortality data for a range of years from the World Bank API.
+    Fetch data for a World Bank indicator for a range of years.
     Returns a pandas DataFrame with all years.
     """
     url = (
         "https://api.worldbank.org/v2/"
         "country/all/"
-        "indicator/SH.DYN.MORT"
+        f"indicator/{indicator_code}"
         "?format=json"
         f"&per_page=20000"
         f"&date={start_year}:{end_year}"
     )
 
-    response = requests.get(url)
-    response.raise_for_status()
-    data = response.json()
+    try:
+        response = requests.get(url, timeout=60)
+        response.raise_for_status()
+        data = response.json()
+    except Exception as e:
+        print(f"Error fetching data for {indicator_code}: {e}")
+        return pd.DataFrame()
 
     rows = []
     if len(data) < 2:
@@ -115,11 +121,49 @@ def get_child_mortality_range(start_year=1960, end_year=2024):
             "income_group": meta.get("INCOME_GRP"),
             "subregion": meta.get("REGION_WB"),
             "year": int(year_str),
-            "mortality": float(value)
+            "value": float(value)
         })
 
     df = pd.DataFrame(rows)
     if not df.empty:
-        df = df.sort_values(["year", "mortality"], ascending=[True, False])
+        df = df.sort_values(["year", "value"], ascending=[True, False])
     return df
 
+# =========================================================
+# BACKWARD COMPATIBILITY (Maintain existing function names)
+# =========================================================
+
+def get_child_mortality(year=2023):
+    """Backward compatibility wrapper."""
+    df = get_indicator_data('SH.DYN.MORT', year)
+    if not df.empty:
+        df = df.rename(columns={'value': 'mortality'})
+    return df
+
+def get_child_mortality_range(start_year=1960, end_year=2024):
+    """Backward compatibility wrapper."""
+    df = get_indicator_data_range('SH.DYN.MORT', start_year, end_year)
+    if not df.empty:
+        df = df.rename(columns={'value': 'mortality'})
+    return df
+
+# =========================================================
+# HELPER: Get indicator display name
+# =========================================================
+
+INDICATOR_NAMES = {
+    'SH.DTH.MORT': 'Number of under-five deaths',
+    'SH.DTH.IMRT': 'Number of infant deaths',
+    'SH.DTH.STLB': 'Number of stillbirths',
+    'SH.DTH.NMRT': 'Number of neonatal deaths',
+    'SH.DYN.STLB': 'Stillbirth rate (per 1,000 total births)',
+    'SH.DYN.MORT': 'Under‑5 mortality rate',
+    'SH.DYN.0509': '5‑9 mortality (per 1,000)',
+    'SH.MMR.DTHS': 'Number of maternal deaths',
+    'SH.DYN.MORT.FE': 'Under‑5 mortality rate (female)',
+    'SH.DYN.MORT.MA': 'Under‑5 mortality rate (male)',
+}
+
+def get_indicator_name(code):
+    """Return human-readable name for indicator code."""
+    return INDICATOR_NAMES.get(code, code)

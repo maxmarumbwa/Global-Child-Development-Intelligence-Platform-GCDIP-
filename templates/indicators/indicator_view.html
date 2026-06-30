@@ -1,0 +1,1195 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block title %}
+{{ indicator_name }} – {{ view_type|title }}
+{% endblock %}
+
+{% block extra_head %}
+{% if view_type == 'map' %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    #map { height: 500px; width: 100%; }
+    .legend {
+        background: white;
+        padding: 8px 12px;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        font-size: 12px;
+        line-height: 1.6;
+    }
+    .legend span {
+        vertical-align: middle;
+    }
+</style>
+{% endif %}
+{% if view_type == 'chart' %}
+<style>
+    .chart-container { position: relative; height: 400px; width: 100%; }
+    #colorLegend { margin-top: 15px; display: none; text-align: center; }
+    #legendItems { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+</style>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+
+<div class="card">
+    <!-- Navigation Bar -->
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+        <h4 class="mb-0">{{ indicator_name }}</h4>
+        <div class="btn-group btn-group-sm" role="group">
+            <a href="{% url 'indicator_view' indicator_code 'chart' %}" class="btn {% if view_type == 'chart' %}btn-secondary active{% else %}btn-outline-secondary{% endif %}">
+                <i class="fa-solid fa-chart-bar"></i> Chart
+            </a>
+            <a href="{% url 'indicator_view' indicator_code 'table' %}" class="btn {% if view_type == 'table' %}btn-secondary active{% else %}btn-outline-secondary{% endif %}">
+                <i class="fa-solid fa-table"></i> Table
+            </a>
+            <a href="{% url 'indicator_view' indicator_code 'map' %}" class="btn {% if view_type == 'map' %}btn-secondary active{% else %}btn-outline-secondary{% endif %}">
+                <i class="fa-solid fa-map"></i> Map
+            </a>
+            <a href="{% url 'mortality_all' %}" class="btn btn-outline-secondary">
+                <i class="fa-solid fa-layer-group"></i> All
+            </a>
+        </div>
+        <div>
+            <span class="badge bg-info">{{ indicator_code }}</span>
+        </div>
+    </div>
+
+    <div class="card-body">
+        <!-- Indicator Selection Dropdown -->
+        <div class="row mb-3">
+            <div class="col-md-8">
+                <label class="form-label"><i class="fa-solid fa-arrow-right"></i> Select Indicator:</label>
+                <select id="indicatorSelect" class="form-select" onchange="changeIndicator()">
+                    <optgroup label="Mortality & Maternal Health">
+                        <option value="SH.DTH.MORT" {% if indicator_code == 'SH.DTH.MORT' %}selected{% endif %}>Number of under-five deaths</option>
+                        <option value="SH.DTH.IMRT" {% if indicator_code == 'SH.DTH.IMRT' %}selected{% endif %}>Number of infant deaths</option>
+                        <option value="SH.DTH.STLB" {% if indicator_code == 'SH.DTH.STLB' %}selected{% endif %}>Number of stillbirths</option>
+                        <option value="SH.DTH.NMRT" {% if indicator_code == 'SH.DTH.NMRT' %}selected{% endif %}>Number of neonatal deaths</option>
+                        <option value="SH.DYN.STLB" {% if indicator_code == 'SH.DYN.STLB' %}selected{% endif %}>Stillbirth rate (per 1,000 total births)</option>
+                        <option value="SH.DYN.MORT" {% if indicator_code == 'SH.DYN.MORT' %}selected{% endif %}>Under‑5 mortality rate</option>
+                        <option value="SH.DYN.0509" {% if indicator_code == 'SH.DYN.0509' %}selected{% endif %}>5‑9 mortality (per 1,000)</option>
+                        <option value="SH.MMR.DTHS" {% if indicator_code == 'SH.MMR.DTHS' %}selected{% endif %}>Number of maternal deaths</option>
+                    </optgroup>
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button class="btn btn-primary btn-sm w-100" onclick="changeIndicator()">
+                    <i class="fa-solid fa-rotate"></i> Update View
+                </button>
+            </div>
+        </div>
+
+        <hr>
+
+        <!-- YEAR SLIDERS -->
+        <div class="row mb-2 align-items-center">
+            <div class="col-md-6" id="year1Container">
+                <label class="form-label">Year 1: <span id="year1Label">{{ current_year }}</span></label>
+                <input type="range" id="year1Slider" min="1960" max="2024"
+                       value="{{ current_year }}" class="form-range"
+                       oninput="onYear1Input(this.value)">
+            </div>
+            <div class="col-md-6" id="year2Container" style="display:none;">
+                <label class="form-label">Year 2: <span id="year2Label">{{ current_year }}</span></label>
+                <input type="range" id="year2Slider" min="1960" max="2024"
+                       value="{{ current_year }}" class="form-range"
+                       oninput="onYear2Input(this.value)">
+            </div>
+        </div>
+
+        <!-- CONTROLS ROW -->
+        <div class="row mb-3 align-items-center g-2">
+            <!-- Play controls -->
+            <div class="col-auto">
+                <button id="playBtn" class="btn btn-primary btn-sm" onclick="togglePlay()">
+                    <i class="fa-solid fa-play"></i> Play
+                </button>
+            </div>
+            <div class="col-auto">
+                <label for="speedSlider" class="form-label me-2">Speed</label>
+                <input type="range" id="speedSlider" min="200" max="2000" value="800" step="100"
+                       class="form-range" style="width:150px;" oninput="updateSpeed(this.value)">
+                <span id="speedLabel">800 ms</span>
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-secondary btn-sm" onclick="resetToStart()">
+                    <i class="fa-solid fa-undo"></i> Reset
+                </button>
+            </div>
+
+            <!-- Display controls -->
+            <div class="col-auto">
+                <label for="orderSelect" class="form-label me-1">Order</label>
+                <select id="orderSelect" class="form-select form-select-sm" style="width:auto; display:inline-block;" onchange="applyFilters()">
+                    <option value="desc">Highest</option>
+                    <option value="asc">Lowest</option>
+                </select>
+            </div>
+            <div class="col-auto">
+                <label for="topNSelect" class="form-label me-1">Show</label>
+                <select id="topNSelect" class="form-select form-select-sm" style="width:auto; display:inline-block;" onchange="applyFilters()">
+                    <option value="10">10</option>
+                    <option value="25" selected>25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="0">All</option>
+                </select>
+            </div>
+
+            <!-- Chart-specific controls -->
+            {% if view_type == 'chart' %}
+            <div class="col-auto">
+                <label for="colorBySelect" class="form-label me-1">Color by</label>
+                <select id="colorBySelect" class="form-select form-select-sm" style="width:auto; display:inline-block;" onchange="applyFilters()">
+                    <option value="">None</option>
+                    <option value="continent">Continent</option>
+                    <option value="income_group">Income Group</option>
+                    <option value="subregion">Subregion</option>
+                </select>
+            </div>
+            <div class="col-auto ms-auto">
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="btn btn-outline-primary active" id="barBtn" onclick="setChartType('bar')">
+                        <i class="fa-solid fa-chart-bar"></i> Bar
+                    </button>
+                    <button type="button" class="btn btn-outline-primary" id="lineBtn" onclick="setChartType('line')">
+                        <i class="fa-solid fa-chart-line"></i> Line
+                    </button>
+                </div>
+            </div>
+            <div class="col-auto">
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="btn btn-outline-secondary active" id="singleBtn" onclick="setCompareMode(false)">Single</button>
+                    <button type="button" class="btn btn-outline-secondary" id="compareBtn" onclick="setCompareMode(true)">Compare</button>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Table-specific controls -->
+            {% if view_type == 'table' %}
+            <div class="col-auto">
+                <label class="form-label me-1">Years</label>
+                <input type="number" id="rangeFrom" class="form-control form-control-sm" style="width:70px; display:inline;" value="1960" min="1960" max="2024">
+                <span class="mx-1">–</span>
+                <input type="number" id="rangeTo" class="form-control form-control-sm" style="width:70px; display:inline;" value="2024" min="1960" max="2024">
+                <button class="btn btn-outline-primary btn-sm" onclick="applyYearRange()">
+                    <i class="fa-solid fa-check"></i>
+                </button>
+            </div>
+            {% endif %}
+
+            <!-- Search -->
+            <div class="col-auto">
+                <div class="input-group input-group-sm">
+                    <input type="text" id="searchInput" class="form-control" placeholder="Search country..." style="width:140px;">
+                    <button class="btn btn-outline-primary" type="button" onclick="applyFilters()">
+                        <i class="fa-solid fa-search"></i>
+                    </button>
+                    <button class="btn btn-outline-secondary" type="button" onclick="clearSearch()">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Export buttons -->
+            <div class="col-auto">
+                <button class="btn btn-success btn-sm" onclick="exportCSV()">
+                    <i class="fa-solid fa-file-export"></i> CSV
+                </button>
+            </div>
+            {% if view_type == 'map' %}
+            <div class="col-auto">
+                <button class="btn btn-warning btn-sm" onclick="exportGeoJSON()">
+                    <i class="fa-solid fa-globe"></i> GeoJSON
+                </button>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- MAIN CONTENT AREA -->
+        {% if view_type == 'chart' %}
+        <div class="chart-container">
+            <canvas id="mortalityChart"></canvas>
+        </div>
+        <div id="colorLegend">
+            <div id="legendItems"></div>
+        </div>
+        {% elif view_type == 'table' %}
+        <div style="max-height: 500px; overflow-y: auto; margin-top: 10px;">
+            <div id="dataTableContainer"></div>
+        </div>
+        <!-- PAGINATION -->
+        <div class="row align-items-center mt-3">
+            <div class="col-md-6">
+                <span id="pageInfo" class="text-muted">Showing 0-0 of 0</span>
+            </div>
+            <div class="col-md-6 d-flex justify-content-end align-items-center gap-2">
+                <label for="pageSizeSelect" class="form-label me-1 mb-0">Rows per page:</label>
+                <select id="pageSizeSelect" class="form-select form-select-sm" style="width:80px;" onchange="applyFilters()">
+                    <option value="10">10</option>
+                    <option value="25" selected>25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="0">All</option>
+                </select>
+                <button class="btn btn-outline-secondary btn-sm" onclick="goToPage('prev')" id="prevBtn">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <span id="pageNumberDisplay" class="mx-2">1</span>
+                <button class="btn btn-outline-secondary btn-sm" onclick="goToPage('next')" id="nextBtn">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+        {% elif view_type == 'map' %}
+        <div id="map"></div>
+        {% endif %}
+
+        <!-- FALLBACK MESSAGE -->
+        <div id="noDataMessage" class="alert alert-warning text-center mt-2" style="display:none;">
+            <i class="fa-solid fa-triangle-exclamation"></i> No data available for the selected year(s) and filters.
+        </div>
+
+        <!-- BOTTOM FILTERS -->
+        <div class="row mt-4">
+            <div class="col-md-4">
+                <label class="form-label"><i class="fa-solid fa-earth-africa"></i> Continent</label>
+                <select id="continentFilter" class="form-select" onchange="applyFilters()">
+                    <option value="">All Continents</option>
+                    {% for c in continents %}
+                    <option value="{{ c }}">{{ c }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label"><i class="fa-solid fa-coins"></i> Income Group</label>
+                <select id="incomeFilter" class="form-select" onchange="applyFilters()">
+                    <option value="">All Income Groups</option>
+                    {% for i in income_groups %}
+                    <option value="{{ i }}">{{ i }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label"><i class="fa-solid fa-location-dot"></i> Subregion</label>
+                <select id="subregionFilter" class="form-select" onchange="applyFilters()">
+                    <option value="">All Subregions</option>
+                    {% for s in subregions %}
+                    <option value="{{ s }}">{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+{% if view_type == 'chart' %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% elif view_type == 'map' %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chroma-js@2.4.2/chroma.min.js"></script>
+{% endif %}
+
+<script>
+// ==============================
+// GLOBALS
+// ==============================
+let allDataByYear = {};
+const indicatorCode = '{{ indicator_code }}';
+const viewType = '{{ view_type }}';
+let currentYear = {{ current_year }};
+let year1 = {{ current_year }};
+let year2 = {{ current_year }};
+let compareMode = false;
+let isPlaying = false;
+let animationInterval = null;
+let animationDelay = 800;
+let currentDisplayData = [];
+
+const MIN_YEAR = 1960;
+const MAX_YEAR = 2024;
+
+try {
+    allDataByYear = {{ all_data_json|safe }};
+    console.log('✅ Data loaded successfully for indicator:', indicatorCode);
+    console.log('Years:', Object.keys(allDataByYear).sort());
+} catch (e) {
+    console.error('❌ Failed to parse all_data_json:', e);
+    document.addEventListener('DOMContentLoaded', function() {
+        const msg = document.getElementById('noDataMessage');
+        msg.style.display = 'block';
+        msg.innerHTML = 'Error loading data. See console.';
+    });
+}
+
+// ==============================
+// INDICATOR CHANGE
+// ==============================
+function changeIndicator() {
+    const select = document.getElementById('indicatorSelect');
+    const newIndicator = select.value;
+    const url = `/indicator/${newIndicator}/${viewType}/`;
+    window.location.href = url;
+}
+
+// ==============================
+// VIEW-SPECIFIC RENDER FUNCTIONS
+// ==============================
+
+{% if view_type == 'chart' %}
+// ============================================================
+// CHART VIEW FUNCTIONS
+// ============================================================
+
+let chart = null;
+let chartType = 'bar';
+
+const categoryColors = {
+    'High income': '#1f77b4',
+    'Upper middle income': '#ff7f0e',
+    'Lower middle income': '#2ca02c',
+    'Low income': '#d62728',
+    'Africa': '#e41a1c',
+    'Americas': '#377eb8',
+    'Asia': '#4daf4a',
+    'Europe': '#984ea3',
+    'Oceania': '#ff7f00',
+};
+
+const fallbackColors = [
+    '#a6cee3', '#b2df8a', '#fb9a99', '#fdbf6f', '#cab2d6',
+    '#ffff99', '#b15928', '#1f78b4', '#33a02c', '#e31a1c',
+    '#ff7f00', '#6a3d9a', '#b2df8a', '#a6cee3', '#fdbf6f'
+];
+
+function getCategoryColor(category, value) {
+    if (!category || !value) return 'rgba(54, 162, 235, 0.5)';
+    if (categoryColors[value]) return categoryColors[value];
+    let hash = 0;
+    const key = `${category}:${value}`;
+    for (let i = 0; i < key.length; i++) {
+        hash = (hash << 5) - hash + key.charCodeAt(i);
+        hash = hash & hash;
+    }
+    const idx = Math.abs(hash) % fallbackColors.length;
+    return fallbackColors[idx];
+}
+
+function updateLegend(data, colorBy) {
+    const legendDiv = document.getElementById('colorLegend');
+    const itemsDiv = document.getElementById('legendItems');
+    if (!colorBy) {
+        legendDiv.style.display = 'none';
+        return;
+    }
+    const categories = {};
+    data.forEach(d => {
+        const val = d[colorBy];
+        if (val) {
+            categories[val] = getCategoryColor(colorBy, val);
+        }
+    });
+    const keys = Object.keys(categories).sort();
+    if (keys.length === 0) {
+        legendDiv.style.display = 'none';
+        return;
+    }
+    legendDiv.style.display = 'block';
+    itemsDiv.innerHTML = keys.map(key => `
+        <div style="display:flex; align-items:center; gap:5px;">
+            <span style="display:inline-block; width:18px; height:18px; background-color:${categories[key]}; border:1px solid #ddd;"></span>
+            <span style="font-size:13px;">${key}</span>
+        </div>
+    `).join('');
+}
+
+function renderChart(data1, data2, year1Label, year2Label) {
+    const noDataMsg = document.getElementById("noDataMessage");
+    const canvas = document.getElementById("mortalityChart");
+    const ctx = canvas.getContext("2d");
+
+    const colorBy = document.getElementById("colorBySelect").value;
+
+    if (chart) { chart.destroy(); chart = null; }
+
+    let datasets = [];
+    let labels = [];
+    let displayData = [];
+    let metaData = [];
+    let exportData = [];
+
+    if (compareMode && data1 && data2) {
+        const countries1 = new Set(data1.map(d => d.country));
+        const countries2 = new Set(data2.map(d => d.country));
+        const common = [...countries1].filter(c => countries2.has(c));
+
+        if (common.length === 0) {
+            noDataMsg.style.display = 'block';
+            document.getElementById('colorLegend').style.display = 'none';
+            currentDisplayData = [];
+            return;
+        }
+
+        const order = document.getElementById("orderSelect").value;
+        const map1 = new Map(data1.map(d => [d.country, d]));
+        const map2 = new Map(data2.map(d => [d.country, d]));
+
+        let combined = common.map(country => ({
+            country: country,
+            value1: map1.get(country).value,
+            value2: map2.get(country).value,
+            year1: year1Label,
+            year2: year2Label,
+            continent: map1.get(country).continent || '',
+            income_group: map1.get(country).income_group || '',
+            subregion: map1.get(country).subregion || '',
+        }));
+
+        combined.sort((a, b) => order === 'desc' ? b.value1 - a.value1 : a.value1 - b.value1);
+
+        const topN = parseInt(document.getElementById("topNSelect").value);
+        if (topN > 0 && combined.length > topN) {
+            combined = combined.slice(0, topN);
+        }
+
+        exportData = combined.map(d => ({
+            country: d.country,
+            year1: d.year1,
+            year2: d.year2,
+            value1: d.value1,
+            value2: d.value2,
+            continent: d.continent,
+            income_group: d.income_group,
+            subregion: d.subregion
+        }));
+
+        labels = combined.map(d => d.country);
+        const values1 = combined.map(d => d.value1);
+        const values2 = combined.map(d => d.value2);
+
+        const meta1 = combined.map(d => ({
+            country: d.country,
+            value: d.value1,
+            year: d.year1,
+            continent: d.continent,
+            income_group: d.income_group,
+            subregion: d.subregion
+        }));
+        const meta2 = combined.map(d => ({
+            country: d.country,
+            value: d.value2,
+            year: d.year2,
+            continent: d.continent,
+            income_group: d.income_group,
+            subregion: d.subregion
+        }));
+
+        let bgColors1, bgColors2;
+        if (colorBy) {
+            bgColors1 = combined.map(d => getCategoryColor(colorBy, d[colorBy]));
+            bgColors2 = combined.map(d => getCategoryColor(colorBy, d[colorBy]));
+            displayData = combined;
+        } else {
+            bgColors1 = combined.map(() => 'rgba(54, 162, 235, 0.6)');
+            bgColors2 = combined.map(() => 'rgba(255, 99, 132, 0.6)');
+        }
+
+        datasets = [
+            {
+                label: `Year ${year1Label}`,
+                data: values1,
+                backgroundColor: bgColors1,
+                borderColor: bgColors1.map(c => c.replace('0.6', '1')),
+                borderWidth: 1,
+                _meta: meta1,
+            },
+            {
+                label: `Year ${year2Label}`,
+                data: values2,
+                backgroundColor: bgColors2,
+                borderColor: bgColors2.map(c => c.replace('0.6', '1')),
+                borderWidth: 1,
+                _meta: meta2,
+            }
+        ];
+        metaData = combined;
+    } else {
+        let data = data1 || [];
+        if (data.length === 0) {
+            noDataMsg.style.display = 'block';
+            document.getElementById('colorLegend').style.display = 'none';
+            currentDisplayData = [];
+            return;
+        }
+        const order = document.getElementById("orderSelect").value;
+        data.sort((a, b) => order === 'desc' ? b.value - a.value : a.value - b.value);
+        const topN = parseInt(document.getElementById("topNSelect").value);
+        if (topN > 0 && data.length > topN) {
+            data = data.slice(0, topN);
+        }
+
+        exportData = data.map(d => ({
+            country: d.country,
+            year: d.year,
+            value: d.value,
+            continent: d.continent || '',
+            income_group: d.income_group || '',
+            subregion: d.subregion || ''
+        }));
+
+        labels = data.map(d => d.country);
+        const values = data.map(d => d.value);
+
+        let bgColors;
+        if (colorBy) {
+            bgColors = data.map(d => getCategoryColor(colorBy, d[colorBy]));
+            displayData = data;
+        } else {
+            bgColors = data.map(() => 'rgba(54, 162, 235, 0.5)');
+        }
+
+        const meta = data.map(d => ({
+            country: d.country,
+            value: d.value,
+            year: d.year,
+            continent: d.continent,
+            income_group: d.income_group,
+            subregion: d.subregion
+        }));
+
+        datasets = [{
+            label: `{{ indicator_name }} (${year1Label})`,
+            data: values,
+            backgroundColor: bgColors,
+            borderColor: bgColors.map(c => c.replace('0.5', '1')),
+            borderWidth: 1,
+            pointBackgroundColor: bgColors,
+            pointBorderColor: '#fff',
+            pointRadius: 3,
+            pointHoverRadius: 5,
+            tension: 0.1,
+            fill: false,
+            _meta: meta,
+        }];
+        metaData = data;
+    }
+
+    currentDisplayData = exportData;
+    noDataMsg.style.display = 'none';
+
+    if (colorBy && displayData.length > 0) {
+        updateLegend(displayData, colorBy);
+    } else {
+        document.getElementById('colorLegend').style.display = 'none';
+    }
+
+    const isLine = chartType === 'line';
+    const type = isLine ? 'line' : 'bar';
+
+    let titleText = compareMode ?
+        `{{ indicator_name }} (${year1Label} vs ${year2Label})` :
+        `{{ indicator_name }} (${year1Label})`;
+    if (colorBy) {
+        titleText += ` — colored by ${colorBy}`;
+    }
+
+    const tooltipCallbacks = {
+        label: function(context) {
+            const dataset = context.dataset;
+            const index = context.dataIndex;
+            const meta = dataset._meta ? dataset._meta[index] : null;
+            if (meta) {
+                return `${meta.country}: ${meta.value.toFixed(1)} (${meta.year})`;
+            } else {
+                return `${context.label}: ${context.parsed.y.toFixed(1)}`;
+            }
+        },
+        afterBody: function(tooltipItems) {
+            if (tooltipItems.length === 0) return [];
+            const first = tooltipItems[0];
+            const dataset = first.dataset;
+            const index = first.dataIndex;
+            const meta = dataset._meta ? dataset._meta[index] : null;
+            if (meta) {
+                const lines = [];
+                if (meta.continent) lines.push(`Continent: ${meta.continent}`);
+                if (meta.income_group) lines.push(`Income: ${meta.income_group}`);
+                if (meta.subregion) lines.push(`Subregion: ${meta.subregion}`);
+                return lines;
+            }
+            if (metaData && metaData[index]) {
+                const m = metaData[index];
+                const lines = [];
+                if (m.continent) lines.push(`Continent: ${m.continent}`);
+                if (m.income_group) lines.push(`Income: ${m.income_group}`);
+                if (m.subregion) lines.push(`Subregion: ${m.subregion}`);
+                return lines;
+            }
+            return [];
+        }
+    };
+
+    chart = new Chart(ctx, {
+        type: type,
+        data: {
+            labels: labels,
+            datasets: datasets
+        },
+        options: {
+            animation: false,
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: true },
+                title: { display: true, text: titleText },
+                tooltip: { callbacks: tooltipCallbacks }
+            },
+            scales: {
+                x: {
+                    ticks: { autoSkip: false, maxRotation: 90, minRotation: 90 }
+                },
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: "Value" }
+                }
+            }
+        }
+    });
+    console.log('📊 Chart rendered for indicator:', indicatorCode);
+}
+
+function setChartType(type) {
+    if (chartType === type) return;
+    chartType = type;
+    document.getElementById('barBtn').classList.toggle('active', type === 'bar');
+    document.getElementById('lineBtn').classList.toggle('active', type === 'line');
+    applyFilters();
+}
+
+function setCompareMode(mode) {
+    compareMode = mode;
+    document.getElementById("singleBtn").classList.toggle('active', !mode);
+    document.getElementById("compareBtn").classList.toggle('active', mode);
+    document.getElementById("year2Container").style.display = mode ? 'block' : 'none';
+    applyFilters();
+}
+
+function onYear2Input(value) {
+    if (isPlaying) stopAnimation();
+    year2 = parseInt(value);
+    document.getElementById("year2Label").innerText = year2;
+    applyFilters();
+}
+
+{% elif view_type == 'table' %}
+// ============================================================
+// TABLE VIEW FUNCTIONS
+// ============================================================
+
+let currentPage = 1;
+let pageSize = 25;
+let rangeStart = 1960;
+let rangeEnd = 2024;
+
+function applyYearRange() {
+    const from = parseInt(document.getElementById('rangeFrom').value);
+    const to = parseInt(document.getElementById('rangeTo').value);
+    if (isNaN(from) || isNaN(to) || from > to) {
+        alert('Please enter a valid year range (From ≤ To).');
+        return;
+    }
+    rangeStart = Math.max(MIN_YEAR, from);
+    rangeEnd = Math.min(MAX_YEAR, to);
+    document.getElementById('year1Slider').min = rangeStart;
+    document.getElementById('year1Slider').max = rangeEnd;
+    document.getElementById('year2Slider').min = rangeStart;
+    document.getElementById('year2Slider').max = rangeEnd;
+    if (year1 < rangeStart) year1 = rangeStart;
+    if (year1 > rangeEnd) year1 = rangeEnd;
+    if (year2 < rangeStart) year2 = rangeStart;
+    if (year2 > rangeEnd) year2 = rangeEnd;
+    document.getElementById('year1Slider').value = year1;
+    document.getElementById('year2Slider').value = year2;
+    document.getElementById('year1Label').innerText = year1;
+    document.getElementById('year2Label').innerText = year2;
+    applyFilters();
+}
+
+function getPaginatedData(data) {
+    const size = parseInt(document.getElementById('pageSizeSelect').value);
+    if (size === 0) {
+        return { data: data, totalPages: 1, currentPage: 1, start: 0, end: data.length, total: data.length };
+    }
+    pageSize = size;
+    const total = data.length;
+    const totalPages = Math.ceil(total / pageSize) || 1;
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+    const start = (currentPage - 1) * pageSize;
+    const end = Math.min(start + pageSize, total);
+    const pageData = data.slice(start, end);
+    return { data: pageData, totalPages, currentPage, start, end, total };
+}
+
+function updatePaginationInfo(start, end, total, currentPage, totalPages) {
+    document.getElementById('pageInfo').textContent =
+        total > 0 ? `Showing ${start + 1}–${end} of ${total}` : 'No records';
+    document.getElementById('pageNumberDisplay').textContent = totalPages > 0 ? currentPage : 0;
+    document.getElementById('prevBtn').disabled = (currentPage <= 1 || total === 0);
+    document.getElementById('nextBtn').disabled = (currentPage >= totalPages || total === 0);
+}
+
+function goToPage(direction) {
+    const total = currentDisplayData.length;
+    const size = parseInt(document.getElementById('pageSizeSelect').value);
+    if (size === 0) return;
+    const totalPages = Math.ceil(total / size) || 1;
+    if (direction === 'prev' && currentPage > 1) currentPage--;
+    if (direction === 'next' && currentPage < totalPages) currentPage++;
+    applyFilters();
+}
+
+function renderTable(data) {
+    const container = document.getElementById('dataTableContainer');
+    const noDataMsg = document.getElementById('noDataMessage');
+
+    if (!data || data.length === 0) {
+        noDataMsg.style.display = 'block';
+        container.innerHTML = '';
+        document.getElementById('pageInfo').textContent = 'No records';
+        document.getElementById('pageNumberDisplay').textContent = 0;
+        document.getElementById('prevBtn').disabled = true;
+        document.getElementById('nextBtn').disabled = true;
+        return;
+    }
+    noDataMsg.style.display = 'none';
+
+    const size = parseInt(document.getElementById('pageSizeSelect').value);
+    let paginatedResult;
+    if (size === 0) {
+        paginatedResult = { data: data, totalPages: 1, currentPage: 1, start: 0, end: data.length, total: data.length };
+        document.getElementById('pageNumberDisplay').textContent = 1;
+        document.getElementById('prevBtn').disabled = true;
+        document.getElementById('nextBtn').disabled = true;
+    } else {
+        const totalPages = Math.ceil(data.length / size) || 1;
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+        const start = (currentPage - 1) * size;
+        const end = Math.min(start + size, data.length);
+        const pageData = data.slice(start, end);
+        paginatedResult = { data: pageData, totalPages, currentPage, start, end, total: data.length };
+        document.getElementById('pageNumberDisplay').textContent = currentPage;
+        document.getElementById('prevBtn').disabled = (currentPage <= 1);
+        document.getElementById('nextBtn').disabled = (currentPage >= totalPages);
+    }
+
+    const pageData = paginatedResult.data;
+    updatePaginationInfo(paginatedResult.start, paginatedResult.end, paginatedResult.total,
+                         paginatedResult.currentPage, paginatedResult.totalPages);
+
+    const headers = ['Country', 'Year', 'Value', 'Continent', 'Income Group', 'Subregion'];
+    const rows = pageData.map(d => [
+        d.country,
+        d.year,
+        d.value !== undefined ? d.value.toFixed(2) : '',
+        d.continent || '',
+        d.income_group || '',
+        d.subregion || ''
+    ]);
+
+    let html = `<div class="table-responsive">
+        <table class="table table-striped table-bordered table-hover">
+            <thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>
+            <tbody>${rows.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`).join('')}</tbody>
+        </table>
+    </div>`;
+    container.innerHTML = html;
+}
+
+function loadDataForYears(start, end) {
+    let allRecords = [];
+    for (let y = start; y <= end; y++) {
+        const yearStr = String(y);
+        if (allDataByYear.hasOwnProperty(yearStr)) {
+            const records = allDataByYear[yearStr].map(d => ({ ...d, year: y }));
+            allRecords = allRecords.concat(records);
+        }
+    }
+    return allRecords;
+}
+
+function onYear2Input(value) {
+    if (isPlaying) stopAnimation();
+    year2 = parseInt(value);
+    document.getElementById("year2Label").innerText = year2;
+    applyFilters();
+}
+
+{% elif view_type == 'map' %}
+// ============================================================
+// MAP VIEW FUNCTIONS
+// ============================================================
+
+let map = null;
+let geoJsonLayer = null;
+let legendControl = null;
+let rawGeoJSON = null;
+
+function initMap() {
+    map = L.map('map').setView([20, 0], 2);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; CartoDB'
+    }).addTo(map);
+}
+
+function loadGeoJSON() {
+    const geojsonUrl = '/static/data/geojson/ne_10m_admin_0_countries_sm.geojson';
+    fetch(geojsonUrl)
+        .then(response => response.json())
+        .then(data => {
+            rawGeoJSON = data;
+            geoJsonLayer = L.geoJSON(data, {
+                style: { fillColor: '#ccc', color: '#555', weight: 1, fillOpacity: 0.7 },
+                onEachFeature: function(feature, layer) {
+                    layer.bindPopup(feature.properties.NAME || feature.properties.name || 'Unknown');
+                }
+            }).addTo(map);
+            updateMap();
+        })
+        .catch(err => {
+            console.error('Failed to load GeoJSON:', err);
+            document.getElementById('noDataMessage').style.display = 'block';
+            document.getElementById('noDataMessage').innerHTML = 'Error loading map data.';
+        });
+}
+
+function updateMap() {
+    if (!geoJsonLayer) return;
+
+    const continent = document.getElementById("continentFilter").value;
+    const income = document.getElementById("incomeFilter").value;
+    const subregion = document.getElementById("subregionFilter").value;
+    const searchTerm = document.getElementById('searchInput').value.trim().toLowerCase();
+
+    const yearStr = String(year1);
+    let data = allDataByYear[yearStr] || [];
+
+    data = data.filter(d => {
+        const continentMatch = !continent || d.continent === continent;
+        const incomeMatch = !income || d.income_group === income;
+        const subregionMatch = !subregion || d.subregion === subregion;
+        const countryMatch = !searchTerm || d.country.toLowerCase().includes(searchTerm);
+        return continentMatch && incomeMatch && subregionMatch && countryMatch;
+    });
+
+    const valueMap = {};
+    data.forEach(d => { valueMap[d.iso3] = d.value; });
+
+    const values = Object.values(valueMap).filter(v => v !== undefined && v !== null);
+    if (values.length === 0) {
+        geoJsonLayer.setStyle({ fillColor: '#ccc', color: '#555', weight: 1, fillOpacity: 0.7 });
+        if (legendControl) map.removeControl(legendControl);
+        document.getElementById('noDataMessage').style.display = 'block';
+        currentDisplayData = [];
+        map.setView([20, 0], 2);
+        return;
+    }
+    document.getElementById('noDataMessage').style.display = 'none';
+
+    const minVal = Math.min(...values);
+    const maxVal = Math.max(...values);
+    const colorScale = chroma.scale(['#ffffb2', '#fecc5c', '#fd8d3c', '#f03b20', '#bd0026'])
+        .domain([minVal, maxVal]);
+
+    const features = [];
+    const bounds = L.latLngBounds();
+
+    geoJsonLayer.eachLayer(function(layer) {
+        const props = layer.feature.properties;
+        let iso3 = props.SOV_A3 || props.ADM0_A3 || props.iso3 || props.ISO_A3;
+        const name = props.NAME || props.name || 'Unknown';
+        const value = iso3 ? valueMap[iso3] : undefined;
+
+        if (value !== undefined && value !== null) {
+            const color = colorScale(value).hex();
+            layer.setStyle({ fillColor: color, color: '#333', weight: 1, fillOpacity: 0.85 });
+            layer.bindPopup(`<b>${name}</b><br>Value: ${value.toFixed(2)}`);
+            if (layer.getBounds) {
+                bounds.extend(layer.getBounds());
+            }
+            features.push({
+                ...layer.feature,
+                properties: {
+                    ...layer.feature.properties,
+                    value: value,
+                    year: year1
+                }
+            });
+        } else {
+            layer.setStyle({ fillColor: '#e0e0e0', color: '#999', weight: 1, fillOpacity: 0.4 });
+            layer.bindPopup(`<b>${name}</b><br>No data`);
+        }
+    });
+
+    if (bounds.isValid() && !bounds.equals(L.latLngBounds([[-90,-180],[90,180]]))) {
+        map.fitBounds(bounds, { padding: [20,20] });
+    } else {
+        map.setView([20, 0], 2);
+    }
+
+    if (legendControl) map.removeControl(legendControl);
+    const legend = L.control({ position: 'bottomright' });
+    legend.onAdd = function() {
+        const div = L.DomUtil.create('div', 'legend');
+        div.innerHTML = `<b>Value</b><br>`;
+        const steps = 5;
+        for (let i = 0; i <= steps; i++) {
+            const val = minVal + (maxVal - minVal) * (i / steps);
+            const color = colorScale(val).hex();
+            div.innerHTML += `<span style="display:inline-block; width:18px; height:18px; background:${color}; border:1px solid #888; margin-right:8px;"></span> ${val.toFixed(2)}<br>`;
+        }
+        return div;
+    };
+    legend.addTo(map);
+    legendControl = legend;
+
+    currentDisplayData = data.map(d => ({
+        country: d.country,
+        year: d.year,
+        value: d.value,
+        continent: d.continent || '',
+        income_group: d.income_group || '',
+        subregion: d.subregion || ''
+    }));
+    window._exportGeoJSONFeatures = features;
+}
+
+function exportGeoJSON() {
+    const features = window._exportGeoJSONFeatures || [];
+    if (features.length === 0) {
+        alert('No data to export. Please adjust your filters.');
+        return;
+    }
+    const fc = {
+        type: 'FeatureCollection',
+        features: features
+    };
+    const json = JSON.stringify(fc, null, 2);
+    const blob = new Blob([json], { type: 'application/json;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.href = url;
+    link.setAttribute('download', `indicator_${indicatorCode}_${year1}.geojson`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
+{% endif %}
+
+// ============================================================
+// SHARED FUNCTIONS
+// ============================================================
+
+function applyFilters() {
+    try {
+        const continent = document.getElementById("continentFilter").value;
+        const income = document.getElementById("incomeFilter").value;
+        const subregion = document.getElementById("subregionFilter").value;
+        const searchTerm = document.getElementById('searchInput').value.trim().toLowerCase();
+
+        const filterFn = (d) => {
+            const continentMatch = !continent || d.continent === continent;
+            const incomeMatch = !income || d.income_group === income;
+            const subregionMatch = !subregion || d.subregion === subregion;
+            const countryMatch = !searchTerm || d.country.toLowerCase().includes(searchTerm);
+            return continentMatch && incomeMatch && subregionMatch && countryMatch;
+        };
+
+        {% if view_type == 'chart' %}
+        if (compareMode) {
+            let data1 = loadYearData(year1).filter(filterFn);
+            let data2 = loadYearData(year2).filter(filterFn);
+            renderChart(data1, data2, year1, year2);
+        } else {
+            let data = loadYearData(year1).filter(filterFn);
+            renderChart(data, null, year1, null);
+        }
+        {% elif view_type == 'table' %}
+        let data = loadDataForYears(rangeStart, rangeEnd).filter(filterFn);
+        const order = document.getElementById("orderSelect").value;
+        data.sort((a, b) => order === 'desc' ? b.value - a.value : a.value - b.value);
+        const topN = parseInt(document.getElementById("topNSelect").value);
+        if (topN > 0 && data.length > topN) {
+            data = data.slice(0, topN);
+        }
+        currentDisplayData = data;
+        currentPage = 1;
+        renderTable(currentDisplayData);
+        {% elif view_type == 'map' %}
+        updateMap();
+        {% endif %}
+    } catch (e) {
+        console.error('Error in applyFilters:', e);
+        document.getElementById('noDataMessage').style.display = 'block';
+        document.getElementById('noDataMessage').innerHTML = 'An error occurred. See console.';
+    }
+}
+
+function loadYearData(year) {
+    const yearStr = String(year);
+    if (allDataByYear.hasOwnProperty(yearStr)) {
+        return allDataByYear[yearStr];
+    } else {
+        console.warn(`No data for year ${year}`);
+        return [];
+    }
+}
+
+function exportCSV() {
+    if (!currentDisplayData || currentDisplayData.length === 0) {
+        alert('No data to export. Please adjust your filters.');
+        return;
+    }
+    const firstRow = currentDisplayData[0];
+    let headers = Object.keys(firstRow);
+    let csvRows = [headers.join(',')];
+    for (const row of currentDisplayData) {
+        const values = headers.map(header => {
+            let val = row[header] !== undefined ? row[header] : '';
+            if (typeof val === 'string' && (val.includes(',') || val.includes('"') || val.includes('\n'))) {
+                val = `"${val.replace(/"/g, '""')}"`;
+            }
+            return val;
+        });
+        csvRows.push(values.join(','));
+    }
+    const csvString = csvRows.join('\n');
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.href = url;
+    link.setAttribute('download', `indicator_${indicatorCode}_${viewType}_${year1}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
+function onYear1Input(value) {
+    if (isPlaying) stopAnimation();
+    year1 = parseInt(value);
+    document.getElementById("year1Label").innerText = year1;
+    if (!compareMode) currentYear = year1;
+    applyFilters();
+}
+
+function togglePlay() {
+    {% if view_type == 'chart' or view_type == 'map' %}
+    if (compareMode) {
+        alert("Animation is available only in Single mode.");
+        return;
+    }
+    {% endif %}
+    if (isPlaying) {
+        stopAnimation();
+    } else {
+        startAnimation();
+    }
+}
+
+function startAnimation() {
+    if (isPlaying || compareMode) return;
+    if (currentYear >= MAX_YEAR) {
+        currentYear = MIN_YEAR;
+        document.getElementById("year1Slider").value = currentYear;
+        document.getElementById("year1Label").innerText = currentYear;
+        year1 = currentYear;
+        applyFilters();
+    }
+    isPlaying = true;
+    document.getElementById("playBtn").innerHTML = '⏸ Pause';
+
+    animationInterval = setInterval(() => {
+        currentYear += 1;
+        if (currentYear > MAX_YEAR) {
+            currentYear = MIN_YEAR;
+        }
+        document.getElementById("year1Slider").value = currentYear;
+        document.getElementById("year1Label").innerText = currentYear;
+        year1 = currentYear;
+        applyFilters();
+    }, animationDelay);
+}
+
+function stopAnimation() {
+    if (animationInterval) {
+        clearInterval(animationInterval);
+        animationInterval = null;
+    }
+    isPlaying = false;
+    document.getElementById("playBtn").innerHTML = '▶ Play';
+}
+
+function updateSpeed(value) {
+    animationDelay = parseInt(value);
+    document.getElementById("speedLabel").innerText = value + " ms";
+    if (isPlaying) {
+        stopAnimation();
+        startAnimation();
+    }
+}
+
+function resetToStart() {
+    if (isPlaying) stopAnimation();
+    currentYear = MIN_YEAR;
+    year1 = MIN_YEAR;
+    year2 = MIN_YEAR + 1;
+    if (year2 > MAX_YEAR) year2 = MIN_YEAR;
+    document.getElementById("year1Slider").value = year1;
+    document.getElementById("year1Label").innerText = year1;
+    document.getElementById("year2Slider").value = year2;
+    document.getElementById("year2Label").innerText = year2;
+    applyFilters();
+}
+
+function clearSearch() {
+    document.getElementById('searchInput').value = '';
+    applyFilters();
+}
+
+// ============================================================
+// INITIALISE
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+    if (Object.keys(allDataByYear).length === 0) {
+        document.getElementById('noDataMessage').style.display = 'block';
+        document.getElementById('noDataMessage').innerHTML = 'No data available. Please check the server logs.';
+        return;
+    }
+    
+    document.getElementById("year1Slider").value = currentYear;
+    document.getElementById("year1Label").innerText = currentYear;
+    document.getElementById("year2Slider").value = currentYear;
+    document.getElementById("year2Label").innerText = currentYear;
+    year1 = currentYear;
+    year2 = currentYear;
+    
+    {% if view_type == 'map' %}
+    initMap();
+    loadGeoJSON();
+    {% else %}
+    applyFilters();
+    {% endif %}
+});
+</script>
+{% endblock %}
