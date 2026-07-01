@@ -19,9 +19,57 @@
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
         body { background:#f4f6f9; font-family:Segoe UI,Tahoma,Geneva,Verdana,sans-serif; }
-        .navbar-custom { height:60px; background:#003366; color:white; display:flex; align-items:center; justify-content:space-between; padding:0 20px; box-shadow:0 2px 8px rgba(0,0,0,.15); flex-shrink:0; }
-        .navbar-custom a { color:white; text-decoration:none; margin-left:20px; }
-        .navbar-custom a:hover { text-decoration:underline; }
+/* ===== NAVBAR STYLES ===== */
+.navbar-custom {
+    background: #1a3a6c;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+/* ===== LOGO ===== */
+.logo {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+}
+
+/* ===== FLEX CONTAINER ===== */
+.d-flex {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.flex-wrap {
+    flex-wrap: wrap;
+}
+
+/* ===== LINKS ===== */
+.navbar-custom a {
+    color: rgba(255,255,255,0.85);
+    text-decoration: none;
+    padding: 6px 14px;
+    border-radius: 6px;
+    transition: background 0.2s;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.navbar-custom a:hover {
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+}
+
+
+
         .layout { display:flex; height:calc(100vh - 60px); }
         .sidebar { width:380px; background:white; border-right:1px solid #ddd; overflow-y:auto; padding:16px; flex-shrink:0; }
         .content { flex:1; overflow:auto; padding:20px; }
@@ -63,38 +111,13 @@
 
 <body>
     <div class="navbar-custom">
-        <div class="logo">GCDIP</div>
+        <div class="logo">Global Child & Disaster Risk Intelligence Platform (GCDRIP)</div>
         <div class="d-flex align-items-center flex-wrap">
-            <a href="#S">Dashboard</a>
-
+            <a href="{% url 'indicator_view' 'SH.DTH.NMRT' 'map' %}">Dashboard</a>
             <!-- 🌍 EXPLORE MAP -->
             <div class="dropdown d-inline-block ms-3">
-                <a class="text-white dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                    🌍 Explore Map
-                </a>
-                <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" href="#">Administrative Boundaries</a></li>
-                    <li><a class="dropdown-item" href="#">Hazard Layers</a></li>
-                    <li><a class="dropdown-item" href="#">Child Vulnerability Index</a></li>
-                    <li><a class="dropdown-item" href="#">Climate Layers</a></li>
-                </ul>
+                <a class="dropdown-item" href="{% url 'view_raster' %}">Explore environmental and hazard exposure maps</a>
             </div>
-
-            <!-- 📊 ANALYZE -->
-            <div class="dropdown d-inline-block ms-3">
-                <a class="text-white dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                    📊 Analyze
-                </a>
-                <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" href="#">Time Series Viewer</a></li>
-                    <li><a class="dropdown-item" href="#">Bar/Line Charts</a></li>
-                    <li><a class="dropdown-item" href="#">Correlation Analysis</a></li>
-                </ul>
-            </div>
-
-            <a href="#">Country Profiles</a>
-            <a href="#">Analytics</a>
-            <a href="#">Downloads</a>
         </div>
     </div>
 
@@ -106,8 +129,8 @@
             <!-- Include the three main sections -->
             {% include 'partials/unicef_programme_indicators.html' %}
             {% include 'partials/remote_sensing_geospatial_btn.html' %}
-            {% comment %} {% include 'partials/remote_sensing_geospatial.html' %} {% endcomment %}
-            {% include 'partials/child_exposure_analytics.html' %}
+            {% include 'partials/remote_sensing_geospatial.html' %}
+            {% comment %} {% include 'partials/child_exposure_analytics.html' %} {% endcomment %}
             <hr>
 
             <!-- Sidebar content block for child templates -->

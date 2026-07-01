@@ -10,7 +10,6 @@ urlpatterns = [
     path('api/indicator-data/', views.indicator_data_api, name='indicator_data_api'),
 ]
 
-
 ############## OLD ############
 # from django.urls import path
 # from . import views 

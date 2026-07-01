@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>FAO Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+        }
+        
+        /* Layout */
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background: #1a3c34;
+            color: white;
+            padding: 20px 0;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+        
+        .sidebar h2 {
+            padding: 0 20px 20px;
+            font-size: 18px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .sidebar h2 small {
+            display: block;
+            font-size: 12px;
+            opacity: 0.7;
+            font-weight: normal;
+        }
+        
+        .nav-group {
+            margin: 10px 0;
+        }
+        
+        .group-header {
+            padding: 10px 20px;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+            opacity: 0.8;
+            display: flex;
+            align-items: center;
+        }
+        
+        .group-header:hover {
+            opacity: 1;
+            background: rgba(255,255,255,0.05);
+        }
+        
+        .group-header .icon { margin-right: 10px; }
+        .group-header .arrow { margin-left: auto; }
+        .group-header.open .arrow { transform: rotate(180deg); }
+        
+        .nav-items {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s;
+        }
+        
+        .nav-items.open {
+            max-height: 1000px;
+        }
+        
+        .nav-item {
+            padding: 8px 20px 8px 50px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .nav-item:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .nav-item.active {
+            background: rgba(76, 175, 80, 0.2);
+            border-left: 3px solid #4CAF50;
+        }
+        
+        /* Main Content */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .topbar {
+            background: white;
+            padding: 15px 25px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        
+        .topbar h3 { font-size: 18px; }
+        .topbar select { 
+            padding: 5px 10px; 
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .topbar button {
+            padding: 5px 15px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .topbar button:hover { background: #45a049; }
+        
+        .content {
+            flex: 1;
+            padding: 20px 25px;
+            overflow-y: auto;
+        }
+        
+        /* Stats */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .stat-card .label {
+            font-size: 11px;
+            color: #888;
+            text-transform: uppercase;
+        }
+        
+        .stat-card .value {
+            font-size: 22px;
+            font-weight: bold;
+            color: #1a3c34;
+            margin-top: 5px;
+        }
+        
+        /* Charts */
+        .chart-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .chart-box {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .chart-box h5 {
+            margin-bottom: 10px;
+            color: #555;
+            font-size: 14px;
+        }
+        
+        .chart-container {
+            height: 250px;
+            position: relative;
+        }
+        
+        /* Table */
+        .table-box {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .table-box h5 { margin-bottom: 10px; color: #555; font-size: 14px; }
+        
+        .table-box table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        
+        .table-box th {
+            background: #f8f9fa;
+            padding: 8px 10px;
+            text-align: left;
+            border-bottom: 2px solid #ddd;
+        }
+        
+        .table-box td {
+            padding: 6px 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .table-box tr:hover { background: #f8f9fa; }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+        
+        .empty {
+            text-align: center;
+            padding: 30px;
+            color: #888;
+        }
+        
+        /* Detail View */
+        .detail-view { display: none; }
+        .detail-view.active { display: block; }
+        
+        .dashboard-view { display: block; }
+        .dashboard-view.hidden { display: none; }
+        
+        /* Mobile */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -250px;
+                top: 0;
+                bottom: 0;
+                z-index: 1000;
+                transition: left 0.3s;
+            }
+            
+            .sidebar.open { left: 0; }
+            
+            .chart-grid { grid-template-columns: 1fr; }
+            
+            .menu-toggle {
+                display: block !important;
+                background: none;
+                border: none;
+                font-size: 24px;
+                cursor: pointer;
+            }
+        }
+        
+        .menu-toggle { display: none; }
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+        .overlay.active { display: block; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Overlay for mobile -->
+    <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+    
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <h2>
+            FAO Dashboard
+            <small>World Bank Data</small>
+        </h2>
+        
+        <!-- Will be populated by JavaScript -->
+        <div id="sidebarNav"></div>
+    </div>
+    
+    <!-- Main -->
+    <div class="main">
+        <!-- Top Bar -->
+        <div class="topbar">
+            <div style="display:flex; align-items:center; gap:15px;">
+                <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+                <h3 id="pageTitle">Dashboard</h3>
+            </div>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <select id="countrySelect" onchange="refreshData()">
+                    <option value="all">All Countries</option>
+                </select>
+                <button onclick="refreshData()">⟳ Refresh</button>
+            </div>
+        </div>
+        
+        <!-- Content -->
+        <div class="content">
+            <!-- Dashboard View -->
+            <div id="dashboardView" class="dashboard-view">
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="label">Total Metrics</div>
+                        <div class="value" id="totalMetrics">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Data Groups</div>
+                        <div class="value" id="totalGroups">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Countries</div>
+                        <div class="value" id="totalCountries">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Updated</div>
+                        <div class="value" id="lastUpdated" style="font-size:14px;">-</div>
+                    </div>
+                </div>
+                
+                <div class="chart-grid">
+                    <div class="chart-box">
+                        <h5>Agricultural Land (%)</h5>
+                        <div class="chart-container" id="chart1">
+                            <div class="loading">Loading...</div>
+                        </div>
+                    </div>
+                    <div class="chart-box">
+                        <h5>Undernourishment (%)</h5>
+                        <div class="chart-container" id="chart2">
+                            <div class="loading">Loading...</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="table-box">
+                    <h5>Recent Data</h5>
+                    <div id="tableContent">
+                        <div class="loading">Loading data...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Detail View -->
+            <div id="detailView" class="detail-view">
+                <div class="chart-box" style="margin-bottom:20px;">
+                    <h5 id="detailTitle">Metric Data</h5>
+                    <div class="chart-container" id="detailChart" style="height:300px;">
+                        <div class="loading">Loading...</div>
+                    </div>
+                </div>
+                <div class="table-box">
+                    <h5>Data Table</h5>
+                    <div id="detailTable"><div class="loading">Loading...</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ============================================================
+// DATA DEFINITION (Matches your Django app structure)
+// ============================================================
+
+const METRIC_GROUPS = {
+    "Land & Agriculture": {
+        icon: "🌾",
+        metrics: [
+            { id: "AG.LND.AGRI.ZS", name: "Agricultural land (%)" },
+            { id: "AG.LND.ARBL.HA", name: "Arable land (hectares)" },
+            { id: "AG.LND.FRST.ZS", name: "Forest area (%)" },
+            { id: "AG.LND.PRCP.MM", name: "Precipitation (mm)" },
+            { id: "AG.YLD.CREL.KG", name: "Cereal yield (kg/ha)" }
+        ]
+    },
+    "Food Security": {
+        icon: "🍽️",
+        metrics: [
+            { id: "SN.ITK.DEFC.ZS", name: "Undernourishment (%)" },
+            { id: "SN.ITK.MSFI.ZS", name: "Moderate food insecurity (%)" },
+            { id: "SN.ITK.SVFI.ZS", name: "Severe food insecurity (%)" },
+            { id: "SN.ITK.DEFC", name: "Undernourished (people)" }
+        ]
+    },
+    "Water Resources": {
+        icon: "💧",
+        metrics: [
+            { id: "ER.H2O.INTR.PC", name: "Freshwater per capita (m³)" },
+            { id: "ER.H2O.FWST.ZS", name: "Water stress (%)" },
+            { id: "ER.H2O.FWAG.ZS", name: "Agriculture water use (%)" }
+        ]
+    },
+    "Emissions": {
+        icon: "🌍",
+        metrics: [
+            { id: "CC.ECA.BCR", name: "Crop residue emissions" },
+            { id: "CC.ECH.FFR", name: "Forest fire emissions" },
+            { id: "CC.EAR.NFC", name: "Forest conversion emissions" }
+        ]
+    }
+};
+
+// Mock countries
+const COUNTRIES = [
+    { id: "US", name: "United States" },
+    { id: "CN", name: "China" },
+    { id: "IN", name: "India" },
+    { id: "BR", name: "Brazil" },
+    { id: "RU", name: "Russian Federation" },
+    { id: "FR", name: "France" },
+    { id: "DE", name: "Germany" },
+    { id: "GB", name: "United Kingdom" },
+    { id: "JP", name: "Japan" },
+    { id: "CA", name: "Canada" },
+    { id: "AU", name: "Australia" },
+    { id: "IT", name: "Italy" },
+    { id: "ES", name: "Spain" },
+    { id: "MX", name: "Mexico" },
+    { id: "ID", name: "Indonesia" },
+    { id: "NG", name: "Nigeria" },
+    { id: "PK", name: "Pakistan" },
+    { id: "BD", name: "Bangladesh" },
+    { id: "ET", name: "Ethiopia" },
+    { id: "EG", name: "Egypt" }
+];
+
+// ============================================================
+// MOCK DATA GENERATOR
+// ============================================================
+
+function generateMockData(metricId, countryId = null) {
+    const countries = countryId ? COUNTRIES.filter(c => c.id === countryId) : COUNTRIES;
+    const data = [];
+    const years = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022];
+
+    const ranges = {
+        "AG.LND.AGRI.ZS": { min: 20, max: 70 },
+        "AG.LND.ARBL.HA": { min: 100000, max: 2000000 },
+        "AG.LND.FRST.ZS": { min: 10, max: 60 },
+        "AG.LND.PRCP.MM": { min: 200, max: 3000 },
+        "AG.YLD.CREL.KG": { min: 1000, max: 8000 },
+        "SN.ITK.DEFC.ZS": { min: 2, max: 30 },
+        "SN.ITK.MSFI.ZS": { min: 5, max: 45 },
+        "SN.ITK.SVFI.ZS": { min: 1, max: 20 },
+        "SN.ITK.DEFC": { min: 50000, max: 20000000 },
+        "ER.H2O.INTR.PC": { min: 100, max: 100000 },
+        "ER.H2O.FWST.ZS": { min: 5, max: 80 },
+        "ER.H2O.FWAG.ZS": { min: 20, max: 90 },
+        "CC.ECA.BCR": { min: 100, max: 10000 },
+        "CC.ECH.FFR": { min: 50, max: 5000 },
+        "CC.EAR.NFC": { min: 10, max: 2000 }
+    };
+
+    const range = ranges[metricId] || { min: 0, max: 100 };
+
+    countries.forEach(country => {
+        let baseValue = range.min + Math.random() * (range.max - range.min) * 0.6;
+        years.forEach((year, idx) => {
+            const variation = 1 + (Math.random() - 0.5) * 0.2;
+            const value = baseValue * variation;
+            data.push({
+                country: country.name,
+                year: String(year),
+                value: Math.round(value * 100) / 100
+            });
+            baseValue = baseValue * (1 + (Math.random() - 0.5) * 0.04);
+        });
+    });
+
+    return {
+        metric_id: metricId,
+        indicator: metricId,
+        data: data
+    };
+}
+
+// ============================================================
+// APPLICATION STATE
+// ============================================================
+
+let currentMetric = null;
+let currentMetricName = '';
+let dataCache = {};
+
+// ============================================================
+// RENDER FUNCTIONS
+// ============================================================
+
+// Build sidebar from METRIC_GROUPS
+function buildSidebar() {
+    const nav = document.getElementById('sidebarNav');
+    let html = '';
+    let groupIndex = 0;
+
+    for (const [groupName, group] of Object.entries(METRIC_GROUPS)) {
+        const isOpen = groupIndex < 2 ? 'open' : '';
+        html += `
+            <div class="nav-group">
+                <div class="group-header ${isOpen}" onclick="toggleGroup(this)">
+                    <span class="icon">${group.icon}</span>
+                    ${groupName}
+                    <span class="arrow">▼</span>
+                </div>
+                <div class="nav-items ${isOpen}">
+        `;
+        
+        group.metrics.forEach(metric => {
+            html += `
+                <div class="nav-item" data-metric="${metric.id}" onclick="loadMetric('${metric.id}', '${metric.name}')">
+                    ${metric.name}
+                </div>
+            `;
+        });
+        
+        html += `</div></div>`;
+        groupIndex++;
+    }
+
+    nav.innerHTML = html;
+
+    // Update stats
+    const totalGroups = Object.keys(METRIC_GROUPS).length;
+    const totalMetrics = Object.values(METRIC_GROUPS).reduce((sum, g) => sum + g.metrics.length, 0);
+    document.getElementById('totalMetrics').textContent = totalMetrics;
+    document.getElementById('totalGroups').textContent = totalGroups;
+}
+
+// Load countries dropdown
+function loadCountries() {
+    const select = document.getElementById('countrySelect');
+    COUNTRIES.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = c.name;
+        select.appendChild(opt);
+    });
+    document.getElementById('totalCountries').textContent = COUNTRIES.length;
+    document.getElementById('lastUpdated').textContent = new Date().toLocaleDateString();
+}
+
+// Toggle sidebar (mobile)
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('overlay').classList.toggle('active');
+}
+
+// Toggle navigation group
+function toggleGroup(header) {
+    header.classList.toggle('open');
+    const items = header.nextElementSibling;
+    items.classList.toggle('open');
+}
+
+// Load dashboard overview
+function loadDashboard() {
+    document.getElementById('dashboardView').classList.remove('hidden');
+    document.getElementById('detailView').classList.remove('active');
+    document.getElementById('pageTitle').textContent = 'Dashboard';
+    
+    document.getElementById('lastUpdated').textContent = new Date().toLocaleDateString();
+    
+    // Load sample charts
+    loadChart('AG.LND.AGRI.ZS', 'chart1', 'Agricultural Land');
+    loadChart('SN.ITK.DEFC.ZS', 'chart2', 'Undernourishment');
+    loadTable();
+}
+
+// Load a specific metric
+function loadMetric(metricId, metricName) {
+    currentMetric = metricId;
+    currentMetricName = metricName;
+    
+    // Update UI
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    const activeItem = document.querySelector(`.nav-item[data-metric="${metricId}"]`);
+    if (activeItem) activeItem.classList.add('active');
+    
+    document.getElementById('dashboardView').classList.add('hidden');
+    document.getElementById('detailView').classList.add('active');
+    document.getElementById('pageTitle').textContent = metricName;
+    document.getElementById('detailTitle').textContent = metricName;
+    
+    loadMetricDetail(metricId);
+}
+
+// Load chart
+function loadChart(metricId, chartId, title) {
+    const country = document.getElementById('countrySelect').value;
+    
+    // Get or generate data
+    let data = dataCache[metricId];
+    if (!data) {
+        data = generateMockData(metricId);
+        dataCache[metricId] = data;
+    }
+    
+    renderSimpleChart(data, chartId, country);
+}
+
+// Load metric detail
+function loadMetricDetail(metricId) {
+    const country = document.getElementById('countrySelect').value;
+    
+    let data = dataCache[metricId];
+    if (!data) {
+        data = generateMockData(metricId);
+        dataCache[metricId] = data;
+    }
+    
+    renderDetailChart(data, country);
+    renderDetailTable(data, country);
+}
+
+// Simple chart rendering (text-based bar chart)
+function renderSimpleChart(data, chartId, countryFilter) {
+    const container = document.getElementById(chartId);
+    
+    if (!data.data || data.data.length === 0) {
+        container.innerHTML = '<div class="empty">No data available</div>';
+        return;
+    }
+    
+    // Filter data
+    let filteredData = data.data;
+    if (countryFilter !== 'all') {
+        const countryName = COUNTRIES.find(c => c.id === countryFilter)?.name;
+        filteredData = data.data.filter(d => d.country === countryName);
+    }
+    
+    // Get latest values by country
+    const countryMap = {};
+    filteredData.forEach(item => {
+        if (!countryMap[item.country] || parseInt(item.year) > parseInt(countryMap[item.country].year)) {
+            countryMap[item.country] = item;
+        }
+    });
+    
+    const sorted = Object.values(countryMap)
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 10);
+    
+    if (sorted.length === 0) {
+        container.innerHTML = '<div class="empty">No data available</div>';
+        return;
+    }
+    
+    const maxVal = sorted[0].value;
+    
+    let html = '<div style="font-size:12px;">';
+    sorted.forEach(item => {
+        const barWidth = Math.min((item.value / maxVal) * 100, 100);
+        html += `
+            <div style="margin:5px 0; display:flex; align-items:center;">
+                <span style="width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.country}</span>
+                <div style="flex:1; background:#e0e0e0; height:20px; margin:0 5px;">
+                    <div style="background:#4CAF50; height:100%; width:${barWidth}%;"></div>
+                </div>
+                <span style="min-width:50px; text-align:right;">${item.value.toFixed(1)}</span>
+            </div>
+        `;
+    });
+    html += '</div>';
+    
+    container.innerHTML = html;
+}
+
+// Render detail chart
+function renderDetailChart(data, countryFilter) {
+    const container = document.getElementById('detailChart');
+    
+    if (!data.data || data.data.length === 0) {
+        container.innerHTML = '<div class="empty">No data available</div>';
+        return;
+    }
+    
+    // Filter data
+    let filteredData = data.data;
+    if (countryFilter !== 'all') {
+        const countryName = COUNTRIES.find(c => c.id === countryFilter)?.name;
+        filteredData = data.data.filter(d => d.country === countryName);
+    }
+    
+    // Group by year for top countries
+    const years = [...new Set(filteredData.map(d => d.year))].sort();
+    const latestYear = years[years.length - 1];
+    
+    const latestData = filteredData.filter(d => d.year === latestYear);
+    const topCountries = latestData
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 5)
+        .map(d => d.country);
+    
+    if (topCountries.length === 0) {
+        container.innerHTML = '<div class="empty">No data available</div>';
+        return;
+    }
+    
+    let html = '<div style="font-size:12px; overflow-y:auto; max-height:280px;">';
+    
+    topCountries.forEach(country => {
+        const countryData = filteredData.filter(d => d.country === country).sort((a,b) => a.year - b.year);
+        html += `<div style="margin:8px 0; padding:5px; background:#f8f9fa; border-radius:4px;">
+            <strong>${country}</strong><br>
+            <span style="color:#666;">`;
+        countryData.slice(-5).forEach(d => {
+            html += `${d.year}: ${d.value.toFixed(1)} `;
+        });
+        html += `</span></div>`;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+// Render detail table
+function renderDetailTable(data, countryFilter) {
+    const container = document.getElementById('detailTable');
+    
+    if (!data.data || data.data.length === 0) {
+        container.innerHTML = '<div class="empty">No data available</div>';
+        return;
+    }
+    
+    // Filter data
+    let filteredData = data.data;
+    if (countryFilter !== 'all') {
+        const countryName = COUNTRIES.find(c => c.id === countryFilter)?.name;
+        filteredData = data.data.filter(d => d.country === countryName);
+    }
+    
+    // Get latest year
+    const years = [...new Set(filteredData.map(d => d.year))].sort();
+    const latestYear = years[years.length - 1];
+    
+    const sorted = filteredData
+        .filter(d => d.year === latestYear)
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 20);
+    
+    if (sorted.length === 0) {
+        container.innerHTML = '<div class="empty">No data available</div>';
+        return;
+    }
+    
+    let html = `
+        <table>
+            <thead>
+                <tr>
+                    <th>Country</th>
+                    <th>Year</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    
+    sorted.forEach(item => {
+        html += `
+            <tr>
+                <td>${item.country}</td>
+                <td>${item.year}</td>
+                <td>${item.value.toFixed(2)}</td>
+            </tr>
+        `;
+    });
+    
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
+
+// Load table on dashboard
+function loadTable() {
+    const container = document.getElementById('tableContent');
+    const metricId = 'AG.LND.AGRI.ZS';
+    
+    let data = dataCache[metricId];
+    if (!data) {
+        data = generateMockData(metricId);
+        dataCache[metricId] = data;
+    }
+    
+    const sorted = data.data
+        .filter(d => d.year === '2022')
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 10);
+    
+    let html = `
+        <table>
+            <thead>
+                <tr>
+                    <th>Country</th>
+                    <th>Agricultural Land (%)</th>
+                    <th>Year</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    
+    sorted.forEach(item => {
+        html += `
+            <tr>
+                <td>${item.country}</td>
+                <td>${item.value.toFixed(2)}</td>
+                <td>${item.year}</td>
+            </tr>
+        `;
+    });
+    
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
+
+// Refresh data
+function refreshData() {
+    // Clear cache to get fresh mock data
+    dataCache = {};
+    
+    if (currentMetric) {
+        loadMetric(currentMetric, currentMetricName);
+    } else {
+        loadDashboard();
+    }
+}
+
+// ============================================================
+// INITIALIZE
+// ============================================================
+
+document.addEventListener('DOMContentLoaded', function() {
+    buildSidebar();
+    loadCountries();
+    loadDashboard();
+});
+</script>
+
+</body>
+</html>

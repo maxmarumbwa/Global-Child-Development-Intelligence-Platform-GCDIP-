@@ -28,55 +28,358 @@ country_meta = countries_df.set_index("iso3")[[
 ]].to_dict(orient="index")
 
 # =========================================================
-# INDICATOR NAMES MAPPING
+# INDICATOR METADATA WITH COLOR SCHEMES
 # =========================================================
-INDICATOR_NAMES = {
-    'SH.DTH.MORT': 'Number of under-five deaths',
-    'SH.DTH.IMRT': 'Number of infant deaths',
-    'SH.DTH.STLB': 'Number of stillbirths',
-    'SH.DTH.NMRT': 'Number of neonatal deaths',
-    'SH.DYN.STLB': 'Stillbirth rate (per 1,000 total births)',
-    'SH.DYN.MORT': 'Under‑5 mortality rate',
-    'SH.DYN.0509': '5‑9 mortality (per 1,000)',
-    'SH.MMR.DTHS': 'Number of maternal deaths',
-    'SH.STA.ANV4.ZS': 'Prenatal ≥4 visits',
-    'SH.STA.ANVC.ZS': 'Prenatal care %',
-    'SH.STA.BRTC.ZS': 'Skilled birth attendance',
-    'SH.IMM.HEPB': 'HepB3 immunization',
-    'SH.IMM.HIB3': 'Hib3 immunization',
-    'SH.IMM.IBCG': 'BCG immunization',
-    'SH.IMM.IDPT': 'DPT immunization',
-    'SH.IMM.MEAS': 'Measles immunization',
-    'SH.STA.ARIF.ZS': 'ARI prevalence',
-    'SH.STA.ORTH': 'Diarrhea treatment ORS',
-    'SH.H2O.BASW.ZS': 'Basic drinking water',
-    'SH.STA.ACSN': 'Improved sanitation',
-    'SH.STA.ODFC.ZS': 'Open defecation',
-    'SH.STA.SMSS.ZS': 'Safely managed sanitation',
-    'SL.TLF.0714.ZS': 'Children in employment',
-    'SL.TLF.0714.SW.TM': 'Work hrs (study+work)',
-    'SL.TLF.0714.SW.ZS': 'Employment & study',
-    'SL.AGR.0714.ZS': 'Child labor in agriculture',
-    'SL.FAM.0714.FE.ZS': 'Unpaid family workers',
-    'SL.MNF.0714.ZS': 'Child labor in manufacturing',
-    'SH.STA.FGMS.ZS': 'FGM prevalence',
-    'SP.M15.2024.FE.ZS': 'Married by 15',
-    'SP.M18.2024.FE.ZS': 'Married by 18',
-    'SE.ENR.ORPH': 'Orphan school attendance ratio',
-    'ID.OWN.BRTH.ZS': 'Birth certification',
-    'SP.REG.BRTH.RU.ZS': 'Completeness, rural',
-    'SP.REG.BRTH.UR.ZS': 'Completeness, urban',
-    'SH.STA.BFED.ZS': 'Exclusive breastfeeding',
-    'SH.STA.BRTW.ZS': 'Low birthweight',
-    'SH.STA.OWGH.MA.ZS': 'Overweight, male',
-    'SH.STA.STNT.ZS': 'Stunting',
-    'SH.STA.WAST.ZS': 'Wasting',
-    'HD.HCI.STNT': 'Fraction not stunted',
+INDICATOR_METADATA = {
+    # ============================================================
+    # MORTALITY & MATERNAL HEALTH (Reds/Oranges)
+    # ============================================================
+    'SH.DTH.MORT': {
+        'name': 'Number of under-five deaths',
+        'color_scheme': 'reds',
+        'category': 'Mortality',
+        'unit': 'count',
+        'description': 'Total number of deaths among children under 5 years of age'
+    },
+    'SH.DTH.IMRT': {
+        'name': 'Number of infant deaths',
+        'color_scheme': 'reds',
+        'category': 'Mortality',
+        'unit': 'count',
+        'description': 'Total number of deaths among infants under 1 year of age'
+    },
+    'SH.DTH.STLB': {
+        'name': 'Number of stillbirths',
+        'color_scheme': 'reds',
+        'category': 'Mortality',
+        'unit': 'count',
+        'description': 'Total number of stillbirths (fetal deaths after 28 weeks)'
+    },
+    'SH.DTH.NMRT': {
+        'name': 'Number of neonatal deaths',
+        'color_scheme': 'reds',
+        'category': 'Mortality',
+        'unit': 'count',
+        'description': 'Total number of deaths among newborns (0-28 days)'
+    },
+    'SH.DYN.STLB': {
+        'name': 'Stillbirth rate (per 1,000 total births)',
+        'color_scheme': 'oranges',
+        'category': 'Mortality',
+        'unit': 'per 1,000 births',
+        'description': 'Number of stillbirths per 1,000 total births'
+    },
+    'SH.DYN.MORT': {
+        'name': 'Under‑5 mortality rate',
+        'color_scheme': 'oranges',
+        'category': 'Mortality',
+        'unit': 'per 1,000 live births',
+        'description': 'Probability of dying between birth and age 5 per 1,000 live births'
+    },
+    'SH.DYN.0509': {
+        'name': '5‑9 mortality (per 1,000)',
+        'color_scheme': 'oranges',
+        'category': 'Mortality',
+        'unit': 'per 1,000',
+        'description': 'Mortality rate for children aged 5-9 years per 1,000'
+    },
+    'SH.MMR.DTHS': {
+        'name': 'Number of maternal deaths',
+        'color_scheme': 'reds',
+        'category': 'Mortality',
+        'unit': 'count',
+        'description': 'Total number of maternal deaths during pregnancy and childbirth'
+    },
+
+    # ============================================================
+    # ANTENATAL & MATERNAL CARE (Greens)
+    # ============================================================
+    'SH.STA.ANV4.ZS': {
+        'name': 'Prenatal ≥4 visits',
+        'color_scheme': 'greens',
+        'category': 'Maternal Care',
+        'unit': '%',
+        'description': 'Percentage of women with at least 4 antenatal care visits'
+    },
+    'SH.STA.ANVC.ZS': {
+        'name': 'Prenatal care %',
+        'color_scheme': 'greens',
+        'category': 'Maternal Care',
+        'unit': '%',
+        'description': 'Percentage of women receiving any prenatal care'
+    },
+    'SH.STA.BRTC.ZS': {
+        'name': 'Skilled birth attendance',
+        'color_scheme': 'greens',
+        'category': 'Maternal Care',
+        'unit': '%',
+        'description': 'Percentage of births attended by skilled health personnel'
+    },
+
+    # ============================================================
+    # CHILD HEALTH & IMMUNIZATION (Blues)
+    # ============================================================
+    'SH.IMM.HEPB': {
+        'name': 'HepB3 immunization',
+        'color_scheme': 'blues',
+        'category': 'Immunization',
+        'unit': '%',
+        'description': 'Percentage of children immunized against Hepatitis B (3 doses)'
+    },
+    'SH.IMM.HIB3': {
+        'name': 'Hib3 immunization',
+        'color_scheme': 'blues',
+        'category': 'Immunization',
+        'unit': '%',
+        'description': 'Percentage of children immunized against Hib (3 doses)'
+    },
+    'SH.IMM.IBCG': {
+        'name': 'BCG immunization',
+        'color_scheme': 'blues',
+        'category': 'Immunization',
+        'unit': '%',
+        'description': 'Percentage of children immunized with BCG vaccine'
+    },
+    'SH.IMM.IDPT': {
+        'name': 'DPT immunization',
+        'color_scheme': 'blues',
+        'category': 'Immunization',
+        'unit': '%',
+        'description': 'Percentage of children immunized with DPT vaccine (3 doses)'
+    },
+    'SH.IMM.MEAS': {
+        'name': 'Measles immunization',
+        'color_scheme': 'blues',
+        'category': 'Immunization',
+        'unit': '%',
+        'description': 'Percentage of children immunized against measles'
+    },
+    'SH.STA.ARIF.ZS': {
+        'name': 'ARI prevalence',
+        'color_scheme': 'purples',
+        'category': 'Child Health',
+        'unit': '%',
+        'description': 'Percentage of children with Acute Respiratory Infection'
+    },
+    'SH.STA.ORTH': {
+        'name': 'Diarrhea treatment ORS',
+        'color_scheme': 'purples',
+        'category': 'Child Health',
+        'unit': '%',
+        'description': 'Percentage of children with diarrhea receiving ORS treatment'
+    },
+
+    # ============================================================
+    # WASH (Teals/Blues)
+    # ============================================================
+    'SH.H2O.BASW.ZS': {
+        'name': 'Basic drinking water',
+        'color_scheme': 'blues',
+        'category': 'WASH',
+        'unit': '%',
+        'description': 'Percentage of population using basic drinking water services'
+    },
+    'SH.STA.ACSN': {
+        'name': 'Improved sanitation',
+        'color_scheme': 'teals',
+        'category': 'WASH',
+        'unit': '%',
+        'description': 'Percentage of population using improved sanitation facilities'
+    },
+    'SH.STA.ODFC.ZS': {
+        'name': 'Open defecation',
+        'color_scheme': 'oranges',
+        'category': 'WASH',
+        'unit': '%',
+        'description': 'Percentage of population practicing open defecation'
+    },
+    'SH.STA.SMSS.ZS': {
+        'name': 'Safely managed sanitation',
+        'color_scheme': 'teals',
+        'category': 'WASH',
+        'unit': '%',
+        'description': 'Percentage of population using safely managed sanitation services'
+    },
+
+    # ============================================================
+    # CHILD LABOR (Oranges)
+    # ============================================================
+    'SL.TLF.0714.ZS': {
+        'name': 'Children in employment',
+        'color_scheme': 'oranges',
+        'category': 'Child Labor',
+        'unit': '%',
+        'description': 'Percentage of children aged 7-14 engaged in employment'
+    },
+    'SL.TLF.0714.SW.TM': {
+        'name': 'Work hrs (study+work)',
+        'color_scheme': 'purples',
+        'category': 'Child Labor',
+        'unit': 'hours',
+        'description': 'Average hours worked including study+work for children 7-14'
+    },
+    'SL.TLF.0714.SW.ZS': {
+        'name': 'Employment & study',
+        'color_scheme': 'purples',
+        'category': 'Child Labor',
+        'unit': '%',
+        'description': 'Percentage of children combining employment and study'
+    },
+    'SL.AGR.0714.ZS': {
+        'name': 'Child labor in agriculture',
+        'color_scheme': 'oranges',
+        'category': 'Child Labor',
+        'unit': '%',
+        'description': 'Percentage of children engaged in agricultural labor'
+    },
+    'SL.FAM.0714.FE.ZS': {
+        'name': 'Unpaid family workers',
+        'color_scheme': 'oranges',
+        'category': 'Child Labor',
+        'unit': '%',
+        'description': 'Percentage of children working as unpaid family workers'
+    },
+    'SL.MNF.0714.ZS': {
+        'name': 'Child labor in manufacturing',
+        'color_scheme': 'oranges',
+        'category': 'Child Labor',
+        'unit': '%',
+        'description': 'Percentage of children engaged in manufacturing labor'
+    },
+
+    # ============================================================
+    # HARMFUL PRACTICES (Reds)
+    # ============================================================
+    'SH.STA.FGMS.ZS': {
+        'name': 'FGM prevalence',
+        'color_scheme': 'reds',
+        'category': 'Harmful Practices',
+        'unit': '%',
+        'description': 'Percentage of women who have undergone Female Genital Mutilation'
+    },
+    'SP.M15.2024.FE.ZS': {
+        'name': 'Married by 15',
+        'color_scheme': 'reds',
+        'category': 'Harmful Practices',
+        'unit': '%',
+        'description': 'Percentage of women married by age 15'
+    },
+    'SP.M18.2024.FE.ZS': {
+        'name': 'Married by 18',
+        'color_scheme': 'oranges',
+        'category': 'Harmful Practices',
+        'unit': '%',
+        'description': 'Percentage of women married by age 18'
+    },
+
+    # ============================================================
+    # EDUCATION (Greens)
+    # ============================================================
+    'SE.ENR.ORPH': {
+        'name': 'Orphan school attendance ratio',
+        'color_scheme': 'greens',
+        'category': 'Education',
+        'unit': 'ratio',
+        'description': 'Ratio of orphan to non-orphan school attendance'
+    },
+
+    # ============================================================
+    # SOCIAL INCLUSION & BIRTH REGISTRATION (Teals)
+    # ============================================================
+    'ID.OWN.BRTH.ZS': {
+        'name': 'Birth certification',
+        'color_scheme': 'teals',
+        'category': 'Birth Registration',
+        'unit': '%',
+        'description': 'Percentage of children with birth certificates'
+    },
+    'SP.REG.BRTH.RU.ZS': {
+        'name': 'Completeness, rural',
+        'color_scheme': 'teals',
+        'category': 'Birth Registration',
+        'unit': '%',
+        'description': 'Completeness of birth registration in rural areas'
+    },
+    'SP.REG.BRTH.UR.ZS': {
+        'name': 'Completeness, urban',
+        'color_scheme': 'teals',
+        'category': 'Birth Registration',
+        'unit': '%',
+        'description': 'Completeness of birth registration in urban areas'
+    },
+
+    # ============================================================
+    # EARLY CHILDHOOD DEVELOPMENT (Greens/Oranges)
+    # ============================================================
+    'SH.STA.BFED.ZS': {
+        'name': 'Exclusive breastfeeding',
+        'color_scheme': 'greens',
+        'category': 'Early Childhood',
+        'unit': '%',
+        'description': 'Percentage of infants exclusively breastfed for first 6 months'
+    },
+    'SH.STA.BRTW.ZS': {
+        'name': 'Low birthweight',
+        'color_scheme': 'oranges',
+        'category': 'Early Childhood',
+        'unit': '%',
+        'description': 'Percentage of newborns with low birthweight (<2.5kg)'
+    },
+    'SH.STA.OWGH.MA.ZS': {
+        'name': 'Overweight, male',
+        'color_scheme': 'oranges',
+        'category': 'Early Childhood',
+        'unit': '%',
+        'description': 'Percentage of male children who are overweight'
+    },
+    'SH.STA.STNT.ZS': {
+        'name': 'Stunting',
+        'color_scheme': 'oranges',
+        'category': 'Early Childhood',
+        'unit': '%',
+        'description': 'Percentage of children under 5 who are stunted'
+    },
+    'SH.STA.WAST.ZS': {
+        'name': 'Wasting',
+        'color_scheme': 'oranges',
+        'category': 'Early Childhood',
+        'unit': '%',
+        'description': 'Percentage of children under 5 who are wasted'
+    },
+    'HD.HCI.STNT': {
+        'name': 'Fraction not stunted',
+        'color_scheme': 'greens',
+        'category': 'Early Childhood',
+        'unit': 'fraction',
+        'description': 'Fraction of children not stunted (1 - stunting rate)'
+    },
 }
+
+# =========================================================
+# HELPER FUNCTIONS
+# =========================================================
 
 def get_indicator_name(code):
     """Return human-readable name for indicator code."""
-    return INDICATOR_NAMES.get(code, code)
+    return INDICATOR_METADATA.get(code, {}).get('name', code)
+
+def get_indicator_metadata(code):
+    """Return full metadata for indicator code."""
+    return INDICATOR_METADATA.get(code, {
+        'name': code,
+        'color_scheme': 'blues',
+        'category': 'Unknown',
+        'unit': '',
+        'description': ''
+    })
+
+def get_color_scheme(code):
+    """Return color scheme for indicator."""
+    return INDICATOR_METADATA.get(code, {}).get('color_scheme', 'blues')
+
+def get_indicator_category(code):
+    """Return category for indicator."""
+    return INDICATOR_METADATA.get(code, {}).get('category', 'Unknown')
 
 # =========================================================
 # GENERIC INDICATOR FETCHER WITH CACHING

@@ -1,6 +1,11 @@
 from django.shortcuts import render
 from django.http import JsonResponse
-from .services import fetch_indicator_data, get_indicator_name
+from .services import (
+    fetch_indicator_data, 
+    get_indicator_name, 
+    get_indicator_metadata,
+    get_color_scheme
+)
 import json
 
 def indicator_view(request, indicator_code='SH.DYN.MORT', view_type='table'):
@@ -18,6 +23,14 @@ def indicator_view(request, indicator_code='SH.DYN.MORT', view_type='table'):
     # Fetch data for the specific indicator (single API call)
     df = fetch_indicator_data(indicator_code, 1960, 2024)
     
+    # Get indicator metadata
+    metadata = get_indicator_metadata(indicator_code)
+    indicator_name = metadata.get('name', indicator_code)
+    color_scheme = metadata.get('color_scheme', 'blues')
+    category = metadata.get('category', 'Unknown')
+    unit = metadata.get('unit', '')
+    description = metadata.get('description', '')
+    
     if df.empty:
         return render(request, "indicators/indicator_view.html", {
             "all_data_json": "{}",
@@ -27,7 +40,11 @@ def indicator_view(request, indicator_code='SH.DYN.MORT', view_type='table'):
             "subregions": [],
             "indicator_code": indicator_code,
             "view_type": view_type,
-            "indicator_name": get_indicator_name(indicator_code),
+            "indicator_name": indicator_name,
+            "color_scheme": color_scheme,
+            "category": category,
+            "unit": unit,
+            "description": description,
         })
 
     # Build data by year
@@ -56,7 +73,11 @@ def indicator_view(request, indicator_code='SH.DYN.MORT', view_type='table'):
         "subregions": subregions,
         "indicator_code": indicator_code,
         "view_type": view_type,
-        "indicator_name": get_indicator_name(indicator_code),
+        "indicator_name": indicator_name,
+        "color_scheme": color_scheme,
+        "category": category,
+        "unit": unit,
+        "description": description,
     })
 
 # =========================================================

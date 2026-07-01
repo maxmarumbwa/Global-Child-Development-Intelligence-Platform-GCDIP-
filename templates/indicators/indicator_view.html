@@ -22,6 +22,13 @@
     .legend span {
         vertical-align: middle;
     }
+    .color-scheme-badge {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+        margin-right: 4px;
+    }
 </style>
 {% endif %}
 {% if view_type == 'chart' %}
@@ -34,6 +41,13 @@
     }
     #colorLegend { margin-top: 15px; display: none; text-align: center; }
     #legendItems { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+    .color-scheme-badge {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+        margin-right: 4px;
+    }
 </style>
 {% endif %}
 {% endblock %}
@@ -57,19 +71,23 @@
         </div>
         <div>
             <span class="badge bg-info">{{ indicator_code }}</span>
+            <span class="badge bg-secondary ms-2">
+                <span class="color-scheme-badge" style="background: {{ color_scheme|default:'blues' }};"></span>
+                {{ color_scheme|default:'Blues'|title }} Scheme
+            </span>
+            {% if category %}
+            <span class="badge bg-primary ms-2">{{ category }}</span>
+            {% endif %}
+            {% if unit %}
+            <span class="badge bg-light text-dark ms-2">Unit: {{ unit }}</span>
+            {% endif %}
         </div>
     </div>
-
-    <div class="card-body">
-        <!-- Indicator displayed for reference -->
-        <div class="mb-3">
-            <small class="text-muted">Current Indicator: <strong>{{ indicator_code }}</strong> - {{ indicator_name }}</small>
-        </div>
 
         <!-- YEAR SLIDERS -->
         <div class="row mb-2 align-items-center">
             <div class="col-md-6" id="year1Container">
-                <label class="form-label">Year 1: <span id="year1Label">{{ current_year }}</span></label>
+                <label class="form-label">Year: <span id="year1Label">{{ current_year }}</span></label>
                 <input type="range" id="year1Slider" min="1960" max="2024"
                        value="{{ current_year }}" class="form-range"
                        oninput="onYear1Input(this.value)">
@@ -192,43 +210,43 @@
         </div>
 
         <!-- MAIN CONTENT AREA -->
-{% if view_type == 'chart' %}
-<div class="chart-wrapper" style="position: relative; height: 450px; width: 100%; min-height: 500px; padding: 10px 0;">
-    <canvas id="mortalityChart" style="width: 100% !important; height: 100% !important;"></canvas>
-</div>
-<div id="colorLegend" style="margin-top: 15px; display: none; text-align: center;">
-    <div id="legendItems"></div>
-</div>
-{% elif view_type == 'table' %}
-<div style="max-height: 550px; overflow-y: auto; margin-top: 10px;">
-    <div id="dataTableContainer"></div>
-</div>
-<!-- PAGINATION -->
-<div class="row align-items-center mt-3">
-    <div class="col-md-6">
-        <span id="pageInfo" class="text-muted">Showing 0-0 of 0</span>
-    </div>
-    <div class="col-md-6 d-flex justify-content-end align-items-center gap-2">
-        <label for="pageSizeSelect" class="form-label me-1 mb-0">Rows per page:</label>
-        <select id="pageSizeSelect" class="form-select form-select-sm" style="width:80px;" onchange="applyFilters()">
-            <option value="10">10</option>
-            <option value="25" selected>25</option>
-            <option value="50">50</option>
-            <option value="100">100</option>
-            <option value="0">All</option>
-        </select>
-        <button class="btn btn-outline-secondary btn-sm" onclick="goToPage('prev')" id="prevBtn">
-            <i class="fa-solid fa-chevron-left"></i>
-        </button>
-        <span id="pageNumberDisplay" class="mx-2">1</span>
-        <button class="btn btn-outline-secondary btn-sm" onclick="goToPage('next')" id="nextBtn">
-            <i class="fa-solid fa-chevron-right"></i>
-        </button>
-    </div>
-</div>
-{% elif view_type == 'map' %}
-<div id="map" style="height: 550px; width: 100%;"></div>
-{% endif %}
+        {% if view_type == 'chart' %}
+        <div class="chart-wrapper" style="position: relative; height: 450px; width: 100%; min-height: 500px; padding: 10px 0;">
+            <canvas id="mortalityChart" style="width: 100% !important; height: 100% !important;"></canvas>
+        </div>
+        <div id="colorLegend" style="margin-top: 15px; display: none; text-align: center;">
+            <div id="legendItems"></div>
+        </div>
+        {% elif view_type == 'table' %}
+        <div style="max-height: 550px; overflow-y: auto; margin-top: 10px;">
+            <div id="dataTableContainer"></div>
+        </div>
+        <!-- PAGINATION -->
+        <div class="row align-items-center mt-3">
+            <div class="col-md-6">
+                <span id="pageInfo" class="text-muted">Showing 0-0 of 0</span>
+            </div>
+            <div class="col-md-6 d-flex justify-content-end align-items-center gap-2">
+                <label for="pageSizeSelect" class="form-label me-1 mb-0">Rows per page:</label>
+                <select id="pageSizeSelect" class="form-select form-select-sm" style="width:80px;" onchange="applyFilters()">
+                    <option value="10">10</option>
+                    <option value="25" selected>25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="0">All</option>
+                </select>
+                <button class="btn btn-outline-secondary btn-sm" onclick="goToPage('prev')" id="prevBtn">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <span id="pageNumberDisplay" class="mx-2">1</span>
+                <button class="btn btn-outline-secondary btn-sm" onclick="goToPage('next')" id="nextBtn">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+        {% elif view_type == 'map' %}
+        <div id="map" style="height: 550px; width: 100%;"></div>
+        {% endif %}
 
         <!-- FALLBACK MESSAGE -->
         <div id="noDataMessage" class="alert alert-warning text-center mt-2" style="display:none;">
@@ -285,6 +303,7 @@
 let allDataByYear = {};
 const indicatorCode = '{{ indicator_code }}';
 const viewType = '{{ view_type }}';
+const colorScheme = '{{ color_scheme|default:"blues" }}';
 let currentYear = {{ current_year }};
 let year1 = {{ current_year }};
 let year2 = {{ current_year }};
@@ -297,10 +316,39 @@ let currentDisplayData = [];
 const MIN_YEAR = 1960;
 const MAX_YEAR = 2024;
 
+// Color scheme mappings
+const colorSchemes = {
+    'blues': ['#cce5ff', '#99ccff', '#66b3ff', '#3399ff', '#0073e6', '#0059b3', '#003d99', '#002666'],
+    'greens': ['#e5f5e0', '#c7e9c0', '#a1d99b', '#74c476', '#41ab5d', '#238b45', '#006d2c', '#00441b'],
+    'oranges': ['#fee6ce', '#fdd0a2', '#fdae6b', '#fd8d3c', '#f16913', '#d94801', '#a63603', '#7f2704'],
+    'reds': ['#fee0d2', '#fcbba1', '#fc9272', '#fb6a4a', '#ef3b2d', '#cb181d', '#99000d', '#67000d'],
+    'purples': ['#efedf5', '#dadaeb', '#bcbddc', '#9e9ac8', '#807dba', '#6a51a3', '#4a1486', '#3f007d'],
+    'teals': ['#e0f2f1', '#b2dfdb', '#80cbc4', '#4db6ac', '#26a69a', '#00897b', '#00695c', '#004d40']
+};
+
+function getColorScheme() {
+    return colorSchemes[colorScheme] || colorSchemes['blues'];
+}
+
+// Map color scheme mappings
+const mapColorSchemes = {
+    'blues': ['#f7fbff', '#deebf7', '#c6dbef', '#9ecae1', '#6baed6', '#4292c6', '#2171b5', '#08519c'],
+    'greens': ['#f7fcf5', '#e5f5e0', '#c7e9c0', '#a1d99b', '#74c476', '#41ab5d', '#238b45', '#005a32'],
+    'oranges': ['#fff5eb', '#fee6ce', '#fdd0a2', '#fdae6b', '#fd8d3c', '#f16913', '#d94801', '#8c2d04'],
+    'reds': ['#fff5f0', '#fee0d2', '#fcbba1', '#fc9272', '#fb6a4a', '#ef3b2d', '#cb181d', '#67000d'],
+    'purples': ['#fcfbfd', '#efedf5', '#dadaeb', '#bcbddc', '#9e9ac8', '#807dba', '#6a51a3', '#3f007d'],
+    'teals': ['#f7fcfd', '#e0f2f1', '#b2dfdb', '#80cbc4', '#4db6ac', '#26a69a', '#00897b', '#004d40']
+};
+
+function getMapColorScale() {
+    return mapColorSchemes[colorScheme] || mapColorSchemes['blues'];
+}
+
 try {
     allDataByYear = {{ all_data_json|safe }};
     console.log('✅ Data loaded successfully for indicator:', indicatorCode);
     console.log('Years:', Object.keys(allDataByYear).sort());
+    console.log('Color Scheme:', colorScheme);
 } catch (e) {
     console.error('❌ Failed to parse all_data_json:', e);
     document.addEventListener('DOMContentLoaded', function() {
@@ -404,6 +452,7 @@ function renderChart(data1, data2, year1Label, year2Label) {
     const ctx = canvas.getContext("2d");
 
     const colorBy = document.getElementById("colorBySelect").value;
+    const schemeColors = getColorScheme();
 
     if (chart) { chart.destroy(); chart = null; }
 
@@ -485,8 +534,8 @@ function renderChart(data1, data2, year1Label, year2Label) {
             bgColors2 = combined.map(d => getCategoryColor(colorBy, d[colorBy]));
             displayData = combined;
         } else {
-            bgColors1 = combined.map(() => 'rgba(54, 162, 235, 0.6)');
-            bgColors2 = combined.map(() => 'rgba(255, 99, 132, 0.6)');
+            bgColors1 = combined.map(() => schemeColors[0] || 'rgba(54, 162, 235, 0.6)');
+            bgColors2 = combined.map(() => schemeColors[2] || 'rgba(255, 99, 132, 0.6)');
         }
 
         datasets = [
@@ -540,7 +589,7 @@ function renderChart(data1, data2, year1Label, year2Label) {
             bgColors = data.map(d => getCategoryColor(colorBy, d[colorBy]));
             displayData = data;
         } else {
-            bgColors = data.map(() => 'rgba(54, 162, 235, 0.5)');
+            bgColors = data.map((d, i) => schemeColors[i % schemeColors.length] || 'rgba(54, 162, 235, 0.5)');
         }
 
         const meta = data.map(d => ({
@@ -556,7 +605,7 @@ function renderChart(data1, data2, year1Label, year2Label) {
             label: `{{ indicator_name }} (${year1Label})`,
             data: values,
             backgroundColor: bgColors,
-            borderColor: bgColors.map(c => c.replace('0.5', '1')),
+            borderColor: bgColors.map(c => c),
             borderWidth: 1,
             pointBackgroundColor: bgColors,
             pointBorderColor: '#fff',
@@ -668,7 +717,7 @@ function setChartType(type) {
     if (chartType === type) return;
     chartType = type;
     document.getElementById('barBtn').classList.toggle('active', type === 'bar');
-    document.getElementById('lineBtn').classlist.toggle('active', type === 'line');
+    document.getElementById('lineBtn').classList.toggle('active', type === 'line');
     applyFilters();
 }
 
@@ -910,8 +959,7 @@ function updateMap() {
 
     const minVal = Math.min(...values);
     const maxVal = Math.max(...values);
-    const colorScale = chroma.scale(['#ffffb2', '#fecc5c', '#fd8d3c', '#f03b20', '#bd0026'])
-        .domain([minVal, maxVal]);
+    const colorScale = chroma.scale(getMapColorScale()).domain([minVal, maxVal]);
 
     const features = [];
     const bounds = L.latLngBounds();
